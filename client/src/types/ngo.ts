@@ -13,6 +13,7 @@ export interface NgoConfig {
   presidentName: string;
   secretaryName: string;
   foundedYear: number;
+  description?: string;
 }
 
 export interface GalleryImage {
