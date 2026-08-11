@@ -32,7 +32,7 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
   const certRef = useRef<HTMLDivElement>(null);
 
   const amountWords = (n: number): string => {
-    // Simple conversion for display (extend as needed)
+    // HELLO Simple conversion for display (extend as needed)
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(n);
   };
 
