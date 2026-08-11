@@ -228,3 +228,5 @@ When instructed to "Create feature X":
 6. Create `src/screens/X/components/` with micro-components consuming `useContext(XContext)`.
 7. Create `src/screens/X/X.tsx` as the context provider and view shell.
 8. Register the route in `src/App.tsx`.
+
+## 6. Always follow all rules 
