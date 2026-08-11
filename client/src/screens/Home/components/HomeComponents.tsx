@@ -21,12 +21,12 @@ export const Noticeboard: React.FC = () => {
               <img src={active.imageUrl} alt={active.title} className="w-full h-full object-cover" />
             </div>
           )}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="inline-flex items-center gap-1.5 bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full mb-3">
               📌 Notice
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">{active.title}</h2>
-            <p className="text-emerald-100 text-base leading-relaxed">{active.content}</p>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight break-words">{active.title}</h2>
+            <p className="text-emerald-100 text-base leading-relaxed break-words">{active.content}</p>
           </div>
         </div>
 
@@ -131,7 +131,7 @@ export const GallerySection: React.FC = () => {
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
               {img.caption && (
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                <div className="gallery-overlay absolute inset-0 bg-gradient-to-t from-slate-900/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
                   <span className="text-white text-sm font-medium">{img.caption}</span>
                 </div>
               )}

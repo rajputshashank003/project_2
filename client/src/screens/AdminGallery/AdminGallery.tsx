@@ -2,12 +2,13 @@ import React, { useRef } from 'react';
 import { useAdminGallery } from './useAdminGallery';
 import { AdminGalleryContext } from './context';
 import { Images, Upload, Trash2 } from 'lucide-react';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const AdminGalleryContent: React.FC = () => {
   const ctx = React.useContext(AdminGalleryContext);
   const fileRef = useRef<HTMLInputElement>(null);
   if (!ctx) return null;
-  const { images, isLoading, uploading, caption, setCaption, handleUpload, handleDelete } = ctx;
+  const { images, isLoading, uploading, caption, setCaption, handleUpload, openDeleteConfirm, deleteTargetId, isDeleting, cancelDelete, confirmDelete } = ctx;
 
   return (
     <div className="page-wrapper">
@@ -63,7 +64,7 @@ const AdminGalleryContent: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
                 {img.caption && <span className="text-white text-xs font-medium mb-2">{img.caption}</span>}
                 <button
-                  onClick={() => handleDelete(img.id)}
+                  onClick={() => openDeleteConfirm(img.id)}
                   className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors self-start"
                 >
                   <Trash2 className="h-3 w-3" />
@@ -74,6 +75,16 @@ const AdminGalleryContent: React.FC = () => {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!deleteTargetId}
+        title="Delete Photo?"
+        message="Are you sure you want to delete this photo? This action cannot be undone."
+        confirmText="Delete"
+        isLoading={isDeleting}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
     </div>
   );
 };

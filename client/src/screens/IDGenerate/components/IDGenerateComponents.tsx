@@ -90,12 +90,12 @@ export const IDForm: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div>
           <label className="form-label">Full Name *</label>
-          <input id="id-name" type="text" placeholder="Ramesh Kumar" value={form.userName} onChange={(e) => handleFormChange('userName', e.target.value)} className={`form-input ${errors.userName ? 'border-red-400' : ''}`} />
+          <input id="id-name" type="text" placeholder="Your full name" value={form.userName} onChange={(e) => handleFormChange('userName', e.target.value)} className={`form-input ${errors.userName ? 'border-red-400' : ''}`} />
           {errors.userName && <p className="text-red-500 text-xs mt-1">{errors.userName}</p>}
         </div>
         <div>
           <label className="form-label">Phone Number *</label>
-          <input id="id-phone" type="tel" inputMode="numeric" maxLength={10} placeholder="9876543210" value={form.phone} onChange={(e) => handleFormChange('phone', e.target.value.replace(/\D/g, ''))} className={`form-input ${errors.phone ? 'border-red-400' : ''}`} />
+          <input id="id-phone" type="tel" inputMode="numeric" maxLength={10} placeholder="9000000000" value={form.phone} onChange={(e) => handleFormChange('phone', e.target.value.replace(/\D/g, ''))} className={`form-input ${errors.phone ? 'border-red-400' : ''}`} />
           {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
         </div>
         <div>

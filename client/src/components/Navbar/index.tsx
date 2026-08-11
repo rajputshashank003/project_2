@@ -3,11 +3,14 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Menu, X, Leaf, LogOut, User, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
+import ConfirmModal from '../ConfirmModal';
 
 const NAV_LINKS = [
-  { to: '/',        label: 'Home' },
-  { to: '/donate',  label: 'Donate' },
+  { to: '/',            label: 'Home' },
+  { to: '/donate',      label: 'Donate' },
   { to: '/id-generate', label: 'Get ID Card' },
+  { to: '/events',      label: 'Events' },
+  { to: '/about',       label: 'About' },
 ];
 
 const ADMIN_LINKS = [
@@ -16,14 +19,17 @@ const ADMIN_LINKS = [
   { to: '/admin/users',             label: 'Users' },
   { to: '/admin/noticeboard',       label: 'Noticeboard' },
   { to: '/admin/gallery',           label: 'Gallery' },
+  { to: '/admin/events',            label: 'Events' },
+  { to: '/admin/team',              label: 'Team Members' },
 ];
 
 const Navbar: React.FC = () => {
   const { isAuthenticated, isAdmin, user, logout } = useAuth();
   const { ngoConfig } = useApp();
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [adminOpen, setAdminOpen] = useState(false);
+  const [menuOpen, setMenuOpen]           = useState(false);
+  const [adminOpen, setAdminOpen]         = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -31,6 +37,7 @@ const Navbar: React.FC = () => {
   };
 
   return (
+    <>
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-card">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -112,7 +119,7 @@ const Navbar: React.FC = () => {
                   <span className="text-sm font-medium text-slate-700">{user?.name || user?.phone}</span>
                 </div>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => setShowLogoutConfirm(true)}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors duration-150"
                 >
                   <LogOut className="h-4 w-4" />
@@ -180,7 +187,7 @@ const Navbar: React.FC = () => {
             <div className="pt-2 border-t border-slate-100">
               {isAuthenticated ? (
                 <button
-                  onClick={() => { handleLogout(); setMenuOpen(false); }}
+                  onClick={() => { setShowLogoutConfirm(true); setMenuOpen(false); }}
                   className="w-full text-left flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                 >
                   <LogOut className="h-4 w-4" />
@@ -200,6 +207,16 @@ const Navbar: React.FC = () => {
         </div>
       )}
     </header>
+
+    <ConfirmModal
+      isOpen={showLogoutConfirm}
+      title="Logout?"
+      message="Are you sure you want to logout?"
+      confirmText="Logout"
+      onConfirm={() => { setShowLogoutConfirm(false); handleLogout(); }}
+      onCancel={() => setShowLogoutConfirm(false)}
+    />
+    </>
   );
 };
 

@@ -11,11 +11,15 @@ const Donate               = lazy(() => import('./screens/Donate/Donate'));
 const IDGenerate           = lazy(() => import('./screens/IDGenerate/IDGenerate'));
 const CertificateView      = lazy(() => import('./screens/CertificateView/CertificateView'));
 const IDCardView           = lazy(() => import('./screens/IDCardView/IDCardView'));
+const Events               = lazy(() => import('./screens/Events/Events'));
+const About                = lazy(() => import('./screens/About/About'));
 const AdminRequestIdCard   = lazy(() => import('./screens/AdminRequestIdCard/AdminRequestIdCard'));
 const AdminRequestDonation = lazy(() => import('./screens/AdminRequestDonation/AdminRequestDonation'));
 const AdminUsers           = lazy(() => import('./screens/AdminUsers/AdminUsers'));
 const AdminNoticeboard     = lazy(() => import('./screens/AdminNoticeboard/AdminNoticeboard'));
 const AdminGallery         = lazy(() => import('./screens/AdminGallery/AdminGallery'));
+const AdminEvents          = lazy(() => import('./screens/AdminEvents/AdminEvents'));
+const AdminTeam            = lazy(() => import('./screens/AdminTeam/AdminTeam'));
 
 const LoadingFallback = () => (
   <div className="flex-1 flex items-center justify-center min-h-[60vh]">
@@ -44,8 +48,10 @@ function App() {
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
             {/* Public routes */}
-            <Route path="/"      element={<Home />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/"        element={<Home />} />
+            <Route path="/login"   element={<Login />} />
+            <Route path="/events"  element={<Events />} />
+            <Route path="/about"   element={<About />} />
 
             {/* Auth-required routes */}
             <Route path="/donate"       element={<ProtectedRoute><Donate /></ProtectedRoute>} />
@@ -59,6 +65,8 @@ function App() {
             <Route path="/admin/users"             element={<ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute>} />
             <Route path="/admin/noticeboard"       element={<ProtectedRoute adminOnly><AdminNoticeboard /></ProtectedRoute>} />
             <Route path="/admin/gallery"           element={<ProtectedRoute adminOnly><AdminGallery /></ProtectedRoute>} />
+            <Route path="/admin/events"            element={<ProtectedRoute adminOnly><AdminEvents /></ProtectedRoute>} />
+            <Route path="/admin/team"              element={<ProtectedRoute adminOnly><AdminTeam /></ProtectedRoute>} />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />

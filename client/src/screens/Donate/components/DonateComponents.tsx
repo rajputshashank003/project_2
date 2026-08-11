@@ -7,18 +7,19 @@ import { Link } from 'react-router-dom';
 export const UpiDetails: React.FC = () => {
   const ctx = useContext(DonateContext);
   if (!ctx) return null;
-  const { ngoConfig, copied, handleCopyUpi } = ctx;
+  const { ngoConfig, copied, handleCopyUpi, copiedPhone, handleCopyPhone } = ctx;
 
   return (
     <div className="card-md mb-6">
       <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
         <div className="h-6 w-6 rounded-full bg-emerald-100 flex items-center justify-center">
-          <span className="text-emerald-700 text-xs font-bold">₹</span>
+          <span className="text-emerald-700 text-xs font-bold">&#8377;</span>
         </div>
-        Pay via UPI
+        Payment Details
       </h2>
 
-      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between gap-4">
+      {/* UPI row */}
+      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between gap-4 mb-3">
         <div>
           <div className="text-xs text-slate-500 mb-0.5">UPI ID</div>
           <div className="font-mono font-semibold text-slate-900 text-sm">{ngoConfig.upiId || 'ngo@upi'}</div>
@@ -38,7 +39,30 @@ export const UpiDetails: React.FC = () => {
         </button>
       </div>
 
-      <p className="text-xs text-slate-400 mt-3">
+      {/* Phone payment row */}
+      {ngoConfig.phone && (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-4 mb-3">
+          <div>
+            <div className="text-xs text-slate-500 mb-0.5">Pay via Phone</div>
+            <div className="font-mono font-semibold text-slate-900 text-sm">{ngoConfig.phone}</div>
+            <div className="text-xs text-slate-400 mt-0.5">Call / WhatsApp to arrange payment</div>
+          </div>
+          <button
+            id="copy-phone-btn"
+            onClick={handleCopyPhone}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              copiedPhone
+                ? 'bg-emerald-600 text-white'
+                : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            {copiedPhone ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            {copiedPhone ? 'Copied!' : 'Copy'}
+          </button>
+        </div>
+      )}
+
+      <p className="text-xs text-slate-400 mt-2">
         Open any UPI app (GPay, PhonePe, Paytm) → Pay to UPI ID → Upload payment screenshot below
       </p>
     </div>
@@ -64,7 +88,7 @@ export const DonationForm: React.FC = () => {
           <input
             id="donor-name"
             type="text"
-            placeholder="Ramesh Kumar"
+            placeholder="Your full name"
             value={form.donorName}
             onChange={(e) => handleFormChange('donorName', e.target.value)}
             className={`form-input ${errors.donorName ? 'border-red-400' : ''}`}
@@ -78,7 +102,7 @@ export const DonationForm: React.FC = () => {
             type="tel"
             inputMode="numeric"
             maxLength={10}
-            placeholder="9876543210"
+            placeholder="9000000000"
             value={form.phone}
             onChange={(e) => handleFormChange('phone', e.target.value.replace(/\D/g, ''))}
             className={`form-input ${errors.phone ? 'border-red-400' : ''}`}

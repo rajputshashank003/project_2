@@ -311,3 +311,8 @@ input, textarea, select { font-family: inherit; }
   #certificate-print-area * { visibility: visible; }
   #certificate-print-area { position: fixed; top: 0; left: 0; width: 100%; }
 }
+
+/* Always show gallery captions on touch/hover-none devices */
+@media (hover: none) {
+  .gallery-overlay { opacity: 1 !important; }
+}

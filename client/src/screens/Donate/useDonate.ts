@@ -34,6 +34,7 @@ export const useDonate = () => {
   const [isSuccess, setIsSuccess]               = useState(false);
   const [submittedId, setSubmittedId]           = useState('');
   const [copied, setCopied]                     = useState(false);
+  const [copiedPhone, setCopiedPhone]           = useState(false);
 
   const handleFormChange = (field: keyof DonationFormData, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -65,6 +66,14 @@ export const useDonate = () => {
       setCopied(true);
       toast.success('UPI ID copied!');
       setTimeout(() => setCopied(false), 2500);
+    });
+  };
+
+  const handleCopyPhone = () => {
+    navigator.clipboard.writeText(ngoConfig.phone).then(() => {
+      setCopiedPhone(true);
+      toast.success('Phone number copied!');
+      setTimeout(() => setCopiedPhone(false), 2500);
     });
   };
 
@@ -115,10 +124,12 @@ export const useDonate = () => {
     isSuccess,
     submittedId,
     copied,
+    copiedPhone,
     ngoConfig,
     handleFormChange,
     handleScreenshotUpload,
     handleCopyUpi,
+    handleCopyPhone,
     handleSubmit,
     handleReset,
   };
