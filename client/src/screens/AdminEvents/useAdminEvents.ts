@@ -1,8 +1,8 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { getEvents, createEvent, updateEvent, deleteEvent } from '../../utils/api_request/events';
 import { fileToBase64, validateImageFile } from '../../utils/helpers';
-import type { NGOEvent, EventImage } from '../../types/event';
+import type { NGOEvent } from '../../types/event';
 
 type PendingImage =
   | { type: 'existing'; id: string; imageUrl: string; caption?: string }

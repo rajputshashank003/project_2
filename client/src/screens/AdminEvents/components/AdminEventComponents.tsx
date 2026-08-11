@@ -1,6 +1,6 @@
-﻿import React, { useContext, useRef } from 'react';
+import React, { useContext, useRef } from 'react';
 import { AdminEventsContext } from '../context';
-import { CalendarDays, Plus, Pencil, Trash2, Upload, X, ImageOff, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarDays, Plus, Pencil, Trash2, Upload, X, ImageOff } from 'lucide-react';
 import Modal from '../../../components/Modal';
 import ConfirmModal from '../../../components/ConfirmModal';
 

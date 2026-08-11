@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useAbout } from './useAbout';
 import { AboutContext } from './context';
 import { useApp } from '../../context/AppContext';
@@ -74,7 +74,7 @@ const AboutContent: React.FC = () => {
         </div>
         <h1 className="section-heading mb-3">{ngoConfig.name || 'About Our NGO'}</h1>
         <p className="section-subheading max-w-2xl mx-auto text-base">
-          {ngoConfig.description || 'We are committed to empowering communities and creating sustainable change through compassion, education, and action.'}
+          {ngoConfig.tagline || 'We are committed to empowering communities and creating sustainable change through compassion, education, and action.'}
         </p>
       </div>
 
