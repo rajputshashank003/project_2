@@ -35,6 +35,8 @@ export const useDonate = () => {
   const [submittedId, setSubmittedId]           = useState('');
   const [copied, setCopied]                     = useState(false);
   const [copiedPhone, setCopiedPhone]           = useState(false);
+  const [copiedAccount, setCopiedAccount]       = useState(false);
+  const [copiedIfsc, setCopiedIfsc]             = useState(false);
 
   const handleFormChange = (field: keyof DonationFormData, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -74,6 +76,24 @@ export const useDonate = () => {
       setCopiedPhone(true);
       toast.success('Phone number copied!');
       setTimeout(() => setCopiedPhone(false), 2500);
+    });
+  };
+
+  const handleCopyAccount = () => {
+    if (!ngoConfig.accountNumber) return;
+    navigator.clipboard.writeText(ngoConfig.accountNumber).then(() => {
+      setCopiedAccount(true);
+      toast.success('Account number copied!');
+      setTimeout(() => setCopiedAccount(false), 2500);
+    });
+  };
+
+  const handleCopyIfsc = () => {
+    if (!ngoConfig.ifscCode) return;
+    navigator.clipboard.writeText(ngoConfig.ifscCode).then(() => {
+      setCopiedIfsc(true);
+      toast.success('IFSC Code copied!');
+      setTimeout(() => setCopiedIfsc(false), 2500);
     });
   };
 
@@ -125,11 +145,15 @@ export const useDonate = () => {
     submittedId,
     copied,
     copiedPhone,
+    copiedAccount,
+    copiedIfsc,
     ngoConfig,
     handleFormChange,
     handleScreenshotUpload,
     handleCopyUpi,
     handleCopyPhone,
+    handleCopyAccount,
+    handleCopyIfsc,
     handleSubmit,
     handleReset,
   };

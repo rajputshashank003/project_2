@@ -1,17 +1,18 @@
 import React, { useContext, useRef } from 'react';
-import { Upload, CheckCircle, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { User, CheckCircle } from 'lucide-react';
 import { IDGenerateContext } from '../context';
 import { DESIGNATIONS } from '../../../utils/constants';
 
-const PhotoUploadBox: React.FC<{
+interface PhotoUploadBoxProps {
   id: string;
   label: string;
   preview: string;
+  onUpload: (file: File) => void;
   error?: string;
-  onUpload: (f: File) => void;
   hint?: string;
-}> = ({ id, label, preview, error, onUpload, hint }) => {
+}
+
+const PhotoUploadBox: React.FC<PhotoUploadBoxProps> = ({ id, label, preview, onUpload, error, hint }) => {
   const ref = useRef<HTMLInputElement>(null);
   return (
     <div>
@@ -20,8 +21,8 @@ const PhotoUploadBox: React.FC<{
       {preview ? (
         <div className="relative w-32 h-40 rounded-xl overflow-hidden border-2 border-emerald-400 cursor-pointer" onClick={() => ref.current?.click()}>
           <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-            <span className="text-white text-xs font-medium">Change</span>
+          <div className="absolute inset-0 bg-black/40 sm:bg-black/30 opacity-100 sm:opacity-0 sm:hover:opacity-100 transition-opacity flex items-center justify-center">
+            <span className="text-white text-xs font-medium bg-black/50 sm:bg-transparent px-2 py-1 rounded">Change</span>
           </div>
         </div>
       ) : (
@@ -44,47 +45,17 @@ const PhotoUploadBox: React.FC<{
 
 export const IDForm: React.FC = () => {
   const ctx = useContext(IDGenerateContext);
-  const paymentRef = useRef<HTMLInputElement>(null);
   if (!ctx) return null;
-  const { form, passportPreview, paymentPreview, errors, isSubmitting, handleFormChange, handlePassportUpload, handlePaymentUpload, handleSubmit, ngoConfig } = ctx;
+  const { form, errors, isSubmitting, handleFormChange, handlePassportUpload, handlePaymentUpload, handleSubmit, passportPreview, paymentPreview } = ctx;
 
   return (
-    <div className="card-md">
-      <h2 className="text-base font-bold text-slate-900 mb-5">Your Information</h2>
+    <div className="card-md max-w-2xl mx-auto">
+      <h2 className="text-lg font-bold text-slate-900 mb-6">ID Card Application Form</h2>
 
-      {/* Photo uploads row */}
-      <div className="flex flex-wrap gap-6 mb-6">
-        <PhotoUploadBox
-          id="upload-passport-btn"
-          label="Passport Size Photo *"
-          preview={passportPreview}
-          error={errors.passport}
-          onUpload={handlePassportUpload}
-          hint="Passport size photo"
-        />
-        <div className="flex-1 min-w-48">
-          <label className="form-label">Payment Screenshot *</label>
-          <input ref={paymentRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePaymentUpload(f); }} />
-          {paymentPreview ? (
-            <div className="relative h-40 rounded-xl overflow-hidden border border-slate-200 cursor-pointer" onClick={() => paymentRef.current?.click()}>
-              <img src={paymentPreview} alt="Payment" className="w-full h-full object-contain bg-slate-50" />
-            </div>
-          ) : (
-            <button
-              id="upload-payment-btn"
-              type="button"
-              onClick={() => paymentRef.current?.click()}
-              className={`w-full h-40 border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 transition-colors ${
-                errors.payment ? 'border-red-300 bg-red-50' : 'border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/50'
-              }`}
-            >
-              <Upload className={`h-6 w-6 ${errors.payment ? 'text-red-400' : 'text-slate-400'}`} />
-              <span className="text-sm text-slate-400">Payment proof</span>
-              <span className="text-xs text-slate-400">Pay ₹ to {ngoConfig.upiId || 'NGO UPI'}</span>
-            </button>
-          )}
-          {errors.payment && <p className="text-red-500 text-xs mt-1">{errors.payment}</p>}
-        </div>
+      {/* Uploads section */}
+      <div className="flex flex-col sm:flex-row gap-6 mb-6 pb-6 border-b border-slate-100">
+        <PhotoUploadBox id="upload-passport" label="Passport Size Photo *" preview={passportPreview} onUpload={handlePassportUpload} error={errors.passport} hint="JPG/PNG, max 5MB" />
+        <PhotoUploadBox id="upload-payment" label="Payment Screenshot *" preview={paymentPreview} onUpload={handlePaymentUpload} error={errors.payment} hint="Payment receipt" />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -95,7 +66,10 @@ export const IDForm: React.FC = () => {
         </div>
         <div>
           <label className="form-label">Phone Number *</label>
-          <input id="id-phone" type="tel" inputMode="numeric" maxLength={10} placeholder="9000000000" value={form.phone} onChange={(e) => handleFormChange('phone', e.target.value.replace(/\D/g, ''))} className={`form-input ${errors.phone ? 'border-red-400' : ''}`} />
+          <div className="relative">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium select-none">+91</span>
+            <input id="id-phone" type="tel" inputMode="numeric" maxLength={10} placeholder="9000000000" value={form.phone} onChange={(e) => handleFormChange('phone', e.target.value.replace(/\D/g, ''))} className={`form-input pl-14 ${errors.phone ? 'border-red-400' : ''}`} />
+          </div>
           {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
         </div>
         <div>
@@ -133,26 +107,27 @@ export const IDForm: React.FC = () => {
 
 export const IDSuccessModal: React.FC = () => {
   const ctx = useContext(IDGenerateContext);
-  if (!ctx || !ctx.isSuccess) return null;
-  const { submittedId, handleReset } = ctx;
+  if (!ctx) return null;
+  const { isSuccess, submittedId, handleReset } = ctx;
+
+  if (!isSuccess) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-card-lg p-8 max-w-md w-full text-center animate-slide-up">
-        <div className="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-5">
-          <CheckCircle className="h-8 w-8 text-emerald-600" />
+      <div className="bg-white rounded-2xl max-w-md w-full p-6 text-center shadow-card animate-scale-in">
+        <div className="h-16 w-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="h-8 w-8" />
         </div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Request Submitted!</h2>
-        <p className="text-slate-500 mb-3">Your ID card request has been submitted. Admin will review and approve it shortly.</p>
-        <div className="bg-slate-50 rounded-xl px-4 py-3 mb-6 inline-block">
-          <span className="text-xs text-slate-500">Request ID:</span>
-          <div className="font-mono font-bold text-slate-800 text-sm">{submittedId}</div>
+        <h3 className="text-xl font-bold text-slate-900 mb-2">Request Submitted!</h3>
+        <p className="text-slate-500 text-sm mb-4">
+          Your ID card application has been submitted successfully. Admin will review your request and payment.
+        </p>
+        <div className="bg-slate-50 rounded-xl p-3 mb-6 text-xs text-slate-600 font-mono">
+          Request ID: {submittedId}
         </div>
-        <p className="text-xs text-slate-400 mb-6">You'll receive SMS & email notifications once approved.</p>
-        <div className="flex gap-3">
-          <button onClick={handleReset} className="btn-outline flex-1 py-2.5">Submit Another</button>
-          <Link to="/" className="btn-primary flex-1 py-2.5 text-center">Back to Home</Link>
-        </div>
+        <button onClick={handleReset} className="btn-primary w-full py-2.5">
+          Done
+        </button>
       </div>
     </div>
   );

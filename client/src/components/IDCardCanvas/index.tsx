@@ -2,8 +2,7 @@ import React, { useRef } from 'react';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 import { Download, FileImage } from 'lucide-react';
-import { formatDateShort } from '../../utils/helpers';
-import { capitalize } from '../../utils/helpers';
+import { formatDateShort, capitalize } from '../../utils/helpers';
 
 export interface IdCardData {
   ngoName: string;
@@ -38,7 +37,9 @@ const IDCardCanvas: React.FC<IDCardCanvasProps> = ({
   data,
   showDownloadButtons = true,
 }) => {
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardRef  = useRef<HTMLDivElement>(null);
+  const frontRef = useRef<HTMLDivElement>(null);
+  const backRef  = useRef<HTMLDivElement>(null);
 
   const designationColor = DESIGNATION_COLORS[data.designation] || '#059669';
 
@@ -46,29 +47,49 @@ const IDCardCanvas: React.FC<IDCardCanvasProps> = ({
     if (!cardRef.current) return;
     const dataUrl = await toPng(cardRef.current, { cacheBust: true, pixelRatio: 3 });
     const link = document.createElement('a');
-    link.download = `id_card_${data.cardNumber}.png`;
+    link.download = `id_card_${data.cardNumber || 'card'}.png`;
     link.href = dataUrl;
     link.click();
   };
 
   const downloadPdf = async () => {
-    if (!cardRef.current) return;
-    const dataUrl = await toPng(cardRef.current, { cacheBust: true, pixelRatio: 3 });
-    const img = new Image();
-    img.src = dataUrl;
-    img.onload = () => {
-      const pdf = new jsPDF({ unit: 'px', format: [img.width, img.height] });
-      pdf.addImage(dataUrl, 'PNG', 0, 0, img.width, img.height);
-      pdf.save(`id_card_${data.cardNumber}.pdf`);
-    };
+    if (!frontRef.current || !backRef.current) return;
+    try {
+      const frontUrl = await toPng(frontRef.current, { cacheBust: true, pixelRatio: 3 });
+      const backUrl  = await toPng(backRef.current,  { cacheBust: true, pixelRatio: 3 });
+
+      const cardWidth  = 320;
+      const cardHeight = 200;
+      const margin     = 20;
+      const pdfWidth   = cardWidth + (margin * 2);
+      const pdfHeight  = (cardHeight * 2) + (margin * 3);
+
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'px',
+        format: [pdfWidth, pdfHeight],
+      });
+
+      pdf.addImage(frontUrl, 'PNG', margin, margin, cardWidth, cardHeight);
+      pdf.addImage(backUrl,  'PNG', margin, margin + cardHeight + margin, cardWidth, cardHeight);
+      pdf.save(`id_card_${data.cardNumber || 'card'}.pdf`);
+    } catch {
+      // Fallback to cardRef
+      if (!cardRef.current) return;
+      const dataUrl = await toPng(cardRef.current, { cacheBust: true, pixelRatio: 3 });
+      const pdf = new jsPDF({ unit: 'px', format: [680, 240] });
+      pdf.addImage(dataUrl, 'PNG', 20, 20, 640, 200);
+      pdf.save(`id_card_${data.cardNumber || 'card'}.pdf`);
+    }
   };
 
   return (
     <div className="flex flex-col items-center gap-6">
       {/* Card container */}
-      <div ref={cardRef} className="flex flex-col sm:flex-row gap-4">
+      <div ref={cardRef} className="flex flex-col sm:flex-row gap-4 p-2 bg-transparent">
         {/* FRONT */}
         <div
+          ref={frontRef}
           style={{
             width: 320,
             height: 200,
@@ -114,8 +135,8 @@ const IDCardCanvas: React.FC<IDCardCanvasProps> = ({
             </div>
 
             {/* Details */}
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginBottom: 2, lineHeight: 1.2 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginBottom: 2, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {data.holderName}
               </div>
               <div style={{
@@ -132,9 +153,9 @@ const IDCardCanvas: React.FC<IDCardCanvasProps> = ({
               }}>
                 {capitalize(data.designation)}
               </div>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', lineHeight: 1.6 }}>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>
                 <div>📱 {data.phone}</div>
-                {data.email && <div>✉ {data.email}</div>}
+                {data.email && <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>✉ {data.email}</div>}
               </div>
             </div>
           </div>
@@ -152,13 +173,14 @@ const IDCardCanvas: React.FC<IDCardCanvasProps> = ({
 
         {/* BACK */}
         <div
+          ref={backRef}
           style={{
             width: 320,
             height: 200,
             borderRadius: 16,
             background: '#f8fafc',
             border: '2px solid #e2e8f0',
-            padding: '20px 20px 16px',
+            padding: '20px 20px 14px',
             position: 'relative',
             overflow: 'hidden',
             boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
@@ -167,29 +189,33 @@ const IDCardCanvas: React.FC<IDCardCanvasProps> = ({
           }}
         >
           {/* Magnetic stripe */}
-          <div style={{ height: 32, background: '#1e293b', marginLeft: -20, marginRight: -20, marginBottom: 14, marginTop: -20 }} />
+          <div style={{ height: 30, background: '#1e293b', marginLeft: -20, marginRight: -20, marginBottom: 10, marginTop: -20 }} />
 
           {/* Signature strip */}
-          <div style={{ background: '#fff7ed', border: '1px solid #fde68a', borderRadius: 4, padding: '6px 10px', marginBottom: 10 }}>
+          <div style={{ background: '#fff7ed', border: '1px solid #fde68a', borderRadius: 4, padding: '4px 8px', marginBottom: 8 }}>
             {data.signatureUrl ? (
-              <img src={data.signatureUrl} alt="Signature" style={{ height: 24, objectFit: 'contain' }} />
+              <img src={data.signatureUrl} alt="Signature" style={{ height: 22, objectFit: 'contain' }} />
             ) : (
-              <div style={{ height: 24, borderBottom: '1px solid #94a3b8', width: '100%' }} />
+              <div style={{ height: 22, borderBottom: '1px solid #94a3b8', width: '100%' }} />
             )}
-            <div style={{ fontSize: 9, color: '#94a3b8', marginTop: 2 }}>Authorized Signature</div>
+            <div style={{ fontSize: 8, color: '#94a3b8', marginTop: 1 }}>Authorized Signature</div>
           </div>
 
           {/* Issue info */}
-          <div style={{ fontSize: 9, color: '#64748b', lineHeight: 1.7 }}>
+          <div style={{ fontSize: 8.5, color: '#64748b', lineHeight: 1.45 }}>
             <div><strong>Issued By:</strong> {data.ngoName}</div>
             <div><strong>Issue Date:</strong> {formatDateShort(data.issueDate)}</div>
             {data.presidentName && <div><strong>President:</strong> {data.presidentName}</div>}
-            {data.address && <div><strong>Address:</strong> {data.address}</div>}
+            {data.address && (
+              <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 280 }}>
+                <strong>Address:</strong> {data.address}
+              </div>
+            )}
           </div>
 
           {/* Disclaimer */}
-          <div style={{ position: 'absolute', bottom: 10, left: 16, right: 16, fontSize: 8, color: '#94a3b8', textAlign: 'center', lineHeight: 1.4 }}>
-            If found, please return to {data.ngoName}. This card is the property of the organization.
+          <div style={{ position: 'absolute', bottom: 8, left: 16, right: 16, fontSize: 7.5, color: '#94a3b8', textAlign: 'center', lineHeight: 1.3 }}>
+            If found, please return to {data.ngoName}. Card is property of organization.
           </div>
         </div>
       </div>

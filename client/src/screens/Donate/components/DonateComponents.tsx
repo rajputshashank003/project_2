@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 export const UpiDetails: React.FC = () => {
   const ctx = useContext(DonateContext);
   if (!ctx) return null;
-  const { ngoConfig, copied, handleCopyUpi, copiedPhone, handleCopyPhone } = ctx;
+  const { ngoConfig, copied, handleCopyUpi, copiedPhone, handleCopyPhone, copiedAccount, handleCopyAccount, copiedIfsc, handleCopyIfsc } = ctx;
 
   return (
     <div className="card-md mb-6">
@@ -62,8 +62,48 @@ export const UpiDetails: React.FC = () => {
         </div>
       )}
 
+      {/* Bank Account Transfer row */}
+      {ngoConfig.accountNumber && (
+        <div className="bg-blue-50/60 border border-blue-200/80 rounded-xl p-4 mb-3 space-y-2">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-xs text-blue-700 font-semibold mb-0.5">Bank Transfer</div>
+              <div className="font-mono font-semibold text-slate-900 text-sm">{ngoConfig.accountNumber}</div>
+              <div className="text-xs text-slate-500 mt-0.5">
+                {ngoConfig.bankName || 'Bank Account'} {ngoConfig.accountHolderName ? `(${ngoConfig.accountHolderName})` : ''}
+              </div>
+            </div>
+            <button
+              id="copy-account-btn"
+              onClick={handleCopyAccount}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                copiedAccount
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white border border-blue-300 text-blue-700 hover:bg-blue-50'
+              }`}
+            >
+              {copiedAccount ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copiedAccount ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+
+          {ngoConfig.ifscCode && (
+            <div className="pt-2 border-t border-blue-100 flex items-center justify-between gap-2 text-xs">
+              <span className="text-slate-600">IFSC Code: <strong className="font-mono text-slate-900">{ngoConfig.ifscCode}</strong></span>
+              <button
+                id="copy-ifsc-btn"
+                onClick={handleCopyIfsc}
+                className="text-blue-700 hover:underline font-semibold flex items-center gap-1"
+              >
+                {copiedIfsc ? 'Copied!' : 'Copy IFSC'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <p className="text-xs text-slate-400 mt-2">
-        Open any UPI app (GPay, PhonePe, Paytm) → Pay to UPI ID → Upload payment screenshot below
+        Open any UPI app or Bank app → Transfer funds → Upload payment screenshot below
       </p>
     </div>
   );
@@ -97,16 +137,19 @@ export const DonationForm: React.FC = () => {
         </div>
         <div>
           <label className="form-label">Phone Number *</label>
-          <input
-            id="donor-phone"
-            type="tel"
-            inputMode="numeric"
-            maxLength={10}
-            placeholder="9000000000"
-            value={form.phone}
-            onChange={(e) => handleFormChange('phone', e.target.value.replace(/\D/g, ''))}
-            className={`form-input ${errors.phone ? 'border-red-400' : ''}`}
-          />
+          <div className="relative">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium select-none">+91</span>
+            <input
+              id="donor-phone"
+              type="tel"
+              inputMode="numeric"
+              maxLength={10}
+              placeholder="9000000000"
+              value={form.phone}
+              onChange={(e) => handleFormChange('phone', e.target.value.replace(/\D/g, ''))}
+              className={`form-input pl-14 ${errors.phone ? 'border-red-400' : ''}`}
+            />
+          </div>
           {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
         </div>
         <div>

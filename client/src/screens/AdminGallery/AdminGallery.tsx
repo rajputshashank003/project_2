@@ -61,7 +61,7 @@ const AdminGalleryContent: React.FC = () => {
           {images.map((img) => (
             <div key={img.id} className="group relative overflow-hidden rounded-2xl aspect-square bg-slate-100">
               <img src={img.imageUrl} alt={img.caption || 'Gallery'} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
                 {img.caption && <span className="text-white text-xs font-medium mb-2">{img.caption}</span>}
                 <button
                   onClick={() => openDeleteConfirm(img.id)}

@@ -27,9 +27,9 @@ const TeamSection: React.FC = () => {
           <div className="h-8 w-8 rounded-full border-4 border-emerald-200 border-t-emerald-600 animate-spin" />
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-6 sm:gap-10 max-w-2xl mx-auto">
+        <div className="flex flex-wrap justify-center gap-6 sm:gap-8 max-w-4xl mx-auto">
           {teamMembers.map((member) => (
-            <div key={member.slot} className="flex flex-col items-center text-center">
+            <div key={member.slot} className="flex flex-col items-center text-center w-28 sm:w-36">
               <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-white shadow-card-md mb-3 bg-slate-100 flex items-center justify-center">
                 {member.photoUrl ? (
                   <img
@@ -43,12 +43,12 @@ const TeamSection: React.FC = () => {
               </div>
               <div className="min-h-[2.5rem] flex flex-col items-center justify-center">
                 {member.name ? (
-                  <>
+                  <React.Fragment>
                     <p className="font-semibold text-slate-900 text-sm leading-snug">{member.name}</p>
                     {member.designation && (
                       <p className="text-xs text-emerald-700 font-medium mt-0.5">{member.designation}</p>
                     )}
-                  </>
+                  </React.Fragment>
                 ) : (
                   <p className="text-xs text-slate-400 italic">Not yet assigned</p>
                 )}
