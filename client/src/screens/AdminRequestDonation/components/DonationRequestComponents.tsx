@@ -1,15 +1,16 @@
-import React, { useContext } from 'react';
-import { Check, X, FileSpreadsheet, Search, Image } from 'lucide-react';
+import React, { useContext, useState } from 'react';
+import { Search, FileSpreadsheet, Check, X, Image, Award } from 'lucide-react';
 import { AdminRequestDonationContext } from '../context';
 import Modal from '../../../components/Modal';
-import { formatDate, formatCurrency, capitalize } from '../../../utils/helpers';
+import CertificateCanvas from '../../../components/CertificateCanvas';
+import { formatCurrency, formatDate, capitalize } from '../../../utils/helpers';
 
 export const ExportBar: React.FC = () => {
   const ctx = useContext(AdminRequestDonationContext);
   if (!ctx) return null;
-  const { searchQuery, filterStatus, setSearchQuery, setFilterStatus, handleExportExcel, filteredDonations } = ctx;
+  const { searchQuery, setSearchQuery, filterStatus, setFilterStatus, filteredDonations, handleExportExcel } = ctx;
 
-  const FILTERS = [
+  const FILTERS: Array<{ label: string; value: string }> = [
     { label: 'All',       value: 'all' },
     { label: 'Pending',   value: 'pending' },
     { label: 'Approved',  value: 'approved' },
@@ -27,7 +28,7 @@ export const ExportBar: React.FC = () => {
           placeholder="Search by name, phone, or email…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="form-input pl-9"
+          className="form-input pl-10"
         />
       </div>
 
@@ -102,12 +103,12 @@ export const DonationRequestTable: React.FC = () => {
                   <div className="text-xs text-slate-400">{d.email}</div>
                 </div>
               </td>
-              <td>{d.phone}</td>
+              <td className="font-mono text-xs">{d.phone}</td>
               <td>
                 <span className="font-semibold text-emerald-700">{formatCurrency(d.amount)}</span>
               </td>
               <td className="font-mono text-xs text-slate-500">{d.utrNumber || '—'}</td>
-              <td className="text-slate-500">{formatDate(d.requestedAt)}</td>
+              <td className="text-slate-500 text-xs">{formatDate(d.requestedAt)}</td>
               <td>
                 <span className={`badge ${
                   d.status === 'approved' ? 'badge-approved' :
@@ -118,17 +119,24 @@ export const DonationRequestTable: React.FC = () => {
               </td>
               <td>
                 <div className="flex items-center gap-2">
-                  {d.paymentScreenshotUrl && (
-                    <button
-                      onClick={() => setScreenshotModal(d)}
-                      className="p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 transition-colors"
-                      title="View Screenshot"
-                    >
-                      <Image className="h-4 w-4" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setScreenshotModal(d)}
+                    className="p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 transition-colors"
+                    title="View Screenshot / Certificate"
+                  >
+                    <Image className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    onClick={() => setScreenshotModal(d)}
+                    className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors"
+                    title="Certificate Preview"
+                  >
+                    <Award className="h-4 w-4" />
+                  </button>
+
                   {d.status === 'pending' && (
-                    <>
+                    <React.Fragment>
                       <button
                         id={`approve-don-${d.id}`}
                         onClick={() => openApprove(d)}
@@ -145,7 +153,7 @@ export const DonationRequestTable: React.FC = () => {
                       >
                         <X className="h-4 w-4" />
                       </button>
-                    </>
+                    </React.Fragment>
                   )}
                 </div>
               </td>
@@ -169,7 +177,7 @@ export const DonationActionModal: React.FC = () => {
       title={actionType === 'approve' ? 'Approve Donation' : 'Reject Donation'}
       size="sm"
       footer={
-        <>
+        <React.Fragment>
           <button onClick={closeAction} className="btn-outline py-2" disabled={actionLoading}>Cancel</button>
           {actionType === 'approve' ? (
             <button id="confirm-approve-don" onClick={handleApprove} disabled={actionLoading} className="btn-primary py-2">
@@ -180,7 +188,7 @@ export const DonationActionModal: React.FC = () => {
               {actionLoading ? 'Processing…' : 'Reject & Notify'}
             </button>
           )}
-        </>
+        </React.Fragment>
       }
     >
       {actionItem && (
@@ -216,16 +224,74 @@ export const DonationActionModal: React.FC = () => {
 
 export const ScreenshotModal: React.FC = () => {
   const ctx = useContext(AdminRequestDonationContext);
+  const [activeTab, setActiveTab] = useState<'screenshot' | 'certificate'>('screenshot');
   if (!ctx) return null;
-  const { screenshotModal, setScreenshotModal } = ctx;
+  const { screenshotModal, setScreenshotModal, ngoConfig } = ctx;
+
+  if (!screenshotModal) return null;
+
+  const certificateData = {
+    donorName:          screenshotModal.donorName,
+    amount:             screenshotModal.amount,
+    donationDate:       screenshotModal.reviewedAt || screenshotModal.requestedAt,
+    certificateNumber:  screenshotModal.id,
+    ngoName:            ngoConfig.name,
+    ngoAddress:         ngoConfig.address,
+    presidentName:      ngoConfig.presidentName,
+    secretaryName:      ngoConfig.secretaryName,
+    signatureUrl:       ngoConfig.signatureUrl,
+    registrationNumber: ngoConfig.registrationNumber,
+  };
 
   return (
-    <Modal isOpen={!!screenshotModal} onClose={() => setScreenshotModal(null)} title="Payment Screenshot" size="md">
-      {screenshotModal?.paymentScreenshotUrl ? (
-        <img src={screenshotModal.paymentScreenshotUrl} alt="Payment" className="w-full rounded-xl" />
-      ) : (
-        <div className="text-center py-8 text-slate-400">No screenshot available (demo mode)</div>
-      )}
+    <Modal
+      isOpen={!!screenshotModal}
+      onClose={() => { setScreenshotModal(null); setActiveTab('screenshot'); }}
+      title="Donation Preview"
+      size="xl"
+    >
+      <div className="space-y-4">
+        {/* Navigation Tabs */}
+        <div className="flex border-b border-slate-200">
+          <button
+            onClick={() => setActiveTab('screenshot')}
+            className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+              activeTab === 'screenshot'
+                ? 'border-emerald-600 text-emerald-700'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Image className="h-4 w-4" />
+            Payment Screenshot
+          </button>
+          <button
+            onClick={() => setActiveTab('certificate')}
+            className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+              activeTab === 'certificate'
+                ? 'border-emerald-600 text-emerald-700'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Award className="h-4 w-4" />
+            Certificate Preview
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'screenshot' ? (
+          <div className="flex justify-center p-4 bg-slate-50 rounded-xl">
+            {screenshotModal.paymentScreenshotUrl ? (
+              <img src={screenshotModal.paymentScreenshotUrl} alt="Payment" className="max-h-96 rounded-xl object-contain" />
+            ) : (
+              <div className="text-center py-12 text-slate-400">No payment screenshot uploaded (demo data)</div>
+            )}
+          </div>
+        ) : (
+          <div className="flex justify-center overflow-x-auto p-4 bg-slate-50 rounded-xl">
+            <CertificateCanvas data={certificateData} showDownloadButtons />
+          </div>
+        )}
+      </div>
     </Modal>
   );
 };

@@ -9,6 +9,8 @@ export const useAdminGallery = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
     const [caption, setCaption]     = useState('');
+    const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting]         = useState(false);
 
     useEffect(() => { loadImages(); }, []);
 
@@ -46,14 +48,34 @@ export const useAdminGallery = () => {
         toast.success('Image removed');
     }, []);
 
+    const openDeleteConfirm  = useCallback((id: string) => setDeleteTargetId(id), []);
+    const cancelDelete       = useCallback(() => setDeleteTargetId(null), []);
+    const confirmDelete      = useCallback(async () => {
+        if (!deleteTargetId) return;
+        setIsDeleting(true);
+        try {
+            setImages((prev) => prev.filter((img) => img.id !== deleteTargetId));
+            await deleteGalleryImage(deleteTargetId);
+            toast.success('Image removed');
+            setDeleteTargetId(null);
+        } finally {
+            setIsDeleting(false);
+        }
+    }, [deleteTargetId]);
+
     return {
         images,
         isLoading,
         uploading,
         caption,
+        deleteTargetId,
+        isDeleting,
         setCaption,
         handleUpload,
         handleDelete,
+        openDeleteConfirm,
+        cancelDelete,
+        confirmDelete,
         loadImages,
     };
 };

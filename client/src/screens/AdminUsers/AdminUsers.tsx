@@ -23,7 +23,7 @@ const AdminUsersContent: React.FC = () => {
 
       <div className="relative mb-4 max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-        <input id="users-search" type="text" placeholder="Search by name, phone…" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="form-input pl-9" />
+        <input id="users-search" type="text" placeholder="Search by name, phone…" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="form-input pl-10" />
       </div>
 
       {isLoading ? (
