@@ -26,11 +26,11 @@ export const PhoneStep: React.FC = () => {
             type="tel"
             inputMode="numeric"
             maxLength={10}
-            placeholder="9876543210"
+            placeholder="9000000000"
             value={phone}
             onChange={(e) => handlePhoneChange(e.target.value.replace(/\D/g, ''))}
             onKeyDown={(e) => e.key === 'Enter' && handleSendOtp()}
-            className={`form-input pl-12 ${phoneError ? 'border-red-400 focus:border-red-400' : ''}`}
+            className={`form-input pl-14 ${phoneError ? 'border-red-400 focus:border-red-400' : ''}`}
             autoFocus
           />
         </div>

@@ -1,5 +1,5 @@
 /**
- * ngo.ts — API module for NGO configuration.
+ * ngo.ts — API module for NGO configuration & Admin Digital Signature.
  * Uses env-based mock config when no backend is available (VITE_API_BASE_URL not set).
  */
 import { request } from './utils';
@@ -17,6 +17,10 @@ const MOCK_CONFIG: NgoConfig = {
     registrationNumber: 'NGO/REG/2020/001234',
     upiId:              import.meta.env.VITE_NGO_UPI_ID            || 'ngofoundation@upi',
     upiName:            import.meta.env.VITE_NGO_UPI_NAME          || 'NGO Foundation',
+    bankName:           import.meta.env.VITE_NGO_BANK_NAME         || 'State Bank of India',
+    accountNumber:      import.meta.env.VITE_NGO_ACCOUNT_NUMBER    || '123456789012',
+    ifscCode:           import.meta.env.VITE_NGO_IFSC_CODE         || 'SBIN0001234',
+    accountHolderName:  import.meta.env.VITE_NGO_ACCOUNT_HOLDER    || 'NGO Foundation',
     signatureUrl:       '',
     presidentName:      'Dr. Rajesh Mehta',
     secretaryName:      'Mrs. Sunita Verma',
@@ -38,4 +42,12 @@ export const updateNgoConfig = async (data: Partial<NgoConfig>): Promise<NgoConf
         return Promise.resolve({ ..._mock_config });
     }
     return request<NgoConfig>({ url: '/ngo/config', method: 'PATCH', data });
+};
+
+export const uploadSignature = async (signatureBase64: string): Promise<NgoConfig> => {
+    return updateNgoConfig({ signatureUrl: signatureBase64 });
+};
+
+export const deleteSignature = async (): Promise<NgoConfig> => {
+    return updateNgoConfig({ signatureUrl: '' });
 };

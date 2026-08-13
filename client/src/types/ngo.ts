@@ -9,10 +9,15 @@ export interface NgoConfig {
   registrationNumber: string;
   upiId: string;
   upiName: string;
+  bankName?: string;
+  accountNumber?: string;
+  ifscCode?: string;
+  accountHolderName?: string;
   signatureUrl?: string;
   presidentName: string;
   secretaryName: string;
   foundedYear: number;
+  description?: string;
 }
 
 export interface GalleryImage {

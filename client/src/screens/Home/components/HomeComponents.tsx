@@ -14,24 +14,30 @@ export const Noticeboard: React.FC = () => {
 
   return (
     <div className="relative bg-emerald-700 text-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="flex flex-col md:flex-row items-center gap-8">
-          {active.imageUrl && (
-            <div className="w-full md:w-80 h-48 rounded-2xl overflow-hidden shrink-0">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 min-h-[260px] md:min-h-[200px] justify-center">
+          {/* Constant image / placeholder slot */}
+          <div className="w-full md:w-80 h-44 rounded-2xl overflow-hidden shrink-0 bg-emerald-800/60 border border-white/10 flex items-center justify-center">
+            {active.imageUrl ? (
               <img src={active.imageUrl} alt={active.title} className="w-full h-full object-cover" />
-            </div>
-          )}
-          <div className="flex-1">
-            <div className="inline-flex items-center gap-1.5 bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full mb-3">
+            ) : (
+              <div className="flex flex-col items-center gap-2 text-emerald-200/80 p-4 text-center">
+                <Leaf className="h-10 w-10 opacity-60" />
+                <span className="text-xs font-semibold uppercase tracking-wider">Notice Announcement</span>
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0 flex flex-col justify-center py-2">
+            <div className="inline-flex items-center gap-1.5 bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full mb-3 self-start">
               📌 Notice
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">{active.title}</h2>
-            <p className="text-emerald-100 text-base leading-relaxed">{active.content}</p>
+            <h2 className="text-xl sm:text-2xl font-bold mb-2 leading-tight break-words line-clamp-2">{active.title}</h2>
+            <p className="text-emerald-100 text-sm sm:text-base leading-relaxed break-words line-clamp-3">{active.content}</p>
           </div>
         </div>
 
         {notices.length > 1 && (
-          <div className="flex items-center justify-center gap-3 mt-6">
+          <div className="flex items-center justify-center gap-3 mt-4">
             <button
               onClick={() => goToNotice((activeNoticeIndex - 1 + notices.length) % notices.length)}
               className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
@@ -131,7 +137,7 @@ export const GallerySection: React.FC = () => {
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
               {img.caption && (
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                <div className="gallery-overlay absolute inset-0 bg-gradient-to-t from-slate-900/70 to-transparent opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
                   <span className="text-white text-sm font-medium">{img.caption}</span>
                 </div>
               )}

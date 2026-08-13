@@ -16,11 +16,9 @@ export const exportDonationsToExcel = (donations: Donation[], filename = 'donati
     'Email':             d.email,
     'Amount':            formatCurrency(d.amount),
     'UTR Number':        d.utrNumber || '—',
-    'Status':            d.status.charAt(0).toUpperCase() + d.status.slice(1),
     'Requested On':      formatDate(d.requestedAt),
     'Reviewed On':       d.reviewedAt ? formatDate(d.reviewedAt) : '—',
     'Reviewed By':       d.reviewedBy || '—',
-    'Rejection Reason':  d.rejectionReason || '—',
   }));
 
   const worksheet = XLSX.utils.json_to_sheet(rows);

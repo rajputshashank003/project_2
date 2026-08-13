@@ -181,6 +181,10 @@ input, textarea, select { font-family: inherit; }
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
+.form-input.pl-9  { padding-left: 2.25rem !important; }
+.form-input.pl-10 { padding-left: 2.5rem !important; }
+.form-input.pl-12 { padding-left: 3rem !important; }
+.form-input.pl-14 { padding-left: 3.5rem !important; }
 .form-input::placeholder { color: #94a3b8; }
 .form-input:focus {
   border-color: #059669;
@@ -310,4 +314,9 @@ input, textarea, select { font-family: inherit; }
   #certificate-print-area,
   #certificate-print-area * { visibility: visible; }
   #certificate-print-area { position: fixed; top: 0; left: 0; width: 100%; }
+}
+
+/* Always show gallery captions on touch/hover-none devices */
+@media (hover: none) {
+  .gallery-overlay { opacity: 1 !important; }
 }
