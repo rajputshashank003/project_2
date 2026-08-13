@@ -1,0 +1,20 @@
+# Environment secrets — never commit
+api/.env
+client/.env
+.env
+
+# Go build artifacts
+api/server
+api/tmp/
+
+# Node
+client/node_modules/
+client/dist/
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp

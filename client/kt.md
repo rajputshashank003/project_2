@@ -1,0 +1,199 @@
+# Client Knowledge Transfer (KT)
+
+> **Maintained by:** Frontend Team
+> **Last Updated:** 2026-08-13
+> **Framework:** React (Vite) — `client/`
+
+---
+
+## 1. Overview
+
+React single-page application for the NGO Platform. Connects to the Go backend at `/api/v1/`.
+Manages: authentication (OTP via phone), admin panel (donations, ID cards, gallery, events, notices, team, config), and public-facing pages (about, gallery, events, contact).
+
+---
+
+## 2. Tech Stack
+
+| Technology | Notes |
+|---|---|
+| React 18 | UI library |
+| Vite | Build tool + dev server |
+| React Router v6 | Client-side routing |
+| Context API | Global auth state |
+| CSS Modules / Vanilla CSS | Styling |
+| Cloudinary | Images fetched from CDN URLs returned by API |
+| jsPDF / html2canvas | Client-side PDF generation (certificates, ID cards) |
+
+---
+
+## 3. 4-File Screen Pattern
+
+Every screen follows this pattern (see `client/structure.md` for full spec):
+
+```
+screens/
+  ScreenName/
+    index.jsx           Entry point, layout
+    ScreenName.jsx      Main component
+    ScreenName.api.js   API calls (uses api_request utility)
+    ScreenName.style.css CSS
+```
+
+---
+
+## 4. API Layer
+
+All HTTP calls go through `src/utils/api_request/`:
+- `apiRequest(method, path, body, token)` — centralised fetch wrapper
+- Base URL: `VITE_API_BASE_URL` env var (must be `http://localhost:3000/api/v1` in dev, backend URL in prod)
+- Auth token stored in `localStorage` as `ngo_token`, passed as `Authorization: Bearer <token>`
+- Idempotency-Key: generated once per form submit (uuid), stored in React state, sent as header for `POST /donations` and `POST /id-cards`
+
+---
+
+## 5. Screen Inventory
+
+| Screen | Route | Auth | Notes |
+|---|---|---|---|
+| Home | `/` | Public | Landing page |
+| About | `/about` | Public | Team members from `/api/v1/team` |
+| Gallery | `/gallery` | Public | Paginated from `/api/v1/gallery` |
+| Events | `/events` | Public | Paginated from `/api/v1/events` |
+| Notices | `/notices` | Public | Paginated from `/api/v1/notices` |
+| Contact | `/contact` | Public | NGO config from `/api/v1/ngo/config` |
+| Login | `/login` | Public | Phone → OTP → JWT stored in localStorage |
+| Dashboard | `/dashboard` | Auth | User overview |
+| DonateForm | `/donate` | Auth | POST `/donations` with Idempotency-Key |
+| IDCardForm | `/id-card/apply` | Auth | POST `/id-cards` with Idempotency-Key |
+| MyCertificates | `/my-certificates` | Auth | Lists user donations, downloads cert PDF |
+| MyIDCard | `/my-id-card` | Auth | Shows approved card, downloads PDF |
+| AdminDashboard | `/admin` | Admin | Stats overview |
+| AdminDonations | `/admin/donations` | Admin | List + approve/reject |
+| AdminIDCards | `/admin/id-cards` | Admin | List + approve with validityYears |
+| AdminGallery | `/admin/gallery` | Admin | Upload + delete |
+| AdminEvents | `/admin/events` | Admin | Create + update + delete |
+| AdminNotices | `/admin/notices` | Admin | Create + toggle + delete |
+| AdminTeam | `/admin/team` | Admin | Slot management |
+| AdminConfig | `/admin/config` | Admin | NGO config partial update |
+| AdminUsers | `/admin/users` | Admin | List + promote/demote |
+
+---
+
+## 6. Auth Flow
+
+```
+Login screen
+  → user enters phone
+  → POST /api/v1/auth/send-otp {phone}
+  → user enters 6-digit OTP
+  → POST /api/v1/auth/verify-otp {phone, otp}
+  → response: {token, user}
+  → stored in localStorage: ngo_token, ngo_user
+  → AuthContext updated
+  → redirect to /dashboard (user) or /admin (admin)
+```
+
+Logout: clear localStorage, reset AuthContext, redirect to `/login`.
+
+---
+
+## 7. Certificate / ID Card Generation
+
+Both are **100% client-side** — no PDFs stored on the server.
+
+- **Certificate:** User visits `/my-certificates`, selects a donation with `status=approved`, clicks "Download". `jsPDF` generates a PDF using the `certificate_number` and NGO config (logo, signature, president_name etc.) fetched from API.
+- **ID Card:** User visits `/my-id-card`, clicks "Download". `jsPDF` generates a card using `unique_card_number`, `issue_date`, `expiry_date`, passport photo URL, and NGO details.
+
+Backend stores only: `certificate_number`, `unique_card_number`, `issue_date`, `expiry_date`. No PDFs in DB or Cloudinary.
+
+---
+
+## 8. Image Uploads (Admin)
+
+All images are sent as **Base64** in JSON body:
+```json
+{
+  "imageBase64": "data:image/jpeg;base64,/9j/4AAQ..."
+}
+```
+
+The API strips the `data:...;base64,` prefix automatically before uploading to Cloudinary. The API returns a `imageUrl` (Cloudinary CDN URL) which the client displays.
+
+**Body limit:** API enforces 20 MB cap. Client should validate file size before encoding.
+
+---
+
+## 9. Idempotency (Donation & ID Card)
+
+Before submitting the donation or ID card form:
+1. Generate a UUID once (`crypto.randomUUID()`)
+2. Store it in React state (so it survives re-renders but not page refresh)
+3. Send as `Idempotency-Key: <uuid>` header on `POST /donations` or `POST /id-cards`
+
+If the user hits "Submit" twice (network retry), the second request returns the cached response (no duplicate in DB).
+
+---
+
+## 10. Pagination
+
+All list API calls accept `?page=1&limit=20`. Response:
+```json
+{ "data": [...], "pagination": { "page": 1, "limit": 20, "total": 147, "totalPages": 8 } }
+```
+
+Implement "Load More" or numbered pages using `pagination.totalPages`.
+
+---
+
+## 11. ID Card Approval (Admin) — Validity Field
+
+`AdminIDCards` screen must include a **Validity** selector in the approval modal:
+
+```
+Validity: [ Lifetime ] [ 1 Year ] [ 2 Years ] [ Custom: ___ years ]
+```
+
+Sends `validityYears: number` in the PATCH body (`0` = Lifetime, `N` = N years).
+
+---
+
+## 12. Environment Variables
+
+```
+VITE_API_BASE_URL=http://localhost:3000/api/v1
+```
+
+In production, set to your Render/backend URL.
+
+---
+
+## 13. Code Conventions
+
+- All API calls in `ScreenName.api.js` — never inline fetch in components
+- Global auth state in `AuthContext` only — no prop-drilling of token/user
+- Images displayed using Cloudinary CDN URLs — never embed Base64 in UI
+- Error responses always in `{error: {code, message}}` shape — parse `error.code` for user-facing messages
+- Loading + error states required on every API call
+
+---
+
+## 14. Run Locally
+
+```bash
+cd client
+cp .env.example .env   # set VITE_API_BASE_URL
+npm install
+npm run dev            # http://localhost:5173
+```
+
+---
+
+## 15. Gotchas
+
+- `VITE_API_BASE_URL` must end with `/api/v1` (no trailing slash) — API calls append `/donations` etc.
+- In dev mode, use phone `ADMIN_PHONE` (from backend `.env`) + OTP `123456` to log in as admin
+- Cloudinary images may take 1-2s to propagate CDN on first upload — show loading state
+- `jsPDF` generation is synchronous and blocking for large content — consider `Web Worker` for heavy cards
+- Team slots are 1-indexed and re-indexed after deletion — always use `slot` number from API response, not array index
+- `pagination.totalPages` can be 0 if there are no records — handle empty state in UI
