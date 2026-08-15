@@ -1,4 +1,4 @@
-name: Deploy API
+name: Deploy Backend
 
 on:
   push:
@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       api: ${{ steps.filter.outputs.api }}
+      whatsapp_service: ${{ steps.filter.outputs.whatsapp_service }}
     steps:
       - uses: actions/checkout@v4
 
@@ -20,6 +21,8 @@ jobs:
           filters: |
             api:
               - 'api/**'
+            whatsapp_service:
+              - 'whatsapp_service/**'
 
   deploy-api:
     name: Build & Deploy API
@@ -48,8 +51,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/ngo-api:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/ngo-api:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/ngo-sandeep-api:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/ngo-sandeep-api:${{ github.sha }}
 
       - name: Trigger Render deploy
         env:
@@ -57,3 +60,33 @@ jobs:
         run: |
           response=$(curl --silent --fail-with-body -X POST "$RENDER_API_DEPLOY_HOOK")
           echo "$response"
+
+  deploy-whatsapp:
+    name: Build & Deploy WhatsApp Service
+    needs: changes
+    if: needs.changes.outputs.whatsapp_service == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push WhatsApp Service image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./whatsapp_service
+          file: ./whatsapp_service/Dockerfile
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/ngo-sandeep-whatsapp-service:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/ngo-sandeep-whatsapp-service:${{ github.sha }}

@@ -1,4 +1,7 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24-alpine AS builder
+
+# Allow Go to auto-download the toolchain version required by go.mod
+ENV GOTOOLCHAIN=auto
 
 # CGO required for sqlite3
 RUN apk add --no-cache gcc musl-dev
