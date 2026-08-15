@@ -1,2 +1,3 @@
 - set dimensions for signature image so it fit correctly on card and certificate
 - set dimension for image for id card so it fit correctly 
+- when sending whatasapp message should wait until we send message through service else send error 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/rs/zerolog/log"
@@ -71,7 +72,8 @@ func (s *WhatsAppLocalService) Send(phone, message string) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		log.Error().Int("status", resp.StatusCode).Str("to", phone).
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Error().Int("status", resp.StatusCode).Str("to", phone).Str("response", string(bodyBytes)).
 			Msg("whatsapp_local: non-2xx response from whatsapp_service")
 	}
 }
