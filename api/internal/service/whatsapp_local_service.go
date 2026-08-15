@@ -1,0 +1,68 @@
+package service
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
+
+	"github.com/rs/zerolog/log"
+	"github.com/shashankrajput/ngo-platform/api/internal/config"
+)
+
+// WhatsAppLocalService sends WhatsApp messages via the standalone whatsapp_service
+// microservice (which uses the unofficial whatsmeow library internally).
+// This service calls the microservice over HTTP — no whatsmeow dependency in N_P.
+// Implements the Messenger interface.
+type WhatsAppLocalService struct {
+	baseURL string // e.g. "http://localhost:8080"
+	devMode bool
+}
+
+// NewWhatsAppLocalService constructs a WhatsAppLocalService.
+func NewWhatsAppLocalService(cfg *config.Config) *WhatsAppLocalService {
+	return &WhatsAppLocalService{
+		baseURL: cfg.WhatsAppLocalURL,
+		devMode: cfg.DevMode,
+	}
+}
+
+// Send sends a WhatsApp message via the local whatsapp_service microservice.
+// In dev mode it only logs.
+// phone: raw 10-digit Indian number (e.g. "9876543210").
+func (s *WhatsAppLocalService) Send(phone, message string) {
+	if phone == "" {
+		return
+	}
+
+	if s.devMode {
+		log.Info().Str("to", phone).Str("message", message).
+			Msg("[DEV] WhatsApp local send skipped")
+		return
+	}
+
+	payload, err := json.Marshal(map[string]string{
+		"phone":   phone,
+		"message": message,
+	})
+	if err != nil {
+		log.Error().Err(err).Str("to", phone).Msg("whatsapp_local: marshal failed")
+		return
+	}
+
+	resp, err := http.Post(
+		fmt.Sprintf("%s/send", s.baseURL),
+		"application/json",
+		bytes.NewBuffer(payload),
+	)
+	if err != nil {
+		log.Error().Err(err).Str("to", phone).Msg("whatsapp_local: send failed")
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		log.Error().Int("status", resp.StatusCode).Str("to", phone).
+			Msg("whatsapp_local: non-2xx response from whatsapp_service")
+	}
+}

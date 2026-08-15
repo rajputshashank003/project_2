@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getEvents } from '../../utils/api_request/events';
 import type { NGOEvent } from '../../types/event';
 
@@ -9,10 +9,10 @@ export const useEvents = () => {
 
     useEffect(() => {
         getEvents()
-            .then((data) => {
-                setEvents(data);
+            .then((result) => {
+                setEvents(result.data);
                 const init: Record<string, number> = {};
-                data.forEach((e) => { init[e.id] = 0; });
+                result.data.forEach((e) => { init[e.id] = 0; });
                 setSlideIndexes(init);
             })
             .catch(() => {})

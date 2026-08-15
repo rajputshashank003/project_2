@@ -11,6 +11,7 @@ export interface Donation {
     status: DonationStatus;
     rejectionReason?: string;
     certificateUrl?: string;
+    certificateNumber?: string;
     requestedAt: string;
     reviewedAt?: string;
     reviewedBy?: string;

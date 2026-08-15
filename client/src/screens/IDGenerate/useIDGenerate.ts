@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { createIdCardRequest } from '../../utils/api_request/id_cards';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
-import { fileToBase64, validateImageFile, isValidEmail, isValidPhone, generateUniqueId } from '../../utils/helpers';
+import { fileToBase64, validateImageFile, isValidEmail, isValidPhone } from '../../utils/helpers';
 import type { UserDesignation } from '../../types/user';
 import type { CreateIdCardPayload } from '../../types/id_card';
 
@@ -85,16 +85,10 @@ export const useIDGenerate = () => {
         passportPhotoBase64:    passportPreview,
         paymentScreenshotBase64: paymentPreview,
       };
-      let requestId: string;
-      try {
-        const result = await createIdCardRequest(payload);
-        requestId = result.id;
-      } catch {
-        requestId = 'IDR-' + generateUniqueId();
-        toast.success('Request submitted! Admin will review and approve your ID card.');
-      }
-      setSubmittedId(requestId);
+      const result = await createIdCardRequest(payload);
+      setSubmittedId(result.id);
       setIsSuccess(true);
+      toast.success('Request submitted! Admin will review and approve your ID card.');
     } catch {
       toast.error('Submission failed. Please try again.');
     } finally {

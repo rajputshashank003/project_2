@@ -13,8 +13,10 @@ export const useAdminUsers = () => {
     const loadUsers = async () => {
         setIsLoading(true);
         try {
-            const data = await getUsers();
-            setUsers(data);
+            const result = await getUsers();
+            setUsers(result.data);
+        } catch {
+            // error toast already shown by axiosInstance interceptor
         } finally {
             setIsLoading(false);
         }

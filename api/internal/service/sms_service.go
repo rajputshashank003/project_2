@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/shashankrajput/ngo-platform/api/internal/config"
@@ -40,7 +41,10 @@ func (s *SMSService) Send(to, message string) {
 		return
 	}
 
-	toFormatted := fmt.Sprintf("+91%s", to) // Indian phone prefix
+	cleanTo := strings.TrimSpace(to)
+	cleanTo = strings.TrimPrefix(cleanTo, "+91")
+	cleanTo = strings.TrimPrefix(cleanTo, "+")
+	toFormatted := fmt.Sprintf("+91%s", cleanTo) // Indian phone prefix
 	params := &openapi.CreateMessageParams{}
 	params.SetTo(toFormatted)
 	params.SetFrom(s.fromPhone)

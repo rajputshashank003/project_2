@@ -1,5 +1,6 @@
-﻿export interface EventImage {
+export interface EventImage {
   id: string;
+  eventId?: string;
   imageUrl: string;
   caption?: string;
 }

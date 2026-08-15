@@ -17,8 +17,10 @@ export const useAdminGallery = () => {
     const loadImages = async () => {
         setIsLoading(true);
         try {
-            const data = await getGalleryImages();
-            setImages(data);
+            const result = await getGalleryImages();
+            setImages(result.data);
+        } catch {
+            // error toast already shown by axiosInstance interceptor
         } finally {
             setIsLoading(false);
         }
@@ -37,6 +39,8 @@ export const useAdminGallery = () => {
             setImages((prev) => [newImage, ...prev]);
             setCaption('');
             toast.success('Image uploaded!');
+        } catch {
+            // error toast already shown by axiosInstance interceptor
         } finally {
             setUploading(false);
         }
@@ -58,6 +62,8 @@ export const useAdminGallery = () => {
             await deleteGalleryImage(deleteTargetId);
             toast.success('Image removed');
             setDeleteTargetId(null);
+        } catch {
+            // error toast already shown by axiosInstance interceptor
         } finally {
             setIsDeleting(false);
         }

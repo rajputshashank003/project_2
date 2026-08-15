@@ -1,8 +1,5 @@
 import toast from 'react-hot-toast';
-
-const SMS_ENABLED  = import.meta.env.VITE_TWILIO_SMS_ENABLED  === 'true';
-const EMAIL_ENABLED = import.meta.env.VITE_RESEND_EMAIL_ENABLED === 'true';
-const API_BASE_URL  = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+import { axiosInstance } from '../utils/api_request/utils';
 
 export interface NotifyPayload {
   phone?: string;
@@ -13,40 +10,34 @@ export interface NotifyPayload {
   htmlBody?: string;
 }
 
-/** Send SMS via backend Twilio proxy or simulate with toast */
+/** Send SMS via backend Twilio proxy (no-op if SMS disabled) */
 export const sendSms = async (payload: NotifyPayload): Promise<void> => {
   if (!payload.phone) return;
 
-  if (SMS_ENABLED) {
+  const smsEnabled = import.meta.env.VITE_TWILIO_SMS_ENABLED === 'true';
+  if (smsEnabled) {
     try {
-      await fetch(`${API_BASE_URL}/notify/sms`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: payload.phone, message: payload.message }),
-      });
+      await axiosInstance.post('/notify/sms', { phone: payload.phone, message: payload.message });
     } catch {
       console.warn('SMS send failed');
     }
   } else {
-    // Mock: show toast with what would be sent
+    // Mock: log what would be sent
     console.info(`[MOCK SMS → ${payload.phone}]: ${payload.message}`);
   }
 };
 
-/** Send Email via backend Resend proxy or simulate with toast */
+/** Send Email via backend Resend proxy (no-op if email disabled) */
 export const sendEmail = async (payload: NotifyPayload): Promise<void> => {
   if (!payload.email) return;
 
-  if (EMAIL_ENABLED) {
+  const emailEnabled = import.meta.env.VITE_RESEND_EMAIL_ENABLED === 'true';
+  if (emailEnabled) {
     try {
-      await fetch(`${API_BASE_URL}/notify/email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to:      payload.email,
-          subject: payload.subject || 'NGO Notification',
-          html:    payload.htmlBody || `<p>${payload.message}</p>`,
-        }),
+      await axiosInstance.post('/notify/email', {
+        to:      payload.email,
+        subject: payload.subject || 'NGO Notification',
+        html:    payload.htmlBody || `<p>${payload.message}</p>`,
       });
     } catch {
       console.warn('Email send failed');

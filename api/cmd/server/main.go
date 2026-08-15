@@ -49,15 +49,20 @@ func main() {
 	idempotencyRepo := repository.NewIdempotencyRepository(db)
 
 	// ---- External services -------------------------------------------------
-	cloudinarySvc := service.NewCloudinaryService(cfg)
-	smsSvc := service.NewSMSService(cfg)
-	emailSvc := service.NewEmailService(cfg)
+	cloudinarySvc     := service.NewCloudinaryService(cfg)
+	smsSvc            := service.NewSMSService(cfg)
+	emailSvc          := service.NewEmailService(cfg)
+	whatsappTwilioSvc := service.NewWhatsAppTwilioService(cfg)
+	whatsappLocalSvc  := service.NewWhatsAppLocalService(cfg)
+
+	// MultiMessenger routes to the correct channel based on MESSAGING_TYPE env var
+	messenger := service.NewMultiMessenger(smsSvc, whatsappTwilioSvc, whatsappLocalSvc, cfg.MessagingType)
 
 	// ---- Domain services ---------------------------------------------------
-	otpSvc := service.NewOTPService(otpRepo, smsSvc, cfg)
-	authSvc := service.NewAuthService(userRepo, otpSvc, cfg)
-	donationSvc := service.NewDonationService(donationRepo, cloudinarySvc, smsSvc, emailSvc)
-	idCardSvc := service.NewIDCardService(idCardRepo, cloudinarySvc, smsSvc, emailSvc)
+	otpSvc      := service.NewOTPService(otpRepo, messenger, cfg)
+	authSvc     := service.NewAuthService(userRepo, otpSvc, cfg)
+	donationSvc := service.NewDonationService(donationRepo, cloudinarySvc, messenger, emailSvc)
+	idCardSvc   := service.NewIDCardService(idCardRepo, cloudinarySvc, messenger, emailSvc)
 	noticeSvc := service.NewNoticeService(noticeRepo, cloudinarySvc)
 	gallerySvc := service.NewGalleryService(galleryRepo, cloudinarySvc)
 	eventSvc := service.NewEventService(eventRepo, cloudinarySvc)
@@ -97,7 +102,7 @@ func main() {
 		db,
 		authSvc, donationSvc, idCardSvc, noticeSvc,
 		gallerySvc, eventSvc, teamSvc, ngoSvc, userSvc,
-		smsSvc, emailSvc,
+		smsSvc, emailSvc, whatsappTwilioSvc, whatsappLocalSvc,
 		userRepo, idempotencyRepo,
 		bodyLimitBytes,
 	)

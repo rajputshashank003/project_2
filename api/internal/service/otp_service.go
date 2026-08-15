@@ -13,14 +13,14 @@ import (
 
 // OTPService handles OTP generation, rate-limiting, storage, and verification.
 type OTPService struct {
-	repo       *repository.OTPRepository
-	sms        *SMSService
-	cfg        *config.Config
+	repo      *repository.OTPRepository
+	messenger Messenger
+	cfg       *config.Config
 }
 
 // NewOTPService constructs an OTPService.
-func NewOTPService(repo *repository.OTPRepository, sms *SMSService, cfg *config.Config) *OTPService {
-	return &OTPService{repo: repo, sms: sms, cfg: cfg}
+func NewOTPService(repo *repository.OTPRepository, messenger Messenger, cfg *config.Config) *OTPService {
+	return &OTPService{repo: repo, messenger: messenger, cfg: cfg}
 }
 
 // Send generates a 6-digit OTP, stores it, and sends via SMS.
@@ -58,8 +58,8 @@ func (s *OTPService) Send(phone string) error {
 		return fmt.Errorf("otp: failed to store: %w", err)
 	}
 
-	// Send SMS (fire-and-forget in prod; logged in dev)
-	go s.sms.Send(phone, fmt.Sprintf("Your NGO Portal OTP is %s. Valid for %d minutes.", code, s.cfg.OTPExpiryMinutes))
+	// Send message (fire-and-forget in prod; logged in dev)
+	go s.messenger.Send(phone, fmt.Sprintf("Your NGO Portal OTP is %s. Valid for %d minutes.", code, s.cfg.OTPExpiryMinutes))
 
 	return nil
 }

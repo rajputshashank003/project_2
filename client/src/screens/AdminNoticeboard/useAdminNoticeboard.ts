@@ -20,8 +20,10 @@ export const useAdminNoticeboard = () => {
     const loadNotices = async () => {
         setIsLoading(true);
         try {
-            const data = await getNotices();
-            setNotices(data);
+            const result = await getNotices();
+            setNotices(result.data);
+        } catch {
+            // error toast already shown by axiosInstance interceptor
         } finally {
             setIsLoading(false);
         }
@@ -65,21 +67,35 @@ export const useAdminNoticeboard = () => {
             setImageFile(null);
             setImagePreview('');
             toast.success('Notice published!');
+        } catch {
+            // error toast already shown by axiosInstance interceptor
         } finally {
             setIsSubmitting(false);
         }
     }, [form, imagePreview]);
 
     const handleToggleActive = useCallback(async (id: string, current: boolean) => {
-        // Optimistic
+        // Optimistic update
         setNotices((prev) => prev.map((n) => n.id === id ? { ...n, isActive: !current } : n));
-        await toggleNoticeActive(id, !current);
+        try {
+            const updated = await toggleNoticeActive(id, !current);
+            // Sync with actual server response
+            setNotices((prev) => prev.map((n) => n.id === updated.id ? updated : n));
+        } catch {
+            // Revert optimistic update on failure
+            setNotices((prev) => prev.map((n) => n.id === id ? { ...n, isActive: current } : n));
+        }
     }, []);
 
     const handleDelete = useCallback(async (id: string) => {
         setNotices((prev) => prev.filter((n) => n.id !== id));
-        await deleteNotice(id);
-        toast.success('Notice deleted');
+        try {
+            await deleteNotice(id);
+            toast.success('Notice deleted');
+        } catch {
+            // Revert optimistic delete on failure
+            await loadNotices();
+        }
     }, []);
 
     return {

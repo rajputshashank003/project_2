@@ -32,7 +32,14 @@ export const useAdminEvents = () => {
 
   const loadEvents = async () => {
     setIsLoading(true);
-    try { setEvents(await getEvents()); } finally { setIsLoading(false); }
+    try {
+      const result = await getEvents();
+      setEvents(result.data);
+    } catch {
+      // error toast already shown by axiosInstance interceptor
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const openAdd = useCallback(() => {

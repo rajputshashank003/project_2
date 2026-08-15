@@ -17,7 +17,7 @@ import (
 type IDCardService struct {
 	repo       *repository.IDCardRepository
 	cloudinary *CloudinaryService
-	sms        *SMSService
+	messenger  Messenger
 	email      *EmailService
 }
 
@@ -25,10 +25,10 @@ type IDCardService struct {
 func NewIDCardService(
 	repo *repository.IDCardRepository,
 	cloudinary *CloudinaryService,
-	sms *SMSService,
+	messenger Messenger,
 	email *EmailService,
 ) *IDCardService {
-	return &IDCardService{repo: repo, cloudinary: cloudinary, sms: sms, email: email}
+	return &IDCardService{repo: repo, cloudinary: cloudinary, messenger: messenger, email: email}
 }
 
 // Create uploads images to Cloudinary then creates an ID card record.
@@ -169,7 +169,7 @@ func (s *IDCardService) notify(card *models.IDCard, status, cardNumber string) {
 	}
 
 	if card.Phone != "" {
-		s.sms.Send(card.Phone, userMsg)
+		s.messenger.Send(card.Phone, userMsg)
 	}
 	if card.Email != "" {
 		s.email.Send(card.Email, subject, html)

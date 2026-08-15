@@ -19,3 +19,9 @@ type SendEmailRequest struct {
 	Subject string `json:"subject" binding:"required"`
 	HTML    string `json:"html"    binding:"required"`
 }
+
+// SendWhatsAppRequest is the body for POST /notify/whatsapp_twilio and /notify/whatsapp_local.
+type SendWhatsAppRequest struct {
+	Phone   string `json:"phone"   binding:"required"`
+	Message string `json:"message" binding:"required"`
+}

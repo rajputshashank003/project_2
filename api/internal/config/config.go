@@ -40,9 +40,14 @@ type Config struct {
 	DevOTP  string
 
 	// Twilio
-	TwilioAccountSID string
-	TwilioAuthToken  string
-	TwilioFromPhone  string
+	TwilioAccountSID  string
+	TwilioAuthToken   string
+	TwilioFromPhone   string
+	TwilioWhatsAppFrom string // "whatsapp:+14155238886" for sandbox; production: "whatsapp:+91XXXXXXXXXX"
+
+	// Messaging
+	MessagingType    string // "sms" | "whatsapp_twilio" | "whatsapp_local"
+	WhatsAppLocalURL string // base URL of standalone whatsapp_service (e.g. "http://localhost:8080")
 
 	// Resend
 	ResendAPIKey    string
@@ -89,9 +94,13 @@ func Load() (*Config, error) {
 		DevMode: getEnv("DEV_MODE", "false") == "true",
 		DevOTP:  getEnv("DEV_OTP", "123456"),
 
-		TwilioAccountSID: getEnv("TWILIO_ACCOUNT_SID", ""),
-		TwilioAuthToken:  getEnv("TWILIO_AUTH_TOKEN", ""),
-		TwilioFromPhone:  getEnv("TWILIO_FROM_PHONE", ""),
+		TwilioAccountSID:   getEnv("TWILIO_ACCOUNT_SID", ""),
+		TwilioAuthToken:    getEnv("TWILIO_AUTH_TOKEN", ""),
+		TwilioFromPhone:    getEnv("TWILIO_FROM_PHONE", ""),
+		TwilioWhatsAppFrom: getEnv("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886"),
+
+		MessagingType:    getEnv("MESSAGING_TYPE", "sms"),
+		WhatsAppLocalURL: getEnv("WHATSAPP_LOCAL_URL", "http://localhost:8080"),
 
 		ResendAPIKey:    getEnv("RESEND_API_KEY", ""),
 		ResendFromEmail: getEnv("RESEND_FROM_EMAIL", "noreply@example.com"),

@@ -38,14 +38,12 @@ export const useLogin = () => {
     }
     setIsLoading(true);
     try {
-      try {
-        await sendOtp(cleaned);
-      } catch {
-        console.info('[MOCK] OTP sent to', cleaned);
-      }
+      await sendOtp(cleaned);
       toast.success('OTP sent to your mobile number');
       setStep('otp');
       setResendTimer(OTP_RESEND_SECONDS);
+    } catch {
+      // error toast already shown by axiosInstance interceptor
     } finally {
       setIsLoading(false);
     }
@@ -77,27 +75,17 @@ export const useLogin = () => {
     }
     setIsLoading(true);
     try {
-      try {
-        const res = await verifyOtp(phone.replace(/\s+/g, ''), otpString);
-        login({
-          ...res.user,
-          token:       res.token,
-          role:        res.user.role as 'admin' | 'user',
-          designation: res.user.designation as 'member' | 'admin' | 'president' | 'secretary' | 'volunteer',
-        });
-      } catch {
-        // Mock login for demo
-        login({
-          id:          'user-001',
-          phone:       phone.replace(/\s+/g, ''),
-          name:        'Demo User',
-          role:        'user',
-          designation: 'member',
-          token:       'mock-token-' + Date.now(),
-        });
-      }
+      const res = await verifyOtp(phone.replace(/\s+/g, ''), otpString);
+      login({
+        ...res.user,
+        token:       res.token,
+        role:        res.user.role as 'admin' | 'user',
+        designation: res.user.designation as 'member' | 'admin' | 'president' | 'secretary' | 'volunteer',
+      });
       toast.success('Logged in successfully');
       navigate('/');
+    } catch {
+      // error toast already shown by axiosInstance interceptor
     } finally {
       setIsLoading(false);
     }
@@ -107,10 +95,12 @@ export const useLogin = () => {
     if (resendTimer > 0) return;
     setIsLoading(true);
     try {
-      try { await sendOtp(phone.replace(/\s+/g, '')); } catch { /* mock */ }
+      await sendOtp(phone.replace(/\s+/g, ''));
       toast.success('OTP resent');
       setResendTimer(OTP_RESEND_SECONDS);
       setOtp(['', '', '', '', '', '']);
+    } catch {
+      // error toast already shown by axiosInstance interceptor
     } finally {
       setIsLoading(false);
     }

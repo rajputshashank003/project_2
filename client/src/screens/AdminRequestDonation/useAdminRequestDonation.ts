@@ -30,8 +30,10 @@ export const useAdminRequestDonation = () => {
   const loadDonations = async () => {
     setIsLoading(true);
     try {
-      const data = await getDonations();
-      setDonations(data);
+      const result = await getDonations();
+      setDonations(result.data);
+    } catch {
+      // error toast already shown by axiosInstance interceptor
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +64,7 @@ export const useAdminRequestDonation = () => {
     if (!actionItem) return;
     setActionLoading(true);
     try {
-      await updateDonationStatus(actionItem.id, { status: 'approved' });
+      const updated = await updateDonationStatus(actionItem.id, { status: 'approved' });
 
       const msgs = buildDonationApprovalMessages({
         donorName: actionItem.donorName,
@@ -78,7 +80,7 @@ export const useAdminRequestDonation = () => {
       });
 
       setDonations((prev) =>
-        prev.map((d) => d.id === actionItem.id ? { ...d, status: 'approved', reviewedAt: new Date().toISOString() } : d)
+        prev.map((d) => d.id === actionItem.id ? updated : d)
       );
       toast.success(`Donation approved for ${actionItem.donorName}`);
       closeAction();
@@ -94,7 +96,7 @@ export const useAdminRequestDonation = () => {
     if (!rejectReason.trim()) { toast.error('Please enter a rejection reason'); return; }
     setActionLoading(true);
     try {
-      await updateDonationStatus(actionItem.id, { status: 'rejected', rejectionReason: rejectReason });
+      const updated = await updateDonationStatus(actionItem.id, { status: 'rejected', rejectionReason: rejectReason });
 
       const msgs = buildDonationRejectionMessages({
         donorName: actionItem.donorName,
@@ -111,7 +113,7 @@ export const useAdminRequestDonation = () => {
       });
 
       setDonations((prev) =>
-        prev.map((d) => d.id === actionItem.id ? { ...d, status: 'rejected', rejectionReason: rejectReason, reviewedAt: new Date().toISOString() } : d)
+        prev.map((d) => d.id === actionItem.id ? updated : d)
       );
       toast.success(`Donation rejected for ${actionItem.donorName}`);
       closeAction();

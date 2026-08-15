@@ -15,6 +15,7 @@ export interface IdCard {
     uniqueCardNumber: string;
     status: IdCardStatus;
     rejectionReason?: string;
+    validityYears?: number;
     issueDate?: string;
     expiryDate?: string;
     requestedAt: string;
@@ -35,4 +36,5 @@ export interface CreateIdCardPayload {
 export interface UpdateIdCardStatusPayload {
     status: IdCardStatus;
     rejectionReason?: string;
+    validityYears?: number;
 }

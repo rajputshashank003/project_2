@@ -1,7 +1,7 @@
 # API Knowledge Transfer (KT)
 
 > **Maintained by:** Backend Team
-> **Last Updated:** 2026-08-13
+> **Last Updated:** 2026-08-14
 > **Module:** `github.com/shashankrajput/ngo-platform/api`
 
 ---
@@ -386,3 +386,151 @@ File: `.github/workflows/backend.yaml`
 - **Team slots** — max 5 slots enforced in service. Slot numbers re-index (1..N) after deletion.
 - **TIMESTAMPTZ** — all timestamps stored with timezone. Go `time.Time` maps correctly with `TimeZone=UTC` in DSN.
 - **`GIN_MODE=release`** hides stack traces in responses — always set in production.
+
+---
+
+## 19. API Response Envelope Details
+
+Every handler wraps its response in a consistent JSON envelope. Frontend must unwrap `.data`.
+
+### Single-Item Responses
+All create/get/update endpoints return:
+```json
+{ "data": { ...model_fields... } }
+```
+
+### List Responses (Paginated)
+All list endpoints (donations, id-cards, notices, gallery, events, users) return:
+```json
+{
+  "data": [ ...items... ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 147,
+    "totalPages": 8
+  }
+}
+```
+
+### Non-Paginated List Responses
+`GET /team` returns `{ "data": [...slots...] }` without pagination (max 5 slots).
+
+### Message-Only Responses
+Some endpoints return only a confirmation message (not the entity):
+
+| Endpoint | Response |
+|---|---|
+| `POST /auth/send-otp` | `{"data": {"message": "OTP sent successfully"}}` |
+| `PATCH /users/:id/promote` | `{"data": {"message": "User promoted to admin"}}` |
+| `PATCH /users/:id/demote` | `{"data": {"message": "Admin role revoked"}}` |
+| `DELETE /notices/:id` | `{"data": {"message": "Notice deleted"}}` |
+| `DELETE /gallery/:id` | `{"data": {"message": "Image deleted"}}` |
+| `DELETE /events/:id` | `{"data": {"message": "Event deleted"}}` |
+
+### Error Envelope
+All errors follow the same shape:
+```json
+{ "error": { "code": "VALIDATION_ERROR", "message": "human readable message" } }
+```
+Frontend reads: `response.data.error.message`
+
+### Image Upload Field Names
+Backend DTOs use `*Base64` suffix for upload fields — NOT the same as the model's `*Url` fields:
+
+| Endpoint | Client field name | Backend DTO field |
+|---|---|---|
+| `POST /donations` | `paymentScreenshotBase64` | `paymentScreenshotBase64` |
+| `POST /id-cards` | `passportPhotoBase64`, `paymentScreenshotBase64` | same |
+| `POST /notices` | `imageBase64` | `imageBase64` |
+| `POST /gallery` | `imageBase64` | `imageBase64` |
+| `PATCH /ngo/config` | `logoBase64` | `logoBase64` (NOT `logoUrl`) |
+| `PATCH /ngo/config` | `signatureBase64` | `signatureBase64` (NOT `signatureUrl`) |
+| `PATCH /team/:slot` | `photoBase64` | `photoBase64` |
+
+---
+
+## 20. Repository Pattern — FindByID Availability
+
+Every repository exposes `FindByID(id uuid.UUID)` for fetching a single record after mutation:
+
+| Repository | FindByID available |
+|---|---|
+| UserRepository | ✅ |
+| DonationRepository | ✅ |
+| IdCardRepository | ✅ |
+| NoticeRepository | ✅ |
+| GalleryRepository | ✅ |
+| EventRepository | ✅ |
+| TeamRepository | ✅ (by slot) |
+| NgoRepository | ✅ (GetConfig, single row) |
+
+Used in: `NoticeService.ToggleActive()` fetches after update to return fresh record.
+
+---
+
+## 21. Messaging Architecture — Multi-Channel Notification
+
+All outgoing phone notifications (OTP, donation approval, ID card approval) use the **`Messenger` interface**.
+
+### Interface
+
+```go
+// api/internal/service/messenger.go
+type Messenger interface {
+    Send(phone, message string)
+}
+```
+
+`SMSService`, `WhatsAppTwilioService`, and `WhatsAppLocalService` all implement it.
+
+### Switching Channels
+
+```env
+MESSAGING_TYPE=sms              # Twilio SMS (DLT required for Indian prod)
+MESSAGING_TYPE=whatsapp_twilio  # Twilio WhatsApp (sandbox or production number)
+MESSAGING_TYPE=whatsapp_local   # standalone whatsapp_service microservice (free)
+```
+
+`MultiMessenger` reads this at startup and routes all `Send()` calls accordingly.
+**Zero code changes needed to switch channels** — only restart with a new env var.
+
+### Service Map
+
+| Service | File | Sends via |
+|---|---|---|
+| `SMSService` | `sms_service.go` | Twilio SMS API |
+| `WhatsAppTwilioService` | `whatsapp_twilio_service.go` | Twilio WhatsApp API (`whatsapp:` prefix on To/From) |
+| `WhatsAppLocalService` | `whatsapp_local_service.go` | HTTP POST to `whatsapp_service` microservice |
+| `MultiMessenger` | `multi_messenger.go` | Dispatcher — picks one of the above |
+
+### Callers (all receive `Messenger`, not a concrete type)
+
+| Service | Usage |
+|---|---|
+| `OTPService` | Sends OTP code on login |
+| `DonationService` | Sends approval/rejection notification |
+| `IDCardService` | Sends approval/rejection notification |
+
+### Manual Notify API Endpoints
+
+| Method | Route | Sends via |
+|---|---|---|
+| `POST` | `/api/v1/notify/sms` | `SMSService` directly (explicit) |
+| `POST` | `/api/v1/notify/whatsapp_twilio` | `WhatsAppTwilioService` directly |
+| `POST` | `/api/v1/notify/whatsapp_local` | `WhatsAppLocalService` directly |
+| `POST` | `/api/v1/notify/email` | `EmailService` directly |
+
+### Phone Format
+
+All services receive raw 10-digit Indian numbers (`"9876543210"`).  
+Country code `+91` is appended internally by each service.
+
+### whatsapp_service Microservice
+
+Located at `whatsapp_service/` (separate Go module — move to own git repo).  
+Uses `go.mau.fi/whatsmeow` (unofficial WhatsApp Web protocol — 100% free, no Meta approval).  
+Exposes `POST /send`, `GET /status`, `GET /qr`.  
+Session persisted in SQLite (`store/whatsapp.db`) — auto-reconnects on restart.
+
+See `whatsapp_service/kt.md` for full documentation.

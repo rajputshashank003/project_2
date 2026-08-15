@@ -8,15 +8,27 @@ import (
 	"github.com/shashankrajput/ngo-platform/api/internal/service"
 )
 
-// NotifyHandler handles manual SMS/email notification requests.
+// NotifyHandler handles manual SMS/email/WhatsApp notification requests.
 type NotifyHandler struct {
-	sms   *service.SMSService
-	email *service.EmailService
+	sms            *service.SMSService
+	email          *service.EmailService
+	whatsappTwilio *service.WhatsAppTwilioService
+	whatsappLocal  *service.WhatsAppLocalService
 }
 
 // NewNotifyHandler constructs a NotifyHandler.
-func NewNotifyHandler(sms *service.SMSService, email *service.EmailService) *NotifyHandler {
-	return &NotifyHandler{sms: sms, email: email}
+func NewNotifyHandler(
+	sms *service.SMSService,
+	email *service.EmailService,
+	whatsappTwilio *service.WhatsAppTwilioService,
+	whatsappLocal *service.WhatsAppLocalService,
+) *NotifyHandler {
+	return &NotifyHandler{
+		sms:            sms,
+		email:          email,
+		whatsappTwilio: whatsappTwilio,
+		whatsappLocal:  whatsappLocal,
+	}
 }
 
 // SendSMS godoc — POST /api/v1/notify/sms
@@ -39,4 +51,26 @@ func (h *NotifyHandler) SendEmail(c *gin.Context) {
 	}
 	h.email.Send(req.To, req.Subject, req.HTML)
 	c.JSON(http.StatusOK, gin.H{"data": gin.H{"message": "Email queued"}})
+}
+
+// SendWhatsAppTwilio godoc — POST /api/v1/notify/whatsapp_twilio
+func (h *NotifyHandler) SendWhatsAppTwilio(c *gin.Context) {
+	var req dto.SendWhatsAppRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "VALIDATION_ERROR", "message": err.Error()}})
+		return
+	}
+	go h.whatsappTwilio.Send(req.Phone, req.Message)
+	c.JSON(http.StatusOK, gin.H{"data": gin.H{"message": "WhatsApp (Twilio) queued"}})
+}
+
+// SendWhatsAppLocal godoc — POST /api/v1/notify/whatsapp_local
+func (h *NotifyHandler) SendWhatsAppLocal(c *gin.Context) {
+	var req dto.SendWhatsAppRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "VALIDATION_ERROR", "message": err.Error()}})
+		return
+	}
+	go h.whatsappLocal.Send(req.Phone, req.Message)
+	c.JSON(http.StatusOK, gin.H{"data": gin.H{"message": "WhatsApp (local) queued"}})
 }

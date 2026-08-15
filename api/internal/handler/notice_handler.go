@@ -77,12 +77,13 @@ func (h *NoticeHandler) Update(c *gin.Context) {
 		return
 	}
 
-	if err := h.svc.ToggleActive(id, *req.IsActive); err != nil {
+	notice, err := h.svc.ToggleActive(id, *req.IsActive)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "UPDATE_FAILED", "message": err.Error()}})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": gin.H{"message": "Notice updated"}})
+	c.JSON(http.StatusOK, gin.H{"data": notice})
 }
 
 // Delete godoc — DELETE /api/v1/notices/:id

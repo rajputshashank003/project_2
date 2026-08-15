@@ -1,7 +1,7 @@
 # Client Knowledge Transfer (KT)
 
 > **Maintained by:** Frontend Team
-> **Last Updated:** 2026-08-13
+> **Last Updated:** 2026-08-14
 > **Framework:** React (Vite) — `client/`
 
 ---
@@ -27,18 +27,39 @@ Manages: authentication (OTP via phone), admin panel (donations, ID cards, galle
 
 ---
 
-## 3. 4-File Screen Pattern
+## 3. Screen Pattern
 
-Every screen follows this pattern (see `client/structure.md` for full spec):
+Every screen follows the 4-file structure under `src/screens/ScreenName/`:
 
 ```
 screens/
   ScreenName/
-    index.jsx           Entry point, layout
-    ScreenName.jsx      Main component
-    ScreenName.api.js   API calls (uses api_request utility)
-    ScreenName.style.css CSS
+    ScreenName.tsx     Main component (renders sub-components)
+    useScreenName.ts   Custom hook (all state, API calls, handlers)
+    context.ts         React context (avoids prop-drilling into sub-components)
+    components/        Sub-components, consume context via useContext()
 ```
+
+### Hook → API Function Mapping
+
+| Screen Hook | API Functions Used |
+|---|---|
+| `useLogin` | `sendOtp`, `verifyOtp` |
+| `useHome` | `getNotices`, `getGalleryImages` |
+| `useAbout` | `getTeamMembers` |
+| `useEvents` | `getEvents` |
+| `useDonate` | `createDonation` |
+| `useIDGenerate` | `createIdCardRequest` |
+| `useCertificateView` | `getDonationById` |
+| `useIDCardView` | `getIdCardById` |
+| `useAdminRequestDonation` | `getDonations`, `updateDonationStatus` |
+| `useAdminRequestIdCard` | `getIdCardRequests`, `updateIdCardStatus`, `uploadSignature`, `deleteSignature` |
+| `useAdminNoticeboard` | `getNotices`, `createNotice`, `toggleNoticeActive`, `deleteNotice` |
+| `useAdminGallery` | `getGalleryImages`, `uploadGalleryImage`, `deleteGalleryImage` |
+| `useAdminEvents` | `getEvents`, `createEvent`, `updateEvent`, `deleteEvent` |
+| `useAdminTeam` | `getTeamMembers`, `updateTeamMember`, `clearTeamMember`, `addTeamSlot`, `removeTeamSlot` |
+| `useAdminUsers` | `getUsers`, `updateUserDesignation` |
+| `useAdminSettings` | `updateNgoConfig`, `uploadSignature`, `deleteSignature` |
 
 ---
 
@@ -197,3 +218,48 @@ npm run dev            # http://localhost:5173
 - `jsPDF` generation is synchronous and blocking for large content — consider `Web Worker` for heavy cards
 - Team slots are 1-indexed and re-indexed after deletion — always use `slot` number from API response, not array index
 - `pagination.totalPages` can be 0 if there are no records — handle empty state in UI
+
+---
+
+## 16. API Layer Architecture
+
+### Central Utility (`src/utils/api_request/utils.ts`)
+
+| Export | Purpose |
+|---|---|
+| `axiosInstance` | Axios instance with baseURL, 15s timeout, auto-attaches Bearer token |
+| `request<T>()` | Generic request wrapper; shows error toast on failure; throws for caller |
+| `unwrap<T>()` | Extracts `.data` from `{data: T}` backend envelope |
+| `ApiResponse<T>` | Type: `{data: T}` — single item response |
+| `PaginatedResponse<T>` | Type: `{data: T[], pagination: {...}}` — list response |
+
+**Auth:** `axiosInstance` reads `localStorage[STORAGE_KEYS.AUTH_TOKEN]` and adds `Authorization: Bearer <token>` on every request.
+
+**401 handling:** Interceptor clears auth, redirects to `/login` automatically.
+
+**Error handling:** `request()` reads `response.data.error.message` from the backend error envelope and calls `toast.error()`. Hooks use empty `catch {}` to avoid double-toasting.
+
+### API Function Files (`src/utils/api_request/*.ts`)
+
+9 files: `auth`, `donations`, `id_cards`, `ngo`, `notices`, `events`, `gallery`, `team_members`, `users`
+
+**Response pattern:**
+- Paginated lists: return `PaginatedResponse<T>` directly (caller extracts `.data`)
+- Single items: `await request<ApiResponse<T>>({...})` then `unwrap(res)` before returning
+- void operations (delete): `await request<unknown>({...})`
+
+### Services (`src/services/`)
+
+| Service | Purpose |
+|---|---|
+| `notification_service.ts` | SMS via `axiosInstance.post('/notify/sms')`, Email via `axiosInstance.post('/notify/email')`. Uses axiosInstance so Bearer token is attached. |
+| `storage_service.ts` | `localStorage` helpers for `ngo_token` / `ngo_user` |
+
+### Global Contexts
+
+| Context | Source File | Provides |
+|---|---|---|
+| `AuthContext` | `src/context/AuthContext.tsx` | `user`, `isAdmin`, `login()`, `logout()` |
+| `AppContext` | `src/context/AppContext.tsx` | `ngoConfig` (fetched on app startup from `GET /ngo/config`), `setNgoConfig()` |
+
+**AppContext** is critical: `ngoConfig` (name, logo, signature, etc.) is used by multiple screens (ID card approval, certificate generation). It is fetched once on mount and shared globally.

@@ -123,8 +123,10 @@ export const RequestActionModal: React.FC = () => {
     actionItem,
     actionType,
     rejectReason,
+    validityYears,
     actionLoading,
     setRejectReason,
+    setValidityYears,
     closeAction,
     handleApprove,
     handleReject,
@@ -172,9 +174,34 @@ export const RequestActionModal: React.FC = () => {
             </div>
           )}
           {actionType === 'approve' && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-sm text-emerald-800">
-              ✅ SMS + Email will be sent to <strong>{actionItem.userName}</strong> and admin upon approval.
-            </div>
+            <React.Fragment>
+              <div className="mb-4">
+                <label className="form-label">Card Validity *</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: 'Lifetime', value: 0 },
+                    { label: '1 Year',   value: 1 },
+                    { label: '2 Years',  value: 2 },
+                    { label: '3 Years',  value: 3 },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setValidityYears(opt.value)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                        validityYears === opt.value
+                          ? 'bg-emerald-600 text-white border-emerald-600'
+                          : 'bg-white text-slate-600 border-slate-200 hover:border-emerald-400'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-sm text-emerald-800">
+                ✅ SMS + Email will be sent to <strong>{actionItem.userName}</strong> and admin upon approval.
+              </div>
+            </React.Fragment>
           )}
         </div>
       )}

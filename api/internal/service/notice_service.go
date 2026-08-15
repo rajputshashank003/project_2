@@ -23,10 +23,14 @@ func NewNoticeService(repo *repository.NoticeRepository, cloudinary *CloudinaryS
 
 // Create creates a notice, optionally uploading an image to Cloudinary.
 func (s *NoticeService) Create(ctx context.Context, req dto.CreateNoticeRequest, createdBy string) (*models.Notice, error) {
+	isActive := true
+	if req.IsActive != nil {
+		isActive = *req.IsActive
+	}
 	notice := &models.Notice{
 		Title:     req.Title,
 		Content:   req.Content,
-		IsActive:  true,
+		IsActive:  isActive,
 		CreatedBy: createdBy,
 	}
 
@@ -55,9 +59,12 @@ func (s *NoticeService) List(page, limit int) ([]models.Notice, int64, error) {
 	return s.repo.ListPaginated(offset, limit)
 }
 
-// ToggleActive flips a notice's isActive flag.
-func (s *NoticeService) ToggleActive(id uuid.UUID, active bool) error {
-	return s.repo.ToggleActive(id, active)
+// ToggleActive flips a notice's isActive flag and returns the updated notice.
+func (s *NoticeService) ToggleActive(id uuid.UUID, active bool) (*models.Notice, error) {
+	if err := s.repo.ToggleActive(id, active); err != nil {
+		return nil, err
+	}
+	return s.repo.FindByID(id)
 }
 
 // Delete hard-deletes a notice and its Cloudinary image.

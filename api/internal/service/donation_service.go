@@ -17,7 +17,7 @@ import (
 type DonationService struct {
 	repo       *repository.DonationRepository
 	cloudinary *CloudinaryService
-	sms        *SMSService
+	messenger  Messenger
 	email      *EmailService
 }
 
@@ -25,10 +25,10 @@ type DonationService struct {
 func NewDonationService(
 	repo *repository.DonationRepository,
 	cloudinary *CloudinaryService,
-	sms *SMSService,
+	messenger Messenger,
 	email *EmailService,
 ) *DonationService {
-	return &DonationService{repo: repo, cloudinary: cloudinary, sms: sms, email: email}
+	return &DonationService{repo: repo, cloudinary: cloudinary, messenger: messenger, email: email}
 }
 
 // Create creates a donation request. Uploads screenshot to Cloudinary first.
@@ -156,7 +156,7 @@ func (s *DonationService) notify(d *models.Donation, status, certNumber string) 
 	}
 
 	if d.Phone != "" {
-		s.sms.Send(d.Phone, userMsg)
+		s.messenger.Send(d.Phone, userMsg)
 	}
 	if d.Email != "" {
 		s.email.Send(d.Email, subject, html)

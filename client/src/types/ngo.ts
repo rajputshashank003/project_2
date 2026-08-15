@@ -1,4 +1,5 @@
 export interface NgoConfig {
+  id?: number;
   name: string;
   tagline: string;
   logoUrl: string;
@@ -18,6 +19,7 @@ export interface NgoConfig {
   secretaryName: string;
   foundedYear: number;
   description?: string;
+  updatedAt?: string;
 }
 
 export interface GalleryImage {

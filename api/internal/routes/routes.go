@@ -24,6 +24,8 @@ func Setup(
 	userSvc *service.UserService,
 	smsSvc *service.SMSService,
 	emailSvc *service.EmailService,
+	whatsappTwilioSvc *service.WhatsAppTwilioService,
+	whatsappLocalSvc *service.WhatsAppLocalService,
 	userRepo *repository.UserRepository,
 	idempotencyRepo *repository.IdempotencyRepository,
 	bodyLimitBytes int64,
@@ -52,7 +54,7 @@ func Setup(
 	teamH := handler.NewTeamHandler(teamSvc)
 	ngoH := handler.NewNgoHandler(ngoSvc)
 	userH := handler.NewUserHandler(userSvc)
-	notifyH := handler.NewNotifyHandler(smsSvc, emailSvc)
+	notifyH := handler.NewNotifyHandler(smsSvc, emailSvc, whatsappTwilioSvc, whatsappLocalSvc)
 	healthH := handler.NewHealthHandler(db)
 
 	// ---- Infra routes (no version prefix) ----------------------------------
@@ -146,6 +148,8 @@ func Setup(
 	{
 		notify.POST("/sms", notifyH.SendSMS)
 		notify.POST("/email", notifyH.SendEmail)
+		notify.POST("/whatsapp_twilio", notifyH.SendWhatsAppTwilio)
+		notify.POST("/whatsapp_local", notifyH.SendWhatsAppLocal)
 	}
 
 	return r

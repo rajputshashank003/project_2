@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { createDonation } from '../../utils/api_request/donations';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { fileToBase64, validateImageFile, isValidEmail, isValidPhone, generateUniqueId } from '../../utils/helpers';
+import { fileToBase64, validateImageFile, isValidEmail, isValidPhone } from '../../utils/helpers';
 import type { CreateDonationPayload } from '../../types/donation';
 
 interface DonationFormData {
@@ -109,16 +109,10 @@ export const useDonate = () => {
         paymentScreenshotBase64: screenshotPreview,
         utrNumber:              form.utrNumber.trim() || undefined,
       };
-      let donationId: string;
-      try {
-        const result = await createDonation(payload);
-        donationId = result.id;
-      } catch {
-        donationId = 'DON-' + generateUniqueId();
-        toast.success('Donation submitted! Admin will verify your payment shortly.');
-      }
-      setSubmittedId(donationId);
+      const result = await createDonation(payload);
+      setSubmittedId(result.id);
       setIsSuccess(true);
+      toast.success('Donation submitted! Admin will verify your payment shortly.');
     } catch {
       toast.error('Submission failed. Please try again.');
     } finally {

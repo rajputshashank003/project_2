@@ -5,7 +5,7 @@ import { getIdCardRequests, updateIdCardStatus } from '../../utils/api_request/i
 import { uploadSignature, deleteSignature } from '../../utils/api_request/ngo';
 import { notifyBoth, buildIdCardApprovalMessages, buildIdCardRejectionMessages } from '../../services/notification_service';
 import { useApp } from '../../context/AppContext';
-import { generateCardNumber, fileToBase64, validateImageFile } from '../../utils/helpers';
+import { fileToBase64, validateImageFile } from '../../utils/helpers';
 import type { IdCard, IdCardStatus } from '../../types/id_card';
 
 type FilterStatus = 'all' | IdCardStatus;
@@ -18,6 +18,7 @@ export const useAdminRequestIdCard = () => {
   const [actionItem, setActionItem]       = useState<IdCard | null>(null);
   const [actionType, setActionType]       = useState<'approve' | 'reject' | null>(null);
   const [rejectReason, setRejectReason]   = useState('');
+  const [validityYears, setValidityYears] = useState<number>(0);
   const [actionLoading, setActionLoading] = useState(false);
   const [previewItem, setPreviewItem]     = useState<IdCard | null>(null);
 
@@ -30,8 +31,10 @@ export const useAdminRequestIdCard = () => {
   const loadRequests = async () => {
     setIsLoading(true);
     try {
-      const data = await getIdCardRequests();
-      setRequests(data);
+      const result = await getIdCardRequests();
+      setRequests(result.data);
+    } catch {
+      // error toast already shown by axiosInstance interceptor
     } finally {
       setIsLoading(false);
     }
@@ -50,17 +53,18 @@ export const useAdminRequestIdCard = () => {
     setActionItem(item);
     setActionType('approve');
     setRejectReason('');
+    setValidityYears(0);
   };
 
   const openReject  = (item: IdCard) => { setActionItem(item); setActionType('reject');  setRejectReason(''); };
-  const closeAction = () => { setActionItem(null); setActionType(null); setRejectReason(''); };
+  const closeAction = () => { setActionItem(null); setActionType(null); setRejectReason(''); setValidityYears(0); };
 
   const handleSignatureUpload = async (file: File) => {
     const error = validateImageFile(file);
     if (error) { toast.error(error); return; }
     setSignatureUploading(true);
     try {
-      const base64 = await fileToBase64(file);
+      const base64  = await fileToBase64(file);
       const updated = await uploadSignature(base64);
       setNgoConfig(updated);
       toast.success('Digital signature uploaded successfully!');
@@ -95,13 +99,16 @@ export const useAdminRequestIdCard = () => {
 
     setActionLoading(true);
     try {
-      const cardNumber = generateCardNumber();
-      await updateIdCardStatus(actionItem.id, { status: 'approved' });
+      // Backend auto-generates uniqueCardNumber and issueDate on approval
+      const updated = await updateIdCardStatus(actionItem.id, {
+        status: 'approved',
+        validityYears,
+      });
 
-      // Build & send dual notifications
+      // Build & send dual notifications using backend-generated card number
       const msgs = buildIdCardApprovalMessages({
         userName:    actionItem.userName,
-        cardNumber,
+        cardNumber:  updated.uniqueCardNumber,
         designation: actionItem.designation,
       });
       await notifyBoth({
@@ -113,9 +120,9 @@ export const useAdminRequestIdCard = () => {
         userHtml:  msgs.userHtml,
       });
 
-      // Update local state
+      // Update local state with the full record returned by backend
       setRequests((prev) =>
-        prev.map((r) => r.id === actionItem.id ? { ...r, status: 'approved', uniqueCardNumber: cardNumber, reviewedAt: new Date().toISOString() } : r)
+        prev.map((r) => r.id === actionItem.id ? updated : r)
       );
       toast.success(`ID card approved for ${actionItem.userName}`);
       closeAction();
@@ -124,14 +131,17 @@ export const useAdminRequestIdCard = () => {
     } finally {
       setActionLoading(false);
     }
-  }, [actionItem, ngoConfig]);
+  }, [actionItem, ngoConfig, validityYears]);
 
   const handleReject = useCallback(async () => {
     if (!actionItem) return;
     if (!rejectReason.trim()) { toast.error('Please enter a rejection reason'); return; }
     setActionLoading(true);
     try {
-      await updateIdCardStatus(actionItem.id, { status: 'rejected', rejectionReason: rejectReason });
+      const updated = await updateIdCardStatus(actionItem.id, {
+        status: 'rejected',
+        rejectionReason: rejectReason,
+      });
 
       const msgs = buildIdCardRejectionMessages({ userName: actionItem.userName, reason: rejectReason });
       await notifyBoth({
@@ -144,7 +154,7 @@ export const useAdminRequestIdCard = () => {
       });
 
       setRequests((prev) =>
-        prev.map((r) => r.id === actionItem.id ? { ...r, status: 'rejected', rejectionReason: rejectReason, reviewedAt: new Date().toISOString() } : r)
+        prev.map((r) => r.id === actionItem.id ? updated : r)
       );
       toast.success(`Request rejected for ${actionItem.userName}`);
       closeAction();
@@ -163,6 +173,7 @@ export const useAdminRequestIdCard = () => {
     actionItem,
     actionType,
     rejectReason,
+    validityYears,
     actionLoading,
     previewItem,
     signatureModalOpen,
@@ -170,6 +181,7 @@ export const useAdminRequestIdCard = () => {
     ngoConfig,
     setFilterStatus,
     setRejectReason,
+    setValidityYears,
     setPreviewItem,
     setSignatureModalOpen,
     handleSignatureUpload,

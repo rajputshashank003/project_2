@@ -31,12 +31,12 @@ export const useHome = () => {
             ]);
 
             if (noticeResult.status === 'fulfilled') {
-                const active = filter(noticeResult.value, (n) => n.isActive);
+                const active = filter(noticeResult.value.data, (n) => n.isActive);
                 setNotices(active);
             }
 
             if (galleryResult.status === 'fulfilled') {
-                setGallery(galleryResult.value);
+                setGallery(galleryResult.value.data);
             }
         } finally {
             setIsLoading(false);
