@@ -1,15 +1,19 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
-// OrgSetting is a single key-value row in the org_settings table.
-// The special key "meta" stores a JSON blob for auxiliary data (e.g. Cloudinary IDs).
+// OrgSetting is a single key-value-meta row in the org_settings table.
+// The "meta" column stores arbitrary JSONB metadata for this setting.
 type OrgSetting struct {
-	ID        int       `gorm:"primaryKey;autoIncrement" json:"-"`
-	Key       string    `gorm:"column:key;uniqueIndex;size:100;not null" json:"key"`
-	Value     string    `gorm:"column:value;type:text"                  json:"value"`
-	CreatedAt time.Time `gorm:"column:created_at;not null;default:now()" json:"-"`
-	UpdatedAt time.Time `gorm:"column:updated_at;not null;default:now()" json:"-"`
+	ID        int             `gorm:"primaryKey;autoIncrement" json:"-"`
+	Key       string          `gorm:"column:key;uniqueIndex;size:100;not null" json:"key"`
+	Value     string          `gorm:"column:value;type:text"                  json:"value"`
+	Meta      json.RawMessage `gorm:"column:meta;type:jsonb;default:'{}'"    json:"meta,omitempty"`
+	CreatedAt time.Time       `gorm:"column:created_at;not null;default:now()" json:"-"`
+	UpdatedAt time.Time       `gorm:"column:updated_at;not null;default:now()" json:"-"`
 }
 
 // TableName overrides GORM's default pluralisation.
@@ -36,7 +40,9 @@ const (
 	OrgKeySecretaryName      = "secretary_name"
 	OrgKeyFoundedYear        = "founded_year"
 	OrgKeyDescription        = "description"
-	OrgKeyMeta               = "meta" // JSON blob: {logo_cloudinary_id, signature_cloudinary_id}
+	OrgKeyMission            = "mission"
+	OrgKeyVision             = "vision"
+	OrgKeyManagerPhone       = "manager_phone"
 )
 
 // NgoConfigResponse is the structured response returned by GET /ngo/config.
@@ -56,16 +62,18 @@ type NgoConfigResponse struct {
 	AccountNumber      string    `json:"accountNumber,omitempty"`
 	IFSCCode           string    `json:"ifscCode,omitempty"`
 	AccountHolderName  string    `json:"accountHolderName,omitempty"`
-	SignatureURL        string    `json:"signatureUrl"`
+	SignatureURL       string    `json:"signatureUrl"`
 	PresidentName      string    `json:"presidentName"`
 	SecretaryName      string    `json:"secretaryName"`
 	FoundedYear        int       `json:"foundedYear"`
 	Description        string    `json:"description,omitempty"`
+	Mission            string    `json:"mission,omitempty"`
+	Vision             string    `json:"vision,omitempty"`
+	ManagerPhone       string    `json:"managerPhone,omitempty"`
 	UpdatedAt          time.Time `json:"updatedAt"`
 }
 
-// OrgMetaJSON holds auxiliary data stored in the "meta" key as JSON.
-type OrgMetaJSON struct {
-	LogoCloudinaryID      string `json:"logo_cloudinary_id"`
-	SignatureCloudinaryID string `json:"signature_cloudinary_id"`
+// CloudinaryAssetMeta holds Cloudinary metadata stored in a setting's meta JSONB column.
+type CloudinaryAssetMeta struct {
+	CloudinaryPublicID string `json:"cloudinary_public_id,omitempty"`
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/cloudinary/cloudinary-go/v2"
@@ -34,8 +35,24 @@ func NewCloudinaryService(cfg *config.Config) *CloudinaryService {
 	return &CloudinaryService{cld: cld, folder: cfg.CloudinaryUploadFolder}
 }
 
-// Upload decodes a Base64 string and uploads it to Cloudinary.
+// UploadFile streams an io.Reader (such as a multipart.File) directly to Cloudinary.
 // Returns (CloudinaryResult, error). On error the caller must NOT persist the record.
+func (s *CloudinaryService) UploadFile(ctx context.Context, file io.Reader) (CloudinaryResult, error) {
+	resp, err := s.cld.Upload.Upload(ctx, file, uploader.UploadParams{
+		Folder: s.folder,
+	})
+	if err != nil {
+		return CloudinaryResult{}, fmt.Errorf("cloudinary: file upload failed: %w", err)
+	}
+
+	return CloudinaryResult{
+		SecureURL: resp.SecureURL,
+		PublicID:  resp.PublicID,
+	}, nil
+}
+
+// Upload decodes a Base64 string and uploads it to Cloudinary.
+// Deprecated: Use UploadFile with multipart file streaming instead.
 func (s *CloudinaryService) Upload(ctx context.Context, base64Str string) (CloudinaryResult, error) {
 	// Strip data URI prefix if present (data:image/png;base64,...)
 	if idx := strings.Index(base64Str, ","); idx != -1 {
@@ -47,17 +64,7 @@ func (s *CloudinaryService) Upload(ctx context.Context, base64Str string) (Cloud
 		return CloudinaryResult{}, fmt.Errorf("cloudinary: base64 decode failed: %w", err)
 	}
 
-	resp, err := s.cld.Upload.Upload(ctx, bytes.NewReader(raw), uploader.UploadParams{
-		Folder: s.folder,
-	})
-	if err != nil {
-		return CloudinaryResult{}, fmt.Errorf("cloudinary: upload failed: %w", err)
-	}
-
-	return CloudinaryResult{
-		SecureURL: resp.SecureURL,
-		PublicID:  resp.PublicID,
-	}, nil
+	return s.UploadFile(ctx, bytes.NewReader(raw))
 }
 
 // Delete removes an asset from Cloudinary by its public_id.

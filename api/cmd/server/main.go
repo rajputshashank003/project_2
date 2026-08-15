@@ -57,18 +57,19 @@ func main() {
 
 	// MultiMessenger routes to the correct channel based on MESSAGING_TYPE env var
 	messenger := service.NewMultiMessenger(smsSvc, whatsappTwilioSvc, whatsappLocalSvc, cfg.MessagingType)
+	log.Info().Str("messagingType", cfg.MessagingType).Str("appBaseURL", cfg.AppBaseURL).Msg("main: messaging configured")
 
 	// ---- Domain services ---------------------------------------------------
 	otpSvc      := service.NewOTPService(otpRepo, messenger, cfg)
 	authSvc     := service.NewAuthService(userRepo, otpSvc, cfg)
-	donationSvc := service.NewDonationService(donationRepo, cloudinarySvc, messenger, emailSvc)
-	idCardSvc   := service.NewIDCardService(idCardRepo, cloudinarySvc, messenger, emailSvc)
-	noticeSvc := service.NewNoticeService(noticeRepo, cloudinarySvc)
-	gallerySvc := service.NewGalleryService(galleryRepo, cloudinarySvc)
-	eventSvc := service.NewEventService(eventRepo, cloudinarySvc)
-	teamSvc := service.NewTeamService(teamRepo, cloudinarySvc)
-	ngoSvc := service.NewNgoService(ngoRepo, cloudinarySvc)
-	userSvc := service.NewUserService(userRepo)
+	donationSvc := service.NewDonationService(donationRepo, ngoRepo, cloudinarySvc, messenger, emailSvc, cfg.AppBaseURL)
+	idCardSvc   := service.NewIDCardService(idCardRepo, ngoRepo, cloudinarySvc, messenger, emailSvc, cfg.AppBaseURL)
+	noticeSvc   := service.NewNoticeService(noticeRepo, cloudinarySvc)
+	gallerySvc  := service.NewGalleryService(galleryRepo, cloudinarySvc)
+	eventSvc    := service.NewEventService(eventRepo, cloudinarySvc)
+	teamSvc     := service.NewTeamService(teamRepo, cloudinarySvc)
+	ngoSvc      := service.NewNgoService(ngoRepo, cloudinarySvc)
+	userSvc     := service.NewUserService(userRepo)
 
 	// ---- Seed admin user ---------------------------------------------------
 	authSvc.SeedAdmin()

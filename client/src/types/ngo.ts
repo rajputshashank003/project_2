@@ -19,6 +19,9 @@ export interface NgoConfig {
   secretaryName: string;
   foundedYear: number;
   description?: string;
+  mission?: string;
+  vision?: string;
+  managerPhone?: string;
   updatedAt?: string;
 }
 

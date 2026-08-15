@@ -116,10 +116,35 @@ export const Hero: React.FC = () => {
   );
 };
 
+const GalleryImageCard: React.FC<{ imageUrl: string; caption?: string }> = ({ imageUrl, caption }) => {
+  const [loaded, setLoaded] = React.useState(false);
+
+  return (
+    <div className="group relative overflow-hidden rounded-2xl aspect-square bg-slate-100 shadow-xs">
+      {!loaded && (
+        <div className="absolute inset-0 bg-slate-200 animate-pulse" />
+      )}
+      <img
+        src={imageUrl}
+        alt={caption || 'Gallery image'}
+        onLoad={() => setLoaded(true)}
+        className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-105 ${
+          loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+        }`}
+      />
+      {caption && loaded && (
+        <div className="gallery-overlay absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+          <span className="text-white text-sm font-medium leading-snug">{caption}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const GallerySection: React.FC = () => {
   const ctx = useContext(HomeContext);
   if (!ctx) return null;
-  const { galleryImages } = ctx;
+  const { galleryImages, isLoading } = ctx;
 
   return (
     <section className="py-16 sm:py-20 bg-white">
@@ -128,22 +153,30 @@ export const GallerySection: React.FC = () => {
           <h2 className="section-heading mb-2">Our Impact in Pictures</h2>
           <p className="section-subheading text-base">Moments from our journey of service and compassion</p>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {galleryImages.slice(0, 6).map((img) => (
-            <div key={img.id} className="group relative overflow-hidden rounded-2xl aspect-square bg-slate-100">
-              <img
-                src={img.imageUrl}
-                alt={img.caption || 'Gallery image'}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+
+        {isLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((n) => (
+              <div key={n} className="rounded-2xl aspect-square bg-slate-100 animate-pulse flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-slate-200/80" />
+              </div>
+            ))}
+          </div>
+        ) : galleryImages.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {galleryImages.slice(0, 6).map((img) => (
+              <GalleryImageCard
+                key={img.id}
+                imageUrl={img.imageUrl}
+                caption={img.caption}
               />
-              {img.caption && (
-                <div className="gallery-overlay absolute inset-0 bg-gradient-to-t from-slate-900/70 to-transparent opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                  <span className="text-white text-sm font-medium">{img.caption}</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-slate-400 text-sm">
+            No gallery photos added yet.
+          </div>
+        )}
       </div>
     </section>
   );

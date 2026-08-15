@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { getEvents, createEvent, updateEvent, deleteEvent } from '../../utils/api_request/events';
-import { fileToBase64, validateImageFile } from '../../utils/helpers';
-import type { NGOEvent } from '../../types/event';
+import { validateImageFile } from '../../utils/helpers';
+import type { NGOEvent, EventImageItem } from '../../types/event';
 
 type PendingImage =
   | { type: 'existing'; id: string; imageUrl: string; caption?: string }
-  | { type: 'new'; previewUrl: string; caption?: string };
+  | { type: 'new'; file: File; previewUrl: string; caption?: string };
 
 interface EventForm {
   title: string;
@@ -65,15 +65,15 @@ export const useAdminEvents = () => {
     if (formErrors[field]) setFormErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
-  const handleAddImage = useCallback(async (file: File) => {
+  const handleAddImage = useCallback((file: File) => {
     if (pendingImages.length >= MAX_IMAGES) {
       toast.error(`Maximum ${MAX_IMAGES} images allowed per event`);
       return;
     }
     const error = validateImageFile(file);
     if (error) { toast.error(error); return; }
-    const previewUrl = await fileToBase64(file);
-    setPendingImages((prev) => [...prev, { type: 'new', previewUrl }]);
+    const previewUrl = URL.createObjectURL(file);
+    setPendingImages((prev) => [...prev, { type: 'new', file, previewUrl }]);
     if (formErrors.images) setFormErrors((prev) => ({ ...prev, images: '' }));
   }, [pendingImages.length, formErrors.images]);
 
@@ -94,10 +94,11 @@ export const useAdminEvents = () => {
     if (!validate()) return;
     setIsSaving(true);
     try {
-      const images = pendingImages.map((img) => ({
-        imageBase64: img.type === 'new' ? img.previewUrl : img.imageUrl,
-        caption: img.caption,
-      }));
+      const images: EventImageItem[] = pendingImages.map((img) =>
+        img.type === 'new'
+          ? { type: 'new', file: img.file, caption: img.caption }
+          : { type: 'existing', url: img.imageUrl, caption: img.caption }
+      );
       if (editTarget) {
         const updated = await updateEvent(editTarget.id, { title: form.title.trim(), description: form.description.trim(), images });
         setEvents((prev) => prev.map((e) => e.id === updated.id ? updated : e));

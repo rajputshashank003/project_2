@@ -1,14 +1,12 @@
 package dto
 
-// CreateIDCardRequest is the body for POST /id-cards.
+// CreateIDCardRequest is the body/form for POST /id-cards.
 type CreateIDCardRequest struct {
-	UserName              string `json:"userName"               binding:"required"`
-	Phone                 string `json:"phone"`
-	Email                 string `json:"email"`
-	Address               string `json:"address"`
-	Designation           string `json:"designation"`
-	PassportPhotoB64      string `json:"passportPhotoBase64"    binding:"required"`
-	PaymentScreenshotB64  string `json:"paymentScreenshotBase64" binding:"required"`
+	UserName    string `json:"userName"    form:"userName"    binding:"required"`
+	Phone       string `json:"phone"       form:"phone"`
+	Email       string `json:"email"       form:"email"`
+	Address     string `json:"address"     form:"address"`
+	Designation string `json:"designation" form:"designation"`
 }
 
 // UpdateIDCardStatusRequest is the body for PATCH /id-cards/:id/status.

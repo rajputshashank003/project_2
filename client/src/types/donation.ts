@@ -22,7 +22,7 @@ export interface CreateDonationPayload {
     phone: string;
     email: string;
     amount: number;
-    paymentScreenshotBase64: string;
+    paymentProof: File;
     utrNumber?: string;
 }
 

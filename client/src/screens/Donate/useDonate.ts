@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { createDonation } from '../../utils/api_request/donations';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { fileToBase64, validateImageFile, isValidEmail, isValidPhone } from '../../utils/helpers';
+import { validateImageFile, isValidEmail, isValidPhone } from '../../utils/helpers';
 import type { CreateDonationPayload } from '../../types/donation';
 
 interface DonationFormData {
@@ -43,11 +43,11 @@ export const useDonate = () => {
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
-  const handleScreenshotUpload = async (file: File) => {
+  const handleScreenshotUpload = (file: File) => {
     const error = validateImageFile(file);
     if (error) { toast.error(error); return; }
     setScreenshotFile(file);
-    const preview = await fileToBase64(file);
+    const preview = URL.createObjectURL(file);
     setScreenshotPreview(preview);
     if (errors.screenshot) setErrors((prev) => ({ ...prev, screenshot: '' }));
   };
@@ -98,16 +98,16 @@ export const useDonate = () => {
   };
 
   const handleSubmit = useCallback(async () => {
-    if (!validate()) return;
+    if (!validate() || !screenshotFile) return;
     setIsSubmitting(true);
     try {
       const payload: CreateDonationPayload = {
-        donorName:              form.donorName.trim(),
-        phone:                  form.phone,
-        email:                  form.email,
-        amount:                 Number(form.amount),
-        paymentScreenshotBase64: screenshotPreview,
-        utrNumber:              form.utrNumber.trim() || undefined,
+        donorName:    form.donorName.trim(),
+        phone:        form.phone,
+        email:        form.email,
+        amount:       Number(form.amount),
+        paymentProof: screenshotFile,
+        utrNumber:    form.utrNumber.trim() || undefined,
       };
       const result = await createDonation(payload);
       setSubmittedId(result.id);
@@ -118,7 +118,7 @@ export const useDonate = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [form, screenshotPreview, validate]);
+  }, [form, screenshotFile, validate]);
 
   const handleReset = () => {
     setForm({ ...EMPTY_FORM, donorName: user?.name || '', phone: user?.phone || '' });

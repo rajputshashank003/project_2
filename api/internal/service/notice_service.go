@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/google/uuid"
 	"github.com/shashankrajput/ngo-platform/api/internal/dto"
@@ -21,8 +22,8 @@ func NewNoticeService(repo *repository.NoticeRepository, cloudinary *CloudinaryS
 	return &NoticeService{repo: repo, cloudinary: cloudinary}
 }
 
-// Create creates a notice, optionally uploading an image to Cloudinary.
-func (s *NoticeService) Create(ctx context.Context, req dto.CreateNoticeRequest, createdBy string) (*models.Notice, error) {
+// Create creates a notice, optionally streaming an image file to Cloudinary.
+func (s *NoticeService) Create(ctx context.Context, req dto.CreateNoticeRequest, file io.Reader, createdBy string) (*models.Notice, error) {
 	isActive := true
 	if req.IsActive != nil {
 		isActive = *req.IsActive
@@ -34,8 +35,8 @@ func (s *NoticeService) Create(ctx context.Context, req dto.CreateNoticeRequest,
 		CreatedBy: createdBy,
 	}
 
-	if req.ImageB64 != "" {
-		result, err := s.cloudinary.Upload(ctx, req.ImageB64)
+	if file != nil {
+		result, err := s.cloudinary.UploadFile(ctx, file)
 		if err != nil {
 			return nil, fmt.Errorf("notice: image upload failed: %w", err)
 		}

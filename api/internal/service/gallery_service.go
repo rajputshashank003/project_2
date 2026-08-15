@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/google/uuid"
-	"github.com/shashankrajput/ngo-platform/api/internal/dto"
 	"github.com/shashankrajput/ngo-platform/api/internal/models"
 	"github.com/shashankrajput/ngo-platform/api/internal/repository"
 )
@@ -21,9 +21,9 @@ func NewGalleryService(repo *repository.GalleryRepository, cloudinary *Cloudinar
 	return &GalleryService{repo: repo, cloudinary: cloudinary}
 }
 
-// Upload uploads an image to Cloudinary then stores the record.
-func (s *GalleryService) Upload(ctx context.Context, req dto.UploadGalleryRequest, uploadedBy string) (*models.GalleryImage, error) {
-	result, err := s.cloudinary.Upload(ctx, req.ImageB64)
+// Upload uploads an image file stream to Cloudinary then stores the record.
+func (s *GalleryService) Upload(ctx context.Context, caption string, file io.Reader, uploadedBy string) (*models.GalleryImage, error) {
+	result, err := s.cloudinary.UploadFile(ctx, file)
 	if err != nil {
 		return nil, fmt.Errorf("gallery: upload failed: %w", err)
 	}
@@ -31,7 +31,7 @@ func (s *GalleryService) Upload(ctx context.Context, req dto.UploadGalleryReques
 	img := &models.GalleryImage{
 		ImageURL:     result.SecureURL,
 		CloudinaryID: result.PublicID,
-		Caption:      req.Caption,
+		Caption:      caption,
 		UploadedBy:   uploadedBy,
 	}
 

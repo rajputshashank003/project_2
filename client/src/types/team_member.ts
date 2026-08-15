@@ -11,5 +11,5 @@ export interface TeamMember {
 export interface UpdateTeamMemberPayload {
   name: string;
   designation: string;
-  photoBase64: string;
+  photo?: File;
 }

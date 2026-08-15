@@ -34,6 +34,7 @@ func Setup(
 
 	// ---- Global middleware --------------------------------------------------
 	r.Use(middleware.RequestID())
+	r.Use(middleware.RequestLogger())
 	r.Use(gin.Recovery())
 	r.Use(middleware.BodyLimit(bodyLimitBytes))
 	r.Use(cors.New(cors.Config{
@@ -160,6 +161,7 @@ func Setup(
 	{
 		my.GET("/donations", donationH.ListMy)
 		my.GET("/id-cards", idCardH.ListMy)
+		my.PATCH("/profile", userH.UpdateMyProfile)
 	}
 
 	return r

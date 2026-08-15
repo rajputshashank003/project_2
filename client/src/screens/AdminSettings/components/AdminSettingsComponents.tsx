@@ -1,6 +1,6 @@
 import React, { useContext, useRef } from 'react';
 import { AdminSettingsContext } from '../context';
-import { Building2, User, Phone, CreditCard, PenTool, Trash2 } from 'lucide-react';
+import { Building2, User, Phone, CreditCard, PenTool, Trash2, Target } from 'lucide-react';
 
 export const GeneralSettingsForm: React.FC = () => {
   const ctx = useContext(AdminSettingsContext);
@@ -50,9 +50,56 @@ export const GeneralSettingsForm: React.FC = () => {
           <input
             id="setting-ngo-year"
             type="number"
-            value={form.foundedYear}
-            onChange={(e) => handleFormChange('foundedYear', Number(e.target.value))}
+            min={1900}
+            max={2100}
+            value={form.foundedYear || ''}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val.length <= 4) {
+                handleFormChange('foundedYear', val === '' ? 0 : Number(val));
+              }
+            }}
             className="form-input"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const MissionVisionSettingsForm: React.FC = () => {
+  const ctx = useContext(AdminSettingsContext);
+  if (!ctx) return null;
+  const { form, handleFormChange } = ctx;
+
+  return (
+    <div className="card-md space-y-4">
+      <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+        <Target className="h-4 w-4 text-emerald-600" />
+        Mission &amp; Vision (Displayed on Public About Page)
+      </h2>
+
+      <div className="space-y-4">
+        <div>
+          <label className="form-label">Our Mission</label>
+          <textarea
+            id="setting-ngo-mission"
+            rows={3}
+            placeholder="Describe the NGO's mission..."
+            value={form.mission || ''}
+            onChange={(e) => handleFormChange('mission', e.target.value)}
+            className="form-input resize-none"
+          />
+        </div>
+        <div>
+          <label className="form-label">Our Vision</label>
+          <textarea
+            id="setting-ngo-vision"
+            rows={3}
+            placeholder="Describe the NGO's long-term vision..."
+            value={form.vision || ''}
+            onChange={(e) => handleFormChange('vision', e.target.value)}
+            className="form-input resize-none"
           />
         </div>
       </div>
@@ -131,6 +178,21 @@ export const ContactSettingsForm: React.FC = () => {
             className="form-input"
           />
         </div>
+      </div>
+
+      <div>
+        <label className="form-label">Manager Phone Number (for Instant WhatsApp Alerts)</label>
+        <input
+          id="setting-manager-phone"
+          type="text"
+          placeholder="e.g. 919876543210"
+          value={form.managerPhone || ''}
+          onChange={(e) => handleFormChange('managerPhone', e.target.value)}
+          className="form-input"
+        />
+        <p className="text-xs text-slate-500 mt-1">
+          When a user requests a donation verification or volunteer ID card, an instant alert will be sent to this WhatsApp number with the applicant details and review link.
+        </p>
       </div>
 
       <div>
@@ -235,13 +297,13 @@ export const AssetSettingsForm: React.FC = () => {
   const sigRef  = useRef<HTMLInputElement>(null);
 
   if (!ctx) return null;
-  const { form, handleLogoUpload, handleSignatureUpload, handleDeleteSignature } = ctx;
+  const { form, handleLogoUpload, handleDeleteLogo, handleSignatureUpload, handleDeleteSignature } = ctx;
 
   return (
     <div className="card-md space-y-4">
       <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
         <PenTool className="h-4 w-4 text-emerald-600" />
-        Branding & Digital Signature
+        Branding &amp; Digital Signature
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -249,21 +311,42 @@ export const AssetSettingsForm: React.FC = () => {
         <div>
           <label className="form-label">NGO Logo</label>
           <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f); }} />
-          <div className="border border-slate-200 rounded-xl p-4 flex items-center gap-4 bg-slate-50">
+          <div className="border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-4 bg-slate-50">
             {form.logoUrl ? (
-              <img src={form.logoUrl} alt="NGO Logo" className="h-14 w-14 object-contain bg-white rounded-lg p-1 border" />
+              <React.Fragment>
+                <img src={form.logoUrl} alt="NGO Logo" className="h-14 w-14 object-contain bg-white rounded-lg p-1 border" />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => logoRef.current?.click()}
+                    className="btn-outline py-1.5 px-2.5 text-xs"
+                  >
+                    Change
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteLogo}
+                    className="btn-danger py-1.5 px-2.5 text-xs"
+                    title="Remove Logo"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </React.Fragment>
             ) : (
-              <div className="h-14 w-14 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-lg">
-                NGO
-              </div>
+              <React.Fragment>
+                <div className="h-14 w-14 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-lg">
+                  NGO
+                </div>
+                <button
+                  type="button"
+                  onClick={() => logoRef.current?.click()}
+                  className="btn-outline py-1.5 px-3 text-xs"
+                >
+                  Upload Logo
+                </button>
+              </React.Fragment>
             )}
-            <button
-              type="button"
-              onClick={() => logoRef.current?.click()}
-              className="btn-outline py-1.5 px-3 text-xs"
-            >
-              {form.logoUrl ? 'Change Logo' : 'Upload Logo'}
-            </button>
           </div>
         </div>
 

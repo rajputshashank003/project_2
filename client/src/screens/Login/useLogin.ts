@@ -1,15 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { sendOtp, verifyOtp } from '../../utils/api_request/auth';
 import { useAuth } from '../../context/AuthContext';
-import { isValidPhone } from '../../utils/helpers';
+import { isValidPhone, isLoginAllowedForPhone } from '../../utils/helpers';
 import { OTP_RESEND_SECONDS } from '../../utils/constants';
 
 type Step = 'phone' | 'otp';
 
 export const useLogin = () => {
   const navigate  = useNavigate();
+  const location  = useLocation();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
 
   const [step, setStep]               = useState<Step>('phone');
@@ -36,6 +38,12 @@ export const useLogin = () => {
       setPhoneError('Please enter a valid 10-digit mobile number');
       return;
     }
+
+    if (!isLoginAllowedForPhone(cleaned)) {
+      toast.error('Feature under maintenance');
+      return;
+    }
+
     setIsLoading(true);
     try {
       await sendOtp(cleaned);
@@ -78,24 +86,34 @@ export const useLogin = () => {
       const res = await verifyOtp(phone.replace(/\s+/g, ''), otpString);
       login({
         ...res.user,
+        email:       res.user.email,
         token:       res.token,
         role:        res.user.role as 'admin' | 'user',
         designation: res.user.designation as 'member' | 'admin' | 'president' | 'secretary' | 'volunteer',
       });
       toast.success('Logged in successfully');
-      navigate('/');
+      
+      const redirectParam = searchParams.get('redirect');
+      const fromState = (location.state as any)?.from?.pathname;
+      const destination = redirectParam || fromState || '/';
+      navigate(destination, { replace: true });
     } catch {
       // error toast already shown by axiosInstance interceptor
     } finally {
       setIsLoading(false);
     }
-  }, [otp, phone, login, navigate]);
+  }, [otp, phone, login, navigate, location.state, searchParams]);
 
   const handleResendOtp = useCallback(async () => {
     if (resendTimer > 0) return;
+    const cleaned = phone.replace(/\s+/g, '');
+    if (!isLoginAllowedForPhone(cleaned)) {
+      toast.error('Feature under maintenance');
+      return;
+    }
     setIsLoading(true);
     try {
-      await sendOtp(phone.replace(/\s+/g, ''));
+      await sendOtp(cleaned);
       toast.success('OTP resent');
       setResendTimer(OTP_RESEND_SECONDS);
       setOtp(['', '', '', '', '', '']);

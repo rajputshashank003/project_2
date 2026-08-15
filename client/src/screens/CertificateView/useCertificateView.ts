@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getDonationById } from '../../utils/api_request/donations';
+import { getNgoConfig } from '../../utils/api_request/ngo';
 import { useApp } from '../../context/AppContext';
 import type { Donation } from '../../types/donation';
 import type { CertificateData } from '../../components/CertificateCanvas';
@@ -23,17 +24,21 @@ export const useCertificateView = () => {
     setIsLoading(true);
     setNotFound(false);
     try {
-      const data = await getDonationById(donationId);
+      const [data, freshConfig] = await Promise.all([
+        getDonationById(donationId),
+        getNgoConfig().catch(() => ngoConfig),
+      ]);
       setDonation(data);
+      const activeConfig = freshConfig || ngoConfig;
       setCertData({
-        ngoName:            ngoConfig.name,
-        ngoLogo:            ngoConfig.logoUrl,
-        ngoAddress:         ngoConfig.address,
-        ngoEmail:           ngoConfig.email,
-        registrationNumber: ngoConfig.registrationNumber,
-        presidentName:      ngoConfig.presidentName,
-        secretaryName:      ngoConfig.secretaryName,
-        signatureUrl:       ngoConfig.signatureUrl,
+        ngoName:            activeConfig.name,
+        ngoLogo:            activeConfig.logoUrl,
+        ngoAddress:         activeConfig.address,
+        ngoEmail:           activeConfig.email,
+        registrationNumber: activeConfig.registrationNumber,
+        presidentName:      activeConfig.presidentName,
+        secretaryName:      activeConfig.secretaryName,
+        signatureUrl:       activeConfig.signatureUrl,
         donorName:          data.donorName,
         amount:             data.amount,
         donationDate:       data.requestedAt,

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -33,12 +34,25 @@ func (h *NgoHandler) GetConfig(c *gin.Context) {
 // UpdateConfig godoc — PATCH /api/v1/ngo/config
 func (h *NgoHandler) UpdateConfig(c *gin.Context) {
 	var req dto.UpdateNgoConfigRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "VALIDATION_ERROR", "message": err.Error()}})
-		return
+	_ = c.ShouldBind(&req)
+
+	var logoFile io.Reader
+	if fileHeader, err := c.FormFile("logo"); err == nil {
+		if f, err := fileHeader.Open(); err == nil {
+			defer f.Close()
+			logoFile = f
+		}
 	}
 
-	cfg, err := h.svc.Update(c.Request.Context(), req)
+	var signatureFile io.Reader
+	if fileHeader, err := c.FormFile("signature"); err == nil {
+		if f, err := fileHeader.Open(); err == nil {
+			defer f.Close()
+			signatureFile = f
+		}
+	}
+
+	cfg, err := h.svc.Update(c.Request.Context(), req, logoFile, signatureFile)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "UPDATE_FAILED", "message": err.Error()}})
 		return

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useApp } from '../../context/AppContext';
-import { updateNgoConfig, uploadSignature, deleteSignature } from '../../utils/api_request/ngo';
-import { fileToBase64, validateImageFile } from '../../utils/helpers';
+import { updateNgoConfig, uploadLogo, deleteLogo, uploadSignature, deleteSignature } from '../../utils/api_request/ngo';
+import { validateImageFile } from '../../utils/helpers';
 import type { NgoConfig } from '../../types/ngo';
 
 export const useAdminSettings = () => {
@@ -24,12 +24,23 @@ export const useAdminSettings = () => {
     const error = validateImageFile(file);
     if (error) { toast.error(error); return; }
     try {
-      const b64 = await fileToBase64(file);
-      setForm((prev) => ({ ...prev, logoUrl: b64 }));
-      setIsDirty(true);
-      toast.success('Logo selected');
+      const updated = await uploadLogo(file);
+      setNgoConfig(updated);
+      setForm(updated);
+      toast.success('Organization logo updated successfully!');
     } catch {
-      toast.error('Failed to process logo image.');
+      toast.error('Failed to upload logo image.');
+    }
+  };
+
+  const handleDeleteLogo = async () => {
+    try {
+      const updated = await deleteLogo();
+      setNgoConfig(updated);
+      setForm(updated);
+      toast.success('Organization logo removed.');
+    } catch {
+      toast.error('Failed to remove logo.');
     }
   };
 
@@ -37,8 +48,7 @@ export const useAdminSettings = () => {
     const error = validateImageFile(file);
     if (error) { toast.error(error); return; }
     try {
-      const b64 = await fileToBase64(file);
-      const updated = await uploadSignature(b64);
+      const updated = await uploadSignature(file);
       setNgoConfig(updated);
       setForm(updated);
       toast.success('Digital signature updated successfully!');
@@ -83,6 +93,7 @@ export const useAdminSettings = () => {
     isDirty,
     handleFormChange,
     handleLogoUpload,
+    handleDeleteLogo,
     handleSignatureUpload,
     handleDeleteSignature,
     handleSaveSettings,

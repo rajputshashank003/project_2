@@ -14,13 +14,21 @@ export const getGalleryImages = async (page = 1, limit = 50): Promise<PaginatedR
 };
 
 export const uploadGalleryImage = async (data: {
-    imageBase64: string;
+    image: File;
     caption?: string;
-}): Promise<GalleryImage> => {
+} | FormData): Promise<GalleryImage> => {
+    let body: FormData;
+    if (data instanceof FormData) {
+        body = data;
+    } else {
+        body = new FormData();
+        body.append('image', data.image);
+        if (data.caption) body.append('caption', data.caption);
+    }
     const res = await request<ApiResponse<GalleryImage>>({
         url:    '/gallery',
         method: 'POST',
-        data,
+        data:   body,
     });
     return unwrap(res);
 };

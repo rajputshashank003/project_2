@@ -1,3 +1,12 @@
 - set dimensions for signature image so it fit correctly on card and certificate
 - set dimension for image for id card so it fit correctly 
+- show generic error from backend 
+
 - when sending whatasapp message should wait until we send message through service else send error 
+- if signature is updated then just close the modal 
+- signature not showing on id card
+- send platform link also in whatasapp message 
+- ux of menu for mobile
+- ux to find id or certificate 
+- add loader on home screen also where images are loading 
+- 

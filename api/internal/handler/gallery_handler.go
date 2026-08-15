@@ -45,16 +45,24 @@ func (h *GalleryHandler) List(c *gin.Context) {
 
 // Upload godoc — POST /api/v1/gallery
 func (h *GalleryHandler) Upload(c *gin.Context) {
-	var req dto.UploadGalleryRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "VALIDATION_ERROR", "message": err.Error()}})
+	fileHeader, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "VALIDATION_ERROR", "message": "image file is required"}})
 		return
 	}
 
+	file, err := fileHeader.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "FILE_READ_ERROR", "message": "Failed to read image file"}})
+		return
+	}
+	defer file.Close()
+
+	caption := c.PostForm("caption")
 	uploadedBy, _ := c.Get(middleware.AuthUserNameKey)
 	name, _ := uploadedBy.(string)
 
-	img, err := h.svc.Upload(c.Request.Context(), req, name)
+	img, err := h.svc.Upload(c.Request.Context(), caption, file, name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "UPLOAD_FAILED", "message": err.Error()}})
 		return

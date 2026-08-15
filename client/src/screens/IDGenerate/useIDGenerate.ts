@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { createIdCardRequest } from '../../utils/api_request/id_cards';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
-import { fileToBase64, validateImageFile, isValidEmail, isValidPhone } from '../../utils/helpers';
+import { validateImageFile, isValidEmail, isValidPhone } from '../../utils/helpers';
 import type { UserDesignation } from '../../types/user';
 import type { CreateIdCardPayload } from '../../types/id_card';
 
@@ -42,20 +42,20 @@ export const useIDGenerate = () => {
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
-  const handlePassportUpload = async (file: File) => {
+  const handlePassportUpload = (file: File) => {
     const error = validateImageFile(file);
     if (error) { toast.error(error); return; }
     setPassportFile(file);
-    const preview = await fileToBase64(file);
+    const preview = URL.createObjectURL(file);
     setPassportPreview(preview);
     if (errors.passport) setErrors((prev) => ({ ...prev, passport: '' }));
   };
 
-  const handlePaymentUpload = async (file: File) => {
+  const handlePaymentUpload = (file: File) => {
     const error = validateImageFile(file);
     if (error) { toast.error(error); return; }
     setPaymentFile(file);
-    const preview = await fileToBase64(file);
+    const preview = URL.createObjectURL(file);
     setPaymentPreview(preview);
     if (errors.payment) setErrors((prev) => ({ ...prev, payment: '' }));
   };
@@ -73,17 +73,17 @@ export const useIDGenerate = () => {
   };
 
   const handleSubmit = useCallback(async () => {
-    if (!validate()) return;
+    if (!validate() || !passportFile || !paymentFile) return;
     setIsSubmitting(true);
     try {
       const payload: CreateIdCardPayload = {
-        userName:               form.userName.trim(),
-        phone:                  form.phone,
-        email:                  form.email,
-        address:                form.address.trim(),
-        designation:            form.designation,
-        passportPhotoBase64:    passportPreview,
-        paymentScreenshotBase64: paymentPreview,
+        userName:      form.userName.trim(),
+        phone:         form.phone,
+        email:         form.email,
+        address:       form.address.trim(),
+        designation:   form.designation,
+        passportPhoto: passportFile,
+        paymentProof:  paymentFile,
       };
       const result = await createIdCardRequest(payload);
       setSubmittedId(result.id);
@@ -94,7 +94,7 @@ export const useIDGenerate = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [form, passportPreview, paymentPreview, validate]);
+  }, [form, passportFile, paymentFile, validate]);
 
   const handleReset = () => {
     setForm({ ...EMPTY_FORM, userName: user?.name || '', phone: user?.phone || '' });

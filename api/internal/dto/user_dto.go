@@ -1,10 +1,17 @@
 package dto
 
-// UpdateUserRequest is the body for PATCH /users/:id.
+// UpdateUserRequest is the body for PATCH /users/:id (admin use).
 type UpdateUserRequest struct {
 	Designation string `json:"designation"`
 	Name        string `json:"name"`
 	Email       string `json:"email"`
+}
+
+// UpdateMyProfileRequest is the body for PATCH /my/profile (self-update by user).
+// Only name and email are allowed — no role or designation changes.
+type UpdateMyProfileRequest struct {
+	Name  string `json:"name"  binding:"required"`
+	Email string `json:"email" binding:"required"`
 }
 
 // SendSMSRequest is the body for POST /notify/sms.

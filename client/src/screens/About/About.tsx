@@ -86,7 +86,7 @@ const AboutContent: React.FC = () => {
           </div>
           <h2 className="text-base font-bold text-slate-900 mb-2">Our Mission</h2>
           <p className="text-slate-500 text-sm leading-relaxed">
-            To provide resources, support, and opportunities that uplift underserved communities, helping individuals lead dignified, self-sufficient lives through targeted programs and partnerships.
+            {ngoConfig.mission || 'To provide resources, support, and opportunities that uplift underserved communities, helping individuals lead dignified, self-sufficient lives through targeted programs and partnerships.'}
           </p>
         </div>
         <div className="card-md">
@@ -95,7 +95,7 @@ const AboutContent: React.FC = () => {
           </div>
           <h2 className="text-base font-bold text-slate-900 mb-2">Our Vision</h2>
           <p className="text-slate-500 text-sm leading-relaxed">
-            A world where every individual has access to basic needs, quality education, and equal opportunities — where communities thrive through compassion and collective action.
+            {ngoConfig.vision || 'A world where every individual has access to basic needs, quality education, and equal opportunities — where communities thrive through compassion and collective action.'}
           </p>
         </div>
       </div>

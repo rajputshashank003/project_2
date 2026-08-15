@@ -46,15 +46,37 @@ func (h *EventHandler) List(c *gin.Context) {
 // Create godoc — POST /api/v1/events
 func (h *EventHandler) Create(c *gin.Context) {
 	var req dto.CreateEventRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "VALIDATION_ERROR", "message": err.Error()}})
 		return
+	}
+
+	var imageUploads []dto.EventImageUpload
+	form, _ := c.MultipartForm()
+	if form != nil {
+		files := form.File["images"]
+		captions := form.Value["captions"]
+		for i, fileHeader := range files {
+			f, err := fileHeader.Open()
+			if err != nil {
+				continue
+			}
+			defer f.Close()
+			capText := ""
+			if i < len(captions) {
+				capText = captions[i]
+			}
+			imageUploads = append(imageUploads, dto.EventImageUpload{
+				File:    f,
+				Caption: capText,
+			})
+		}
 	}
 
 	createdBy, _ := c.Get(middleware.AuthUserNameKey)
 	name, _ := createdBy.(string)
 
-	event, err := h.svc.Create(c.Request.Context(), req, name)
+	event, err := h.svc.Create(c.Request.Context(), req, imageUploads, name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "CREATE_FAILED", "message": err.Error()}})
 		return
@@ -72,12 +94,49 @@ func (h *EventHandler) Update(c *gin.Context) {
 	}
 
 	var req dto.UpdateEventRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "VALIDATION_ERROR", "message": err.Error()}})
 		return
 	}
 
-	event, err := h.svc.Update(c.Request.Context(), id, req)
+	var imageUploads []dto.EventImageUpload
+	form, _ := c.MultipartForm()
+	if form != nil {
+		// Existing image URLs
+		existingURLs := form.Value["existingUrls"]
+		existingCaptions := form.Value["existingCaptions"]
+		for i, url := range existingURLs {
+			capText := ""
+			if i < len(existingCaptions) {
+				capText = existingCaptions[i]
+			}
+			imageUploads = append(imageUploads, dto.EventImageUpload{
+				ExistingURL: url,
+				Caption:     capText,
+			})
+		}
+
+		// New image files
+		newFiles := form.File["images"]
+		newCaptions := form.Value["captions"]
+		for i, fileHeader := range newFiles {
+			f, err := fileHeader.Open()
+			if err != nil {
+				continue
+			}
+			defer f.Close()
+			capText := ""
+			if i < len(newCaptions) {
+				capText = newCaptions[i]
+			}
+			imageUploads = append(imageUploads, dto.EventImageUpload{
+				File:    f,
+				Caption: capText,
+			})
+		}
+	}
+
+	event, err := h.svc.Update(c.Request.Context(), id, req, imageUploads)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "UPDATE_FAILED", "message": err.Error()}})
 		return

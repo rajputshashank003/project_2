@@ -73,16 +73,45 @@ func (h *IDCardHandler) Create(c *gin.Context) {
 	}
 
 	var req dto.CreateIDCardRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "VALIDATION_ERROR", "message": err.Error()}})
 		return
 	}
+
+	// Passport photo file
+	passportHeader, err := c.FormFile("passportPhoto")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "VALIDATION_ERROR", "message": "passportPhoto file is required"}})
+		return
+	}
+	passportFile, err := passportHeader.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "FILE_READ_ERROR", "message": "Failed to read passport photo file"}})
+		return
+	}
+	defer passportFile.Close()
+
+	// Payment screenshot / proof file
+	paymentHeader, err := c.FormFile("paymentScreenshot")
+	if err != nil {
+		paymentHeader, err = c.FormFile("paymentProof")
+	}
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "VALIDATION_ERROR", "message": "paymentScreenshot/paymentProof file is required"}})
+		return
+	}
+	paymentFile, err := paymentHeader.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "FILE_READ_ERROR", "message": "Failed to read payment screenshot file"}})
+		return
+	}
+	defer paymentFile.Close()
 
 	// Get authenticated user ID
 	rawID, _ := c.Get(middleware.AuthUserIDKey)
 	userUUID, _ := rawID.(uuid.UUID)
 
-	card, err := h.svc.Create(c.Request.Context(), req, &userUUID)
+	card, err := h.svc.Create(c.Request.Context(), req, &userUUID, passportFile, paymentFile)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "CREATE_FAILED", "message": err.Error()}})
 		return

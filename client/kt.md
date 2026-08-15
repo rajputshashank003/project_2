@@ -48,6 +48,7 @@ screens/
 | `useHome` | `getNotices`, `getGalleryImages` |
 | `useAbout` | `getTeamMembers` |
 | `useEvents` | `getEvents` |
+| `useGallery` | `getGalleryImages` |
 | `useDonate` | `createDonation` |
 | `useIDGenerate` | `createIdCardRequest` |
 | `useCertificateView` | `getDonationById` |
@@ -61,16 +62,19 @@ screens/
 | `useAdminUsers` | `getUsers`, `updateUserDesignation` |
 | `useAdminSettings` | `updateNgoConfig`, `uploadSignature`, `deleteSignature` |
 | `useUserProfile` | `getMyDonations`, `getMyIdCards` |
+| `ProfileCompletionModal` | `updateMyProfile` |
 
 ---
 
 ## 4. API Layer
 
 All HTTP calls go through `src/utils/api_request/`:
-- `apiRequest(method, path, body, token)` — centralised fetch wrapper
+- `request(config)` — centralized Axios wrapper with automatic Bearer token injection and error handling
 - Base URL: `VITE_API_BASE_URL` env var (must be `http://localhost:3000/api/v1` in dev, backend URL in prod)
 - Auth token stored in `localStorage` as `ngo_token`, passed as `Authorization: Bearer <token>`
 - Idempotency-Key: generated once per form submit (uuid), stored in React state, sent as header for `POST /donations` and `POST /id-cards`
+- Mandatory onboarding: `PATCH /my/profile` handles user self-update for full name and email.
+- Deep links & redirection: `ProtectedRoute` captures `from` location state, and `useLogin` supports `?redirect=` param for automatic post-auth routing.
 
 ---
 
@@ -190,8 +194,9 @@ In production, set to your Render/backend URL.
 
 ## 13. Code Conventions
 
-- All API calls in `ScreenName.api.js` — never inline fetch in components
+- All API calls in `src/utils/api_request/*.ts` — never inline fetch/axios in components or hooks
 - Global auth state in `AuthContext` only — no prop-drilling of token/user
+- **File Uploads**: Always use `FormData` with raw browser `File` objects for network transfer; use `URL.createObjectURL(file)` for instant UI previews (never convert to base64 for network requests)
 - Images displayed using Cloudinary CDN URLs — never embed Base64 in UI
 - Error responses always in `{error: {code, message}}` shape — parse `error.code` for user-facing messages
 - Loading + error states required on every API call
@@ -232,7 +237,7 @@ npm run dev            # http://localhost:5173
 | `ApiResponse<T>` | Type: `{data: T}` — single item response |
 | `PaginatedResponse<T>` | Type: `{data: T[], pagination: {...}}` — list response |
 
-**Auth:** `axiosInstance` reads `localStorage[STORAGE_KEYS.AUTH_TOKEN]` and adds `Authorization: Bearer <token>` on every request.
+**Auth & FormData:** `axiosInstance` reads `localStorage[STORAGE_KEYS.AUTH_TOKEN]` and adds `Authorization: Bearer <token>`. When `config.data instanceof FormData`, it deletes `'Content-Type'` so Axios and the browser automatically set `multipart/form-data` with proper boundary headers instead of attempting to JSON-stringify the FormData.
 
 **401 handling:** Interceptor clears auth, redirects to `/login` automatically.
 
@@ -262,3 +267,14 @@ npm run dev            # http://localhost:5173
 | `AppContext` | `src/context/AppContext.tsx` | `ngoConfig` (fetched on app startup from `GET /ngo/config`), `setNgoConfig()` |
 
 **AppContext** is critical: `ngoConfig` (name, logo, signature, etc.) is used by multiple screens (ID card approval, certificate generation). It is fetched once on mount and shared globally.
+
+---
+
+## 17. Login Access Restrictions (`VITE_STOP_LOGIN`)
+
+- `VITE_STOP_LOGIN` in `client/.env` controls phone-based login access.
+- Accepts a comma-separated list of allowed phone numbers (e.g. `VITE_STOP_LOGIN="1242342, 4124342, 2423423"`).
+- If set, any user attempting to request an OTP with a number not present in the list receives `toast.error('Feature under maintenance')` and the API call is prevented.
+- If empty or set to `"false"`, all valid 10-digit mobile numbers are permitted to log in.
+- Normalized and validated via `isLoginAllowedForPhone(phone)` in `src/utils/helpers.ts`.
+

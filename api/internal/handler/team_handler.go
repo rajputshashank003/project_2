@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"io"
 	"net/http"
 	"strconv"
 
@@ -38,12 +39,21 @@ func (h *TeamHandler) UpdateSlot(c *gin.Context) {
 	}
 
 	var req dto.UpdateTeamMemberRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "VALIDATION_ERROR", "message": err.Error()}})
 		return
 	}
 
-	member, err := h.svc.UpdateSlot(c.Request.Context(), slot, req)
+	var file io.Reader
+	if fileHeader, err := c.FormFile("photo"); err == nil {
+		f, err := fileHeader.Open()
+		if err == nil {
+			defer f.Close()
+			file = f
+		}
+	}
+
+	member, err := h.svc.UpdateSlot(c.Request.Context(), slot, req, file)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "UPDATE_FAILED", "message": err.Error()}})
 		return
@@ -53,6 +63,7 @@ func (h *TeamHandler) UpdateSlot(c *gin.Context) {
 }
 
 // ClearSlot godoc — PATCH /api/v1/team/:slot/clear
+// Returns the cleared TeamMember object so the frontend can update its state.
 func (h *TeamHandler) ClearSlot(c *gin.Context) {
 	slot, err := strconv.Atoi(c.Param("slot"))
 	if err != nil {
@@ -60,25 +71,28 @@ func (h *TeamHandler) ClearSlot(c *gin.Context) {
 		return
 	}
 
-	if err := h.svc.ClearSlot(c.Request.Context(), slot); err != nil {
+	cleared, err := h.svc.ClearSlot(c.Request.Context(), slot)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "CLEAR_FAILED", "message": err.Error()}})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": gin.H{"message": "Slot cleared"}})
+	c.JSON(http.StatusOK, gin.H{"data": cleared})
 }
 
 // AddSlot godoc — POST /api/v1/team/add-slot
+// Returns the full updated team list so the frontend can replace its state.
 func (h *TeamHandler) AddSlot(c *gin.Context) {
-	member, err := h.svc.AddSlot()
+	members, err := h.svc.AddSlot()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "ADD_SLOT_FAILED", "message": err.Error()}})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"data": member})
+	c.JSON(http.StatusCreated, gin.H{"data": members})
 }
 
 // RemoveSlot godoc — DELETE /api/v1/team/slot/:slot
+// Returns the full updated team list so the frontend can replace its state.
 func (h *TeamHandler) RemoveSlot(c *gin.Context) {
 	slot, err := strconv.Atoi(c.Param("slot"))
 	if err != nil {
@@ -86,10 +100,11 @@ func (h *TeamHandler) RemoveSlot(c *gin.Context) {
 		return
 	}
 
-	if err := h.svc.RemoveSlot(c.Request.Context(), slot); err != nil {
+	members, err := h.svc.RemoveSlot(c.Request.Context(), slot)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "REMOVE_FAILED", "message": err.Error()}})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": gin.H{"message": "Slot removed and re-indexed"}})
+	c.JSON(http.StatusOK, gin.H{"data": members})
 }

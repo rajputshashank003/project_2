@@ -14,14 +14,18 @@ export interface NGOEvent {
   createdBy: string;
 }
 
+export type EventImageItem =
+  | { type: 'new'; file: File; caption?: string }
+  | { type: 'existing'; url: string; caption?: string };
+
 export interface CreateEventPayload {
   title: string;
   description: string;
-  images: { imageBase64: string; caption?: string }[];
+  images: EventImageItem[];
 }
 
 export interface UpdateEventPayload {
   title?: string;
   description?: string;
-  images?: { imageBase64: string; caption?: string }[];
+  images?: EventImageItem[];
 }

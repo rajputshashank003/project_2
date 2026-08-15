@@ -135,20 +135,13 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
             {data.signatureUrl && <img src={data.signatureUrl} alt="Signature" style={{ height: 40, marginBottom: 4 }} />}
             <div style={{ borderTop: '1px solid #334155', paddingTop: 4, fontSize: 11, color: '#334155' }}>
               <div style={{ fontWeight: 700 }}>{data.presidentName || 'President'}</div>
-              <div style={{ color: '#64748b' }}>President</div>
+              <div style={{ color: '#64748b' }}>Authorized Signatory / President</div>
             </div>
           </div>
 
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 11, color: '#94a3b8' }}>Certificate No.</div>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#334155', fontFamily: 'monospace' }}>{data.certificateNumber}</div>
-          </div>
-
-          <div style={{ textAlign: 'center', minWidth: 160 }}>
-            <div style={{ borderTop: '1px solid #334155', paddingTop: 4, fontSize: 11, color: '#334155' }}>
-              <div style={{ fontWeight: 700 }}>{data.secretaryName || 'Secretary'}</div>
-              <div style={{ color: '#64748b' }}>Secretary</div>
-            </div>
           </div>
         </div>
       </div>

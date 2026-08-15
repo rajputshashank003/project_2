@@ -21,11 +21,24 @@ export const getIdCardById = async (id: string): Promise<IdCard> => {
     return unwrap(res);
 };
 
-export const createIdCardRequest = async (data: CreateIdCardPayload): Promise<IdCard> => {
+export const createIdCardRequest = async (data: CreateIdCardPayload | FormData): Promise<IdCard> => {
+    let body: FormData;
+    if (data instanceof FormData) {
+        body = data;
+    } else {
+        body = new FormData();
+        body.append('userName', data.userName);
+        body.append('phone', data.phone);
+        body.append('email', data.email);
+        body.append('address', data.address);
+        body.append('designation', data.designation);
+        body.append('passportPhoto', data.passportPhoto);
+        body.append('paymentScreenshot', data.paymentProof);
+    }
     const res = await request<ApiResponse<IdCard>>({
         url:    '/id-cards',
         method: 'POST',
-        data,
+        data:   body,
         headers: { 'Idempotency-Key': crypto.randomUUID() },
     });
     return unwrap(res);

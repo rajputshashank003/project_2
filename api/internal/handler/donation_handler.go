@@ -74,16 +74,33 @@ func (h *DonationHandler) Create(c *gin.Context) {
 	}
 
 	var req dto.CreateDonationRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "VALIDATION_ERROR", "message": err.Error()}})
 		return
 	}
+
+	// Extract payment proof file from multipart form
+	fileHeader, err := c.FormFile("paymentProof")
+	if err != nil {
+		fileHeader, err = c.FormFile("paymentScreenshot")
+	}
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "VALIDATION_ERROR", "message": "Payment screenshot/proof file is required"}})
+		return
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "FILE_READ_ERROR", "message": "Failed to read payment screenshot file"}})
+		return
+	}
+	defer file.Close()
 
 	// Extract authenticated user ID set by Auth middleware
 	userIDRaw, _ := c.Get(middleware.AuthUserIDKey)
 	userID, _ := userIDRaw.(uuid.UUID)
 
-	donation, err := h.svc.Create(c.Request.Context(), userID, req)
+	donation, err := h.svc.Create(c.Request.Context(), userID, req, file)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "CREATE_FAILED", "message": err.Error()}})
 		return

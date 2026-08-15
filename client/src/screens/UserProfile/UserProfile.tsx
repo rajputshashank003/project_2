@@ -24,8 +24,16 @@ const UserProfileContent: React.FC = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-900">{user?.name || 'Member Profile'}</h1>
-              <p className="text-sm text-slate-500 mt-0.5">+91 {user?.phone}</p>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500 mt-1">
+                <span>+91 {user?.phone}</span>
+                {user?.email && (
+                  <React.Fragment>
+                    <span className="text-slate-300">•</span>
+                    <span>{user.email}</span>
+                  </React.Fragment>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-2.5">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 capitalize">
                   {user?.role === 'admin' ? 'Admin' : (user?.designation || 'Member')}
                 </span>

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"io"
 	"strconv"
 	"time"
 
@@ -32,9 +33,9 @@ func (s *NgoService) Get() (*models.NgoConfigResponse, error) {
 	return s.kvToResponse(kvMap), nil
 }
 
-// Update partially updates the org config. Uploads new logo/signature to Cloudinary
-// and deletes the old assets if replaced. Returns the updated config.
-func (s *NgoService) Update(ctx context.Context, req dto.UpdateNgoConfigRequest) (*models.NgoConfigResponse, error) {
+// Update partially updates the org config. Uploads new logo/signature files to Cloudinary
+// and deletes old assets if replaced or removed. Returns the updated config.
+func (s *NgoService) Update(ctx context.Context, req dto.UpdateNgoConfigRequest, logoFile io.Reader, signatureFile io.Reader) (*models.NgoConfigResponse, error) {
 	updates := map[string]string{
 		// always touch updated_at indirectly via BulkSet's updated_at column
 	}
@@ -91,61 +92,68 @@ func (s *NgoService) Update(ctx context.Context, req dto.UpdateNgoConfigRequest)
 	if req.Description != nil {
 		updates[models.OrgKeyDescription] = *req.Description
 	}
+	if req.Mission != nil {
+		updates[models.OrgKeyMission] = *req.Mission
+	}
+	if req.Vision != nil {
+		updates[models.OrgKeyVision] = *req.Vision
+	}
+	if req.ManagerPhone != nil {
+		updates[models.OrgKeyManagerPhone] = *req.ManagerPhone
+	}
 
 	// --- Logo replacement ---
-	if req.LogoB64 != nil && *req.LogoB64 != "" {
-		// Fetch current meta to delete old Cloudinary asset
-		meta, _ := s.repo.GetMeta()
-		if meta.LogoCloudinaryID != "" {
-			s.cloudinary.Delete(ctx, meta.LogoCloudinaryID)
+	if logoFile != nil {
+		assetMeta, _ := s.repo.GetAssetMeta(models.OrgKeyLogoURL)
+		if assetMeta.CloudinaryPublicID != "" {
+			s.cloudinary.Delete(ctx, assetMeta.CloudinaryPublicID)
 		}
-		uploadResult, err := s.cloudinary.Upload(ctx, *req.LogoB64)
+		uploadResult, err := s.cloudinary.UploadFile(ctx, logoFile)
 		if err != nil {
 			return nil, fmt.Errorf("ngo: logo upload failed: %w", err)
 		}
-		updates[models.OrgKeyLogoURL] = uploadResult.SecureURL
-		// Persist new Cloudinary ID in meta
-		meta.LogoCloudinaryID = uploadResult.PublicID
-		if err := s.repo.SetMeta(meta); err != nil {
-			return nil, fmt.Errorf("ngo: meta update failed: %w", err)
+		newMeta := models.CloudinaryAssetMeta{CloudinaryPublicID: uploadResult.PublicID}
+		if err := s.repo.SetWithMeta(models.OrgKeyLogoURL, uploadResult.SecureURL, newMeta); err != nil {
+			return nil, fmt.Errorf("ngo: logo update failed: %w", err)
+		}
+	} else if req.RemoveLogo != nil && *req.RemoveLogo {
+		assetMeta, _ := s.repo.GetAssetMeta(models.OrgKeyLogoURL)
+		if assetMeta.CloudinaryPublicID != "" {
+			s.cloudinary.Delete(ctx, assetMeta.CloudinaryPublicID)
+		}
+		if err := s.repo.SetWithMeta(models.OrgKeyLogoURL, "", models.CloudinaryAssetMeta{}); err != nil {
+			return nil, fmt.Errorf("ngo: logo removal failed: %w", err)
 		}
 	}
 
 	// --- Signature replacement ---
-	if req.SignatureB64 != nil {
-		if *req.SignatureB64 == "" {
-			// Delete signature
-			meta, _ := s.repo.GetMeta()
-			if meta.SignatureCloudinaryID != "" {
-				s.cloudinary.Delete(ctx, meta.SignatureCloudinaryID)
-				meta.SignatureCloudinaryID = ""
-				_ = s.repo.SetMeta(meta)
-			}
-			updates[models.OrgKeySignatureURL] = ""
-		} else {
-			meta, _ := s.repo.GetMeta()
-			if meta.SignatureCloudinaryID != "" {
-				s.cloudinary.Delete(ctx, meta.SignatureCloudinaryID)
-			}
-			uploadResult, err := s.cloudinary.Upload(ctx, *req.SignatureB64)
-			if err != nil {
-				return nil, fmt.Errorf("ngo: signature upload failed: %w", err)
-			}
-			updates[models.OrgKeySignatureURL] = uploadResult.SecureURL
-			meta.SignatureCloudinaryID = uploadResult.PublicID
-			if err := s.repo.SetMeta(meta); err != nil {
-				return nil, fmt.Errorf("ngo: meta update failed: %w", err)
-			}
+	if signatureFile != nil {
+		assetMeta, _ := s.repo.GetAssetMeta(models.OrgKeySignatureURL)
+		if assetMeta.CloudinaryPublicID != "" {
+			s.cloudinary.Delete(ctx, assetMeta.CloudinaryPublicID)
+		}
+		uploadResult, err := s.cloudinary.UploadFile(ctx, signatureFile)
+		if err != nil {
+			return nil, fmt.Errorf("ngo: signature upload failed: %w", err)
+		}
+		newMeta := models.CloudinaryAssetMeta{CloudinaryPublicID: uploadResult.PublicID}
+		if err := s.repo.SetWithMeta(models.OrgKeySignatureURL, uploadResult.SecureURL, newMeta); err != nil {
+			return nil, fmt.Errorf("ngo: signature update failed: %w", err)
+		}
+	} else if req.RemoveSignature != nil && *req.RemoveSignature {
+		assetMeta, _ := s.repo.GetAssetMeta(models.OrgKeySignatureURL)
+		if assetMeta.CloudinaryPublicID != "" {
+			s.cloudinary.Delete(ctx, assetMeta.CloudinaryPublicID)
+		}
+		if err := s.repo.SetWithMeta(models.OrgKeySignatureURL, "", models.CloudinaryAssetMeta{}); err != nil {
+			return nil, fmt.Errorf("ngo: signature removal failed: %w", err)
 		}
 	}
 
-	if len(updates) == 0 {
-		// Nothing to update — return current config
-		return s.Get()
-	}
-
-	if err := s.repo.BulkSet(updates); err != nil {
-		return nil, fmt.Errorf("ngo: update failed: %w", err)
+	if len(updates) > 0 {
+		if err := s.repo.BulkSet(updates); err != nil {
+			return nil, fmt.Errorf("ngo: update failed: %w", err)
+		}
 	}
 
 	return s.Get()
@@ -175,6 +183,9 @@ func (s *NgoService) kvToResponse(kv map[string]string) *models.NgoConfigRespons
 		SecretaryName:      kv[models.OrgKeySecretaryName],
 		FoundedYear:        foundedYear,
 		Description:        kv[models.OrgKeyDescription],
+		Mission:            kv[models.OrgKeyMission],
+		Vision:             kv[models.OrgKeyVision],
+		ManagerPhone:       kv[models.OrgKeyManagerPhone],
 		UpdatedAt:          time.Now(), // approximate; real per-key updated_at not surfaced
 	}
 }

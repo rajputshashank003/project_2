@@ -25,7 +25,7 @@ func (s *UserService) List(page, limit int) ([]models.User, int64, error) {
 	return s.repo.ListPaginated(offset, limit)
 }
 
-// Update partially updates a user's designation, name, email.
+// Update partially updates a user's designation, name, email (admin use).
 func (s *UserService) Update(id uuid.UUID, req dto.UpdateUserRequest) (*models.User, error) {
 	user, err := s.repo.FindByID(id)
 	if err != nil {
@@ -40,6 +40,21 @@ func (s *UserService) Update(id uuid.UUID, req dto.UpdateUserRequest) (*models.U
 	if req.Email != "" {
 		user.Email = req.Email
 	}
+	if err := s.repo.Update(user); err != nil {
+		return nil, fmt.Errorf("user: update failed: %w", err)
+	}
+	return user, nil
+}
+
+// UpdateMyProfile allows a user to self-update only their name and email.
+// Used by the onboarding modal — role and designation are NOT modifiable here.
+func (s *UserService) UpdateMyProfile(id uuid.UUID, req dto.UpdateMyProfileRequest) (*models.User, error) {
+	user, err := s.repo.FindByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("user: not found")
+	}
+	user.Name = req.Name
+	user.Email = req.Email
 	if err := s.repo.Update(user); err != nil {
 		return nil, fmt.Errorf("user: update failed: %w", err)
 	}

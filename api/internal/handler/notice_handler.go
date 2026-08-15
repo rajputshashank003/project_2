@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -46,15 +47,24 @@ func (h *NoticeHandler) List(c *gin.Context) {
 // Create godoc — POST /api/v1/notices
 func (h *NoticeHandler) Create(c *gin.Context) {
 	var req dto.CreateNoticeRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "VALIDATION_ERROR", "message": err.Error()}})
 		return
+	}
+
+	var file io.Reader
+	if fileHeader, err := c.FormFile("image"); err == nil {
+		f, err := fileHeader.Open()
+		if err == nil {
+			defer f.Close()
+			file = f
+		}
 	}
 
 	createdBy, _ := c.Get(middleware.AuthUserNameKey)
 	name, _ := createdBy.(string)
 
-	notice, err := h.svc.Create(c.Request.Context(), req, name)
+	notice, err := h.svc.Create(c.Request.Context(), req, file, name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "CREATE_FAILED", "message": err.Error()}})
 		return

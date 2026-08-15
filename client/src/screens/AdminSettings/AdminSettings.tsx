@@ -3,6 +3,7 @@ import { useAdminSettings } from './useAdminSettings';
 import { AdminSettingsContext } from './context';
 import {
   GeneralSettingsForm,
+  MissionVisionSettingsForm,
   OfficialsSettingsForm,
   ContactSettingsForm,
   PaymentSettingsForm,
@@ -48,6 +49,7 @@ const AdminSettingsContent: React.FC = () => {
       </div>
 
       <GeneralSettingsForm />
+      <MissionVisionSettingsForm />
       <OfficialsSettingsForm />
       <ContactSettingsForm />
       <PaymentSettingsForm />

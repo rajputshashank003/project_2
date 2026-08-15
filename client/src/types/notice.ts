@@ -11,6 +11,6 @@ export interface Notice {
 export interface CreateNoticePayload {
     title: string;
     content: string;
-    imageBase64?: string;
+    image?: File;
     isActive: boolean;
 }

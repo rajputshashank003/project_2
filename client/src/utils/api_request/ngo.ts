@@ -5,38 +5,13 @@ import { request, unwrap } from './utils';
 import type { ApiResponse } from './utils';
 import type { NgoConfig } from '../../types/ngo';
 
-// Backend DTO uses logoBase64 / signatureBase64 — not logoUrl / signatureUrl
-interface UpdateNgoConfigPayload {
-    name?:               string;
-    tagline?:            string;
-    logoBase64?:         string;
-    address?:            string;
-    phone?:              string;
-    email?:              string;
-    website?:            string;
-    registrationNumber?: string;
-    upiId?:              string;
-    upiName?:            string;
-    bankName?:           string;
-    accountNumber?:      string;
-    ifscCode?:           string;
-    accountHolderName?:  string;
-    signatureBase64?:    string;
-    presidentName?:      string;
-    secretaryName?:      string;
-    foundedYear?:        number;
-    description?:        string;
-}
-
 export const getNgoConfig = async (): Promise<NgoConfig> => {
     const res = await request<ApiResponse<NgoConfig>>({ url: '/ngo/config', method: 'GET' });
     return unwrap(res);
 };
 
 export const updateNgoConfig = async (data: Partial<NgoConfig>): Promise<NgoConfig> => {
-    // Map NgoConfig field names to the backend DTO field names.
-    // logoUrl with base64 data → logoBase64; signatureUrl → signatureBase64.
-    const payload: UpdateNgoConfigPayload = {
+    const payload = {
         name:               data.name,
         tagline:            data.tagline,
         address:            data.address,
@@ -52,11 +27,11 @@ export const updateNgoConfig = async (data: Partial<NgoConfig>): Promise<NgoConf
         accountHolderName:  data.accountHolderName,
         presidentName:      data.presidentName,
         secretaryName:      data.secretaryName,
-        foundedYear:        data.foundedYear,
+        foundedYear:        typeof data.foundedYear === 'number' ? data.foundedYear : Number(data.foundedYear) || undefined,
         description:        data.description,
-        // Pass image data using the backend's expected field names
-        logoBase64:      data.logoUrl      ? data.logoUrl      : undefined,
-        signatureBase64: data.signatureUrl !== undefined ? data.signatureUrl : undefined,
+        mission:            data.mission,
+        vision:             data.vision,
+        managerPhone:       data.managerPhone,
     };
     const res = await request<ApiResponse<NgoConfig>>({
         url:    '/ngo/config',
@@ -66,11 +41,33 @@ export const updateNgoConfig = async (data: Partial<NgoConfig>): Promise<NgoConf
     return unwrap(res);
 };
 
-export const uploadSignature = async (signatureBase64: string): Promise<NgoConfig> => {
+export const uploadLogo = async (file: File): Promise<NgoConfig> => {
+    const formData = new FormData();
+    formData.append('logo', file);
     const res = await request<ApiResponse<NgoConfig>>({
         url:    '/ngo/config',
         method: 'PATCH',
-        data:   { signatureBase64 },
+        data:   formData,
+    });
+    return unwrap(res);
+};
+
+export const deleteLogo = async (): Promise<NgoConfig> => {
+    const res = await request<ApiResponse<NgoConfig>>({
+        url:    '/ngo/config',
+        method: 'PATCH',
+        data:   { removeLogo: true },
+    });
+    return unwrap(res);
+};
+
+export const uploadSignature = async (file: File): Promise<NgoConfig> => {
+    const formData = new FormData();
+    formData.append('signature', file);
+    const res = await request<ApiResponse<NgoConfig>>({
+        url:    '/ngo/config',
+        method: 'PATCH',
+        data:   formData,
     });
     return unwrap(res);
 };
@@ -79,7 +76,7 @@ export const deleteSignature = async (): Promise<NgoConfig> => {
     const res = await request<ApiResponse<NgoConfig>>({
         url:    '/ngo/config',
         method: 'PATCH',
-        data:   { signatureBase64: '' },
+        data:   { removeSignature: true },
     });
     return unwrap(res);
 };

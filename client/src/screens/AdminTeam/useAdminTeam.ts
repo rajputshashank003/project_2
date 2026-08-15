@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { getTeamMembers, updateTeamMember, clearTeamMember, addTeamSlot, removeTeamSlot } from '../../utils/api_request/team_members';
-import { fileToBase64, validateImageFile } from '../../utils/helpers';
+import { validateImageFile } from '../../utils/helpers';
 import type { TeamMember, TeamMemberSlot } from '../../types/team_member';
 
 interface SlotFormState {
   name: string;
   designation: string;
+  photoFile?: File;
   photoPreview: string;
   isDirty: boolean;
 }
@@ -51,13 +52,13 @@ export const useAdminTeam = () => {
     }));
   }, []);
 
-  const handlePhotoUpload = useCallback(async (slot: TeamMemberSlot, file: File) => {
+  const handlePhotoUpload = useCallback((slot: TeamMemberSlot, file: File) => {
     const error = validateImageFile(file);
     if (error) { toast.error(error); return; }
-    const b64 = await fileToBase64(file);
+    const preview = URL.createObjectURL(file);
     setForms((prev) => ({
       ...prev,
-      [slot]: { ...(prev[slot] || emptySlotForm()), photoPreview: b64, isDirty: true },
+      [slot]: { ...(prev[slot] || emptySlotForm()), photoFile: file, photoPreview: preview, isDirty: true },
     }));
   }, []);
 
@@ -69,11 +70,9 @@ export const useAdminTeam = () => {
     try {
       const updatedList = await addTeamSlot();
       setMembers(updatedList);
-      const newInit: Partial<SlotForms> = { ...forms };
+      const newInit: Partial<SlotForms> = {};
       updatedList.forEach((m) => {
-        if (!newInit[m.slot]) {
-          newInit[m.slot] = { name: m.name, designation: m.designation, photoPreview: m.photoUrl, isDirty: false };
-        }
+        newInit[m.slot] = forms[m.slot] || { name: m.name, designation: m.designation, photoPreview: m.photoUrl, isDirty: false };
       });
       setForms(newInit);
       toast.success('Team slot added');
@@ -92,29 +91,38 @@ export const useAdminTeam = () => {
       setMembers(updatedList);
       const newInit: Partial<SlotForms> = {};
       updatedList.forEach((m) => {
-        newInit[m.slot] = forms[m.slot] || { name: m.name, designation: m.designation, photoPreview: m.photoUrl, isDirty: false };
+        newInit[m.slot] = { name: m.name, designation: m.designation, photoPreview: m.photoUrl, isDirty: false };
       });
       setForms(newInit);
       toast.success(`Slot ${slot} removed`);
     } catch {
       toast.error('Failed to remove slot');
     }
-  }, [members.length, forms]);
+  }, [members.length]);
 
   const handleSave = useCallback(async (slot: TeamMemberSlot) => {
     const f = forms[slot] || emptySlotForm();
     if (!f.name.trim())        { toast.error('Name is required'); return; }
     if (!f.designation.trim()) { toast.error('Designation is required'); return; }
-    if (!f.photoPreview)       { toast.error('Please upload a photo'); return; }
+    if (!f.photoPreview && !f.photoFile) { toast.error('Please upload a photo'); return; }
     setSaving((prev) => ({ ...prev, [slot]: true }));
     try {
       const updated = await updateTeamMember(slot, {
         name: f.name.trim(),
         designation: f.designation.trim(),
-        photoBase64: f.photoPreview,
+        photo: f.photoFile,
       });
       setMembers((prev) => prev.map((m) => (m.slot === slot ? updated : m)));
-      setForms((prev) => ({ ...prev, [slot]: { ...(prev[slot] || emptySlotForm()), isDirty: false } }));
+      setForms((prev) => ({
+        ...prev,
+        [slot]: {
+          name: updated.name,
+          designation: updated.designation,
+          photoPreview: updated.photoUrl,
+          photoFile: undefined,
+          isDirty: false,
+        },
+      }));
       toast.success(`Slot ${slot} saved!`);
     } catch {
       toast.error('Failed to save. Please try again.');
@@ -134,6 +142,8 @@ export const useAdminTeam = () => {
       setForms((prev) => ({ ...prev, [clearTarget]: emptySlotForm() }));
       toast.success(`Slot ${clearTarget} cleared`);
       setClearTarget(null);
+    } catch {
+      toast.error('Failed to clear slot');
     } finally {
       setClearing((prev) => ({ ...prev, [clearTarget!]: false }));
     }

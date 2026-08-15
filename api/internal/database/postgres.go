@@ -17,8 +17,12 @@ import (
 // Connect opens a GORM connection, tunes the connection pool, runs migrations,
 // and returns the *gorm.DB. It panics on any fatal error.
 func Connect(cfg *config.Config) *gorm.DB {
+	logMode := logger.Warn
+	if cfg.DevMode {
+		logMode = logger.Info
+	}
 	gormCfg := &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
+		Logger: logger.Default.LogMode(logMode),
 	}
 
 	db, err := gorm.Open(postgres.Open(cfg.DSN()), gormCfg)

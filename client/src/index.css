@@ -301,6 +301,32 @@ input, textarea, select { font-family: inherit; }
 /* ── Animation utilities ── */
 .animate-fade-in  { animation: fadeIn  0.2s  ease-out both; }
 .animate-slide-up { animation: slideUp 0.25s ease-out both; }
+.animate-drawer-slide {
+  animation: drawerSlideInRight 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform;
+}
+.animate-backdrop-fade {
+  animation: backdropFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity;
+}
+
+@keyframes drawerSlideInRight {
+  0% {
+    transform: translate3d(100%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes backdropFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
 
 /* ── Custom scrollbar ── */
 ::-webkit-scrollbar              { width: 5px; height: 5px; }

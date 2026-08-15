@@ -1,21 +1,22 @@
 package dto
 
-// EventImageInput is a single image within a CreateEventRequest.
-type EventImageInput struct {
-	ImageB64 string `json:"imageBase64" binding:"required"`
-	Caption  string `json:"caption"`
+import "io"
+
+// EventImageUpload holds an uploaded file stream or existing URL and optional caption.
+type EventImageUpload struct {
+	File        io.Reader
+	ExistingURL string
+	Caption     string
 }
 
-// CreateEventRequest is the body for POST /events.
+// CreateEventRequest is the form/body for POST /events.
 type CreateEventRequest struct {
-	Title       string           `json:"title"       binding:"required"`
-	Description string           `json:"description"`
-	Images      []EventImageInput `json:"images"`
+	Title       string `json:"title"       form:"title"       binding:"required"`
+	Description string `json:"description" form:"description"`
 }
 
-// UpdateEventRequest is the body for PATCH /events/:id.
+// UpdateEventRequest is the form/body for PATCH /events/:id.
 type UpdateEventRequest struct {
-	Title       string           `json:"title"`
-	Description string           `json:"description"`
-	Images      []EventImageInput `json:"images"` // replaces all images if provided
+	Title       string `json:"title"       form:"title"`
+	Description string `json:"description" form:"description"`
 }

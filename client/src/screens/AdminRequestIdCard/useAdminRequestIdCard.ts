@@ -5,7 +5,7 @@ import { getIdCardRequests, updateIdCardStatus } from '../../utils/api_request/i
 import { uploadSignature, deleteSignature } from '../../utils/api_request/ngo';
 import { notifyBoth, buildIdCardApprovalMessages, buildIdCardRejectionMessages } from '../../services/notification_service';
 import { useApp } from '../../context/AppContext';
-import { fileToBase64, validateImageFile } from '../../utils/helpers';
+import { validateImageFile } from '../../utils/helpers';
 import type { IdCard, IdCardStatus } from '../../types/id_card';
 
 type FilterStatus = 'all' | IdCardStatus;
@@ -64,8 +64,7 @@ export const useAdminRequestIdCard = () => {
     if (error) { toast.error(error); return; }
     setSignatureUploading(true);
     try {
-      const base64  = await fileToBase64(file);
-      const updated = await uploadSignature(base64);
+      const updated = await uploadSignature(file);
       setNgoConfig(updated);
       toast.success('Digital signature uploaded successfully!');
     } catch {

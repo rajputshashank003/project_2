@@ -12,12 +12,21 @@ export const getTeamMembers = async (): Promise<TeamMember[]> => {
 
 export const updateTeamMember = async (
     slot: TeamMemberSlot,
-    data: UpdateTeamMemberPayload
+    data: UpdateTeamMemberPayload | FormData
 ): Promise<TeamMember> => {
+    let body: FormData;
+    if (data instanceof FormData) {
+        body = data;
+    } else {
+        body = new FormData();
+        body.append('name', data.name);
+        body.append('designation', data.designation);
+        if (data.photo) body.append('photo', data.photo);
+    }
     const res = await request<ApiResponse<TeamMember>>({
         url:    `/team/${slot}`,
         method: 'PATCH',
-        data,
+        data:   body,
     });
     return unwrap(res);
 };

@@ -1,8 +1,9 @@
 import React, { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import ProfileCompletionModal from './components/ProfileCompletionModal';
 import { useAuth } from './context/AuthContext';
 
 // Lazy-loaded screens
@@ -13,6 +14,7 @@ const IDGenerate = lazy(() => import('./screens/IDGenerate/IDGenerate'));
 const CertificateView = lazy(() => import('./screens/CertificateView/CertificateView'));
 const IDCardView = lazy(() => import('./screens/IDCardView/IDCardView'));
 const Events = lazy(() => import('./screens/Events/Events'));
+const Gallery = lazy(() => import('./screens/Gallery/Gallery'));
 const About = lazy(() => import('./screens/About/About'));
 const AdminRequestIdCard = lazy(() => import('./screens/AdminRequestIdCard/AdminRequestIdCard'));
 const AdminRequestDonation = lazy(() => import('./screens/AdminRequestDonation/AdminRequestDonation'));
@@ -36,8 +38,9 @@ const LoadingFallback = () => (
 // Protected route wrapper
 const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) => {
     const { isAuthenticated, isAdmin, isLoading } = useAuth();
+    const location = useLocation();
     if (isLoading) return <LoadingFallback />;
-    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />;
     if (adminOnly && !isAdmin) return <Navigate to="/" replace />;
     return <React.Fragment>{children}</React.Fragment>;
 };
@@ -47,6 +50,9 @@ function App() {
         <div className="flex flex-col min-h-screen bg-slate-50">
             {/* Vercel analytics */}
             <Analytics />
+
+            {/* Profile Completion Onboarding Modal */}
+            <ProfileCompletionModal />
 
             {/* Navbar */}
             <Navbar />
@@ -59,6 +65,7 @@ function App() {
                         <Route path="/" element={<Home />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/events" element={<Events />} />
+                        <Route path="/gallery" element={<Gallery />} />
                         <Route path="/about" element={<About />} />
 
                         {/* Auth-required routes */}

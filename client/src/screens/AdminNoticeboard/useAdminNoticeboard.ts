@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { getNotices, createNotice, toggleNoticeActive, deleteNotice } from '../../utils/api_request/notices';
-import { fileToBase64, validateImageFile } from '../../utils/helpers';
+import { validateImageFile } from '../../utils/helpers';
 import type { Notice, CreateNoticePayload } from '../../types/notice';
 
 const EMPTY_FORM = { title: '', content: '', isActive: true };
@@ -36,11 +36,11 @@ export const useAdminNoticeboard = () => {
         }
     };
 
-    const handleImageUpload = async (file: File) => {
+    const handleImageUpload = (file: File) => {
         const error = validateImageFile(file);
         if (error) { toast.error(error); return; }
         setImageFile(file);
-        setImagePreview(await fileToBase64(file));
+        setImagePreview(URL.createObjectURL(file));
     };
 
     const validate = () => {
@@ -56,10 +56,10 @@ export const useAdminNoticeboard = () => {
         setIsSubmitting(true);
         try {
             const payload: CreateNoticePayload = {
-                title:       form.title.trim(),
-                content:     form.content.trim(),
-                imageBase64: imagePreview || undefined,
-                isActive:    form.isActive,
+                title:    form.title.trim(),
+                content:  form.content.trim(),
+                image:    imageFile || undefined,
+                isActive: form.isActive,
             };
             const newNotice = await createNotice(payload);
             setNotices((prev) => [newNotice, ...prev]);
@@ -72,7 +72,7 @@ export const useAdminNoticeboard = () => {
         } finally {
             setIsSubmitting(false);
         }
-    }, [form, imagePreview]);
+    }, [form, imageFile]);
 
     const handleToggleActive = useCallback(async (id: string, current: boolean) => {
         // Optimistic update

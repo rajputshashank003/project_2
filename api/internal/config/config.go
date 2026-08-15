@@ -45,6 +45,9 @@ type Config struct {
 	TwilioFromPhone   string
 	TwilioWhatsAppFrom string // "whatsapp:+14155238886" for sandbox; production: "whatsapp:+91XXXXXXXXXX"
 
+	// App
+	AppBaseURL string // public-facing URL e.g. "https://ngo.costop.in" — used in notification deep links
+
 	// Messaging
 	MessagingType       string // "sms" | "whatsapp_twilio" | "whatsapp_local"
 	WhatsAppLocalURL    string // base URL of standalone whatsapp_service (e.g. "http://localhost:8080")
@@ -99,6 +102,8 @@ func Load() (*Config, error) {
 		TwilioAuthToken:    getEnv("TWILIO_AUTH_TOKEN", ""),
 		TwilioFromPhone:    getEnv("TWILIO_FROM_PHONE", ""),
 		TwilioWhatsAppFrom: getEnv("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886"),
+
+		AppBaseURL: getEnv("APP_BASE_URL", "https://ngo.costop.in"),
 
 		MessagingType:       getEnv("MESSAGING_TYPE", "sms"),
 		WhatsAppLocalURL:    getEnv("WHATSAPP_LOCAL_URL", "http://localhost:8080"),

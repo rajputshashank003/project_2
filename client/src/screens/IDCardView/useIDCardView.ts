@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getIdCardById } from '../../utils/api_request/id_cards';
+import { getNgoConfig } from '../../utils/api_request/ngo';
 import { useApp } from '../../context/AppContext';
 import type { IdCard } from '../../types/id_card';
 import type { IdCardData } from '../../components/IDCardCanvas';
@@ -23,11 +24,15 @@ export const useIDCardView = () => {
     setIsLoading(true);
     setNotFound(false);
     try {
-      const data = await getIdCardById(cardId);
+      const [data, freshConfig] = await Promise.all([
+        getIdCardById(cardId),
+        getNgoConfig().catch(() => ngoConfig),
+      ]);
       setIdCard(data);
+      const activeConfig = freshConfig || ngoConfig;
       setCardData({
-        ngoName:          ngoConfig.name,
-        ngoLogo:          ngoConfig.logoUrl,
+        ngoName:          activeConfig.name,
+        ngoLogo:          activeConfig.logoUrl,
         cardNumber:       data.uniqueCardNumber,
         holderName:       data.userName,
         phone:            data.phone,
@@ -36,8 +41,8 @@ export const useIDCardView = () => {
         passportPhotoUrl: data.passportPhotoUrl,
         issueDate:        data.issueDate || data.requestedAt,
         address:          data.address,
-        presidentName:    ngoConfig.presidentName,
-        signatureUrl:     ngoConfig.signatureUrl,
+        presidentName:    activeConfig.presidentName,
+        signatureUrl:     activeConfig.signatureUrl,
       });
     } catch {
       setNotFound(true);

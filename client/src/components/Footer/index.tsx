@@ -4,7 +4,7 @@ import { Leaf, Heart, Phone, Mail, MapPin } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 const Footer: React.FC = () => {
-  const { ngoConfig } = useApp();
+  const { ngoConfig, isConfigLoading } = useApp();
 
   return (
     <footer className="bg-slate-900 text-slate-400 mt-auto">
@@ -16,10 +16,18 @@ const Footer: React.FC = () => {
               <div className="h-9 w-9 rounded-xl bg-emerald-600 flex items-center justify-center">
                 <Leaf className="h-5 w-5 text-white" />
               </div>
-              <span className="font-bold text-white text-base">{ngoConfig.name}</span>
+              {isConfigLoading ? (
+                <div className="h-5 w-28 bg-slate-800 rounded animate-pulse" />
+              ) : (
+                <span className="font-bold text-white text-base">{ngoConfig.name}</span>
+              )}
             </div>
-            <p className="text-sm leading-relaxed mb-4">{ngoConfig.tagline}</p>
-            {ngoConfig.registrationNumber && (
+            {isConfigLoading ? (
+              <div className="h-4 w-48 bg-slate-800 rounded animate-pulse mb-4" />
+            ) : (
+              <p className="text-sm leading-relaxed mb-4">{ngoConfig.tagline}</p>
+            )}
+            {ngoConfig.registrationNumber && !isConfigLoading && (
               <p className="text-xs text-slate-500">Reg. No: {ngoConfig.registrationNumber}</p>
             )}
           </div>
@@ -30,9 +38,11 @@ const Footer: React.FC = () => {
             <ul className="space-y-2.5">
               {[
                 { to: '/',            label: 'Home' },
+                { to: '/events',      label: 'Events & Activities' },
+                { to: '/gallery',     label: 'Photo Gallery' },
                 { to: '/donate',      label: 'Make a Donation' },
                 { to: '/id-generate', label: 'Get Volunteer ID' },
-                { to: '/login',       label: 'Login' },
+                { to: '/about',       label: 'About Us' },
               ].map((link) => (
                 <li key={link.to}>
                   <Link to={link.to} className="text-sm hover:text-emerald-400 transition-colors duration-150">

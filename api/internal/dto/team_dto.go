@@ -1,8 +1,7 @@
 package dto
 
-// UpdateTeamMemberRequest is the body for PATCH /team/:slot.
+// UpdateTeamMemberRequest is the form/body for PATCH /team/:slot.
 type UpdateTeamMemberRequest struct {
-	Name        string `json:"name"`
-	Designation string `json:"designation"`
-	PhotoB64    string `json:"photoBase64"`
+	Name        string `json:"name"        form:"name"`
+	Designation string `json:"designation" form:"designation"`
 }

@@ -103,3 +103,29 @@ func (h *UserHandler) Demote(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": gin.H{"message": "Admin role revoked"}})
 }
+
+// UpdateMyProfile godoc — PATCH /api/v1/my/profile
+// Allows an authenticated user to update their own name and email.
+// Used primarily for the onboarding modal on first login.
+func (h *UserHandler) UpdateMyProfile(c *gin.Context) {
+	userIDRaw, _ := c.Get(middleware.AuthUserIDKey)
+	userID, ok := userIDRaw.(uuid.UUID)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": gin.H{"code": "UNAUTHORIZED", "message": "Invalid user session"}})
+		return
+	}
+
+	var req dto.UpdateMyProfileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "VALIDATION_ERROR", "message": err.Error()}})
+		return
+	}
+
+	user, err := h.svc.UpdateMyProfile(userID, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "UPDATE_FAILED", "message": err.Error()}})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": user})
+}

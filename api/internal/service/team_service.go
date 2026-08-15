@@ -3,11 +3,12 @@ package service
 import (
 	"context"
 	"fmt"
+	"io"
+	"time"
 
 	"github.com/shashankrajput/ngo-platform/api/internal/dto"
 	"github.com/shashankrajput/ngo-platform/api/internal/models"
 	"github.com/shashankrajput/ngo-platform/api/internal/repository"
-	"time"
 )
 
 // TeamService handles team member business logic.
@@ -27,8 +28,9 @@ func (s *TeamService) ListAll() ([]models.TeamMember, error) {
 }
 
 // UpdateSlot updates a team member slot. Uploads photo to Cloudinary if provided.
+// UpdateSlot updates name, designation, and optional photo for a team slot.
 // Deletes old Cloudinary photo if replacing.
-func (s *TeamService) UpdateSlot(ctx context.Context, slot int, req dto.UpdateTeamMemberRequest) (*models.TeamMember, error) {
+func (s *TeamService) UpdateSlot(ctx context.Context, slot int, req dto.UpdateTeamMemberRequest, file io.Reader) (*models.TeamMember, error) {
 	member, err := s.repo.FindBySlot(slot)
 	if err != nil {
 		return nil, fmt.Errorf("team: slot %d not found", slot)
@@ -41,12 +43,12 @@ func (s *TeamService) UpdateSlot(ctx context.Context, slot int, req dto.UpdateTe
 		member.Designation = req.Designation
 	}
 
-	if req.PhotoB64 != "" {
+	if file != nil {
 		// Delete old Cloudinary asset
 		if member.CloudinaryID != "" {
 			s.cloudinary.Delete(ctx, member.CloudinaryID)
 		}
-		result, err := s.cloudinary.Upload(ctx, req.PhotoB64)
+		result, err := s.cloudinary.UploadFile(ctx, file)
 		if err != nil {
 			return nil, fmt.Errorf("team: photo upload failed: %w", err)
 		}
@@ -63,19 +65,29 @@ func (s *TeamService) UpdateSlot(ctx context.Context, slot int, req dto.UpdateTe
 }
 
 // ClearSlot resets a slot and deletes its Cloudinary photo.
-func (s *TeamService) ClearSlot(ctx context.Context, slot int) error {
+// Returns the cleared TeamMember so the caller can update UI state.
+func (s *TeamService) ClearSlot(ctx context.Context, slot int) (*models.TeamMember, error) {
 	member, err := s.repo.FindBySlot(slot)
 	if err != nil {
-		return fmt.Errorf("team: slot %d not found", slot)
+		return nil, fmt.Errorf("team: slot %d not found", slot)
 	}
 	if member.CloudinaryID != "" {
 		s.cloudinary.Delete(ctx, member.CloudinaryID)
 	}
-	return s.repo.Clear(slot)
+	if err := s.repo.Clear(slot); err != nil {
+		return nil, fmt.Errorf("team: clear slot failed: %w", err)
+	}
+	// Reload cleared member from DB
+	cleared, err := s.repo.FindBySlot(slot)
+	if err != nil {
+		return nil, fmt.Errorf("team: reload after clear failed: %w", err)
+	}
+	return cleared, nil
 }
 
 // AddSlot adds a new slot (max 5).
-func (s *TeamService) AddSlot() (*models.TeamMember, error) {
+// Returns the full updated team list so the caller can re-sync UI state.
+func (s *TeamService) AddSlot() ([]models.TeamMember, error) {
 	count, err := s.repo.Count()
 	if err != nil {
 		return nil, fmt.Errorf("team: count failed: %w", err)
@@ -96,20 +108,28 @@ func (s *TeamService) AddSlot() (*models.TeamMember, error) {
 	if err := s.repo.Upsert(newMember); err != nil {
 		return nil, fmt.Errorf("team: create slot failed: %w", err)
 	}
-	return newMember, nil
+
+	// Return the full updated list so the frontend can replace its state
+	return s.repo.ListAll()
 }
 
 // RemoveSlot deletes a slot, cleans Cloudinary, and re-indexes remaining slots.
-func (s *TeamService) RemoveSlot(ctx context.Context, slot int) error {
+// Returns the full updated team list so the caller can re-sync UI state.
+func (s *TeamService) RemoveSlot(ctx context.Context, slot int) ([]models.TeamMember, error) {
 	member, err := s.repo.FindBySlot(slot)
 	if err != nil {
-		return fmt.Errorf("team: slot %d not found", slot)
+		return nil, fmt.Errorf("team: slot %d not found", slot)
 	}
 	if member.CloudinaryID != "" {
 		s.cloudinary.Delete(ctx, member.CloudinaryID)
 	}
 	if err := s.repo.DeleteSlot(slot); err != nil {
-		return fmt.Errorf("team: delete slot failed: %w", err)
+		return nil, fmt.Errorf("team: delete slot failed: %w", err)
 	}
-	return s.repo.ReindexSlots()
+	if err := s.repo.ReindexSlots(); err != nil {
+		return nil, fmt.Errorf("team: reindex failed: %w", err)
+	}
+
+	// Return the full updated list so the frontend can replace its state
+	return s.repo.ListAll()
 }

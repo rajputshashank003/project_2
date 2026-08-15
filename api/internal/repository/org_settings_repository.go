@@ -9,7 +9,7 @@ import (
 )
 
 // OrgSettingsRepository handles all DB operations for org_settings.
-// The table is a flexible key-value store; see models.OrgSetting for key constants.
+// Each row represents a setting with its Key, Value, and JSONB Meta column.
 type OrgSettingsRepository struct {
 	db *gorm.DB
 }
@@ -32,7 +32,28 @@ func (r *OrgSettingsRepository) GetAll() (map[string]string, error) {
 	return result, nil
 }
 
-// Set upserts a single key-value pair.
+// Get fetches a single setting by key, including its Value and Meta.
+func (r *OrgSettingsRepository) Get(key string) (*models.OrgSetting, error) {
+	var row models.OrgSetting
+	if err := r.db.Where("key = ?", key).First(&row).Error; err != nil {
+		return nil, err
+	}
+	return &row, nil
+}
+
+// GetValue returns only the text value of a key, or empty string if not found.
+func (r *OrgSettingsRepository) GetValue(key string) (string, error) {
+	var row models.OrgSetting
+	if err := r.db.Select("value").Where("key = ?", key).First(&row).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return "", nil
+		}
+		return "", err
+	}
+	return row.Value, nil
+}
+
+// Set upserts a single key-value pair. Does not overwrite existing meta on conflict.
 func (r *OrgSettingsRepository) Set(key, value string) error {
 	row := models.OrgSetting{Key: key, Value: value}
 	return r.db.Clauses(clause.OnConflict{
@@ -41,7 +62,33 @@ func (r *OrgSettingsRepository) Set(key, value string) error {
 	}).Create(&row).Error
 }
 
+// SetWithMeta upserts a key, its value, and its JSONB meta column.
+func (r *OrgSettingsRepository) SetWithMeta(key, value string, meta any) error {
+	var metaBytes []byte
+	if meta != nil {
+		b, err := json.Marshal(meta)
+		if err != nil {
+			return err
+		}
+		metaBytes = b
+	} else {
+		metaBytes = []byte("{}")
+	}
+
+	row := models.OrgSetting{
+		Key:   key,
+		Value: value,
+		Meta:  metaBytes,
+	}
+
+	return r.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "key"}},
+		DoUpdates: clause.AssignmentColumns([]string{"value", "meta", "updated_at"}),
+	}).Create(&row).Error
+}
+
 // BulkSet upserts multiple key-value pairs inside a single transaction.
+// Preserves existing meta on conflict.
 func (r *OrgSettingsRepository) BulkSet(updates map[string]string) error {
 	if len(updates) == 0 {
 		return nil
@@ -56,30 +103,22 @@ func (r *OrgSettingsRepository) BulkSet(updates map[string]string) error {
 	}).Create(&rows).Error
 }
 
-// GetMeta returns the deserialized OrgMetaJSON stored under the "meta" key.
-// Returns an empty struct (not an error) if the meta key does not exist yet.
-func (r *OrgSettingsRepository) GetMeta() (models.OrgMetaJSON, error) {
-	var row models.OrgSetting
-	result := r.db.Where("key = ?", models.OrgKeyMeta).First(&row)
-	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return models.OrgMetaJSON{}, nil
+// GetAssetMeta returns the CloudinaryAssetMeta stored in the meta column of a given key.
+// Returns an empty struct if the row does not exist or meta is empty/unparseable.
+func (r *OrgSettingsRepository) GetAssetMeta(key string) (models.CloudinaryAssetMeta, error) {
+	row, err := r.Get(key)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return models.CloudinaryAssetMeta{}, nil
 		}
-		return models.OrgMetaJSON{}, result.Error
+		return models.CloudinaryAssetMeta{}, err
 	}
-	var meta models.OrgMetaJSON
-	if err := json.Unmarshal([]byte(row.Value), &meta); err != nil {
-		// Corrupted JSON — return empty but don't fail
-		return models.OrgMetaJSON{}, nil
+	if len(row.Meta) == 0 || string(row.Meta) == "{}" {
+		return models.CloudinaryAssetMeta{}, nil
+	}
+	var meta models.CloudinaryAssetMeta
+	if err := json.Unmarshal(row.Meta, &meta); err != nil {
+		return models.CloudinaryAssetMeta{}, nil
 	}
 	return meta, nil
-}
-
-// SetMeta serializes the given OrgMetaJSON and upserts it under the "meta" key.
-func (r *OrgSettingsRepository) SetMeta(meta models.OrgMetaJSON) error {
-	b, err := json.Marshal(meta)
-	if err != nil {
-		return err
-	}
-	return r.Set(models.OrgKeyMeta, string(b))
 }

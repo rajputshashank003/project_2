@@ -66,3 +66,28 @@ export const getInitials = (name: string): string =>
 /** Capitalize first letter */
 export const capitalize = (str: string): string =>
   str.charAt(0).toUpperCase() + str.slice(1);
+
+/** Check if login is allowed for a given phone number based on VITE_STOP_LOGIN / VITE_ALLOWED_LOGIN_PHONES */
+export const isLoginAllowedForPhone = (phone: string): boolean => {
+  const stopLoginEnv = (import.meta.env.VITE_STOP_LOGIN || import.meta.env.VITE_ALLOWED_LOGIN_PHONES || '').trim();
+  if (!stopLoginEnv || stopLoginEnv.toLowerCase() === 'false') {
+    return true; // No restriction active
+  }
+
+  const allowedList = String(stopLoginEnv)
+    .split(',')
+    .map((p: string) => p.replace(/\D/g, ''))
+    .filter(Boolean);
+
+  if (allowedList.length === 0) {
+    return true;
+  }
+
+  const cleanedInput = phone.replace(/\D/g, '');
+  return allowedList.some((allowed: string) => {
+    if (allowed === cleanedInput) return true;
+    if (cleanedInput.length >= 10 && allowed.endsWith(cleanedInput.slice(-10))) return true;
+    if (allowed.length >= 10 && cleanedInput.endsWith(allowed.slice(-10))) return true;
+    return false;
+  });
+};

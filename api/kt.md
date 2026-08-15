@@ -111,8 +111,12 @@ api/
 | ADMIN_NAME | — | Admin | Admin display name |
 | DEV_MODE | — | false | `true` → logs OTP, skips Twilio/Resend |
 | DEV_OTP | — | 123456 | Accepted OTP in dev mode |
-| TWILIO_ACCOUNT_SID | — | — | Required if DEV_MODE=false |
-| TWILIO_AUTH_TOKEN | — | — | Required if DEV_MODE=false |
+| APP_BASE_URL | — | https://ngo.costop.in | Public URL for notification deep links |
+| MESSAGING_TYPE | — | sms | `sms` \| `whatsapp_twilio` \| `whatsapp_local` |
+| WHATSAPP_LOCAL_URL | — | http://localhost:8080 | Microservice base URL |
+| WHATSAPP_LOCAL_API_KEY | — | — | Microservice API key |
+| TWILIO_ACCOUNT_SID | — | — | Required if MESSAGING_TYPE=sms/whatsapp_twilio |
+| TWILIO_AUTH_TOKEN | — | — | Required if MESSAGING_TYPE=sms/whatsapp_twilio |
 | TWILIO_FROM_PHONE | — | — | E.164 format |
 | RESEND_API_KEY | — | — | Required if DEV_MODE=false |
 | RESEND_FROM_EMAIL | — | noreply@example.com | Sender address |
@@ -139,61 +143,62 @@ All routes under `/api/v1/` unless noted.
 | Method | Path | Auth | Body | Notes |
 |---|---|---|---|---|
 | GET | `/ngo/config` | Public | — | Reads all rows from `org_settings` KV table |
-| PATCH | `/ngo/config` | Admin | `UpdateNgoConfigRequest` | Upserts KV pairs into `org_settings` |
+| PATCH | `/ngo/config` | Admin | `UpdateNgoConfigRequest` | Upserts KV pairs (including `mission`, `vision`) |
 
-### User Profile (My Records)
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| GET | `/my/donations?page=&limit=` | Auth | Returns current user's donations (all statuses) |
-| GET | `/my/id-cards?page=&limit=` | Auth | Returns current user's ID card requests (all statuses) |
+### User Profile (My Records & Onboarding)
+| Method | Path | Auth | Body | Notes |
+|---|---|---|---|---|
+| GET | `/my/donations?page=&limit=` | Auth | — | Returns current user's donations (all statuses) |
+| GET | `/my/id-cards?page=&limit=` | Auth | — | Returns current user's ID card requests (all statuses) |
+| PATCH | `/my/profile` | Auth | `{name, email}` | User self-onboarding / update |
 
 ### Donations
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| GET | `/donations?page=&limit=` | Admin | Paginated |
-| GET | `/donations/:id` | Auth | |
-| POST | `/donations` | Auth | Idempotency-Key header |
-| PATCH | `/donations/:id/status` | Admin | Transactional |
+| Method | Path | Auth | Content-Type | Notes |
+|---|---|---|---|---|
+| GET | `/donations?page=&limit=` | Admin | — | Paginated |
+| GET | `/donations/:id` | Auth | — | |
+| POST | `/donations` | Auth | `multipart/form-data` | `paymentProof` file + form fields, Idempotency-Key header |
+| PATCH | `/donations/:id/status` | Admin | `application/json` | Transactional |
 
 ### ID Cards
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| GET | `/id-cards?page=&limit=` | Admin | Paginated |
-| GET | `/id-cards/:id` | Auth | |
-| POST | `/id-cards` | Auth | Idempotency-Key header |
-| PATCH | `/id-cards/:id/status` | Admin | Transactional; validityYears required |
+| Method | Path | Auth | Content-Type | Notes |
+|---|---|---|---|---|
+| GET | `/id-cards?page=&limit=` | Admin | — | Paginated |
+| GET | `/id-cards/:id` | Auth | — | |
+| POST | `/id-cards` | Auth | `multipart/form-data` | `passportPhoto` + `paymentScreenshot` files + form fields, Idempotency-Key header |
+| PATCH | `/id-cards/:id/status` | Admin | `application/json` | Transactional; validityYears required |
 
 ### Notices
-| Method | Path | Auth |
-|---|---|---|
-| GET | `/notices?page=&limit=` | Public |
-| POST | `/notices` | Admin |
-| PATCH | `/notices/:id` | Admin |
-| DELETE | `/notices/:id` | Admin |
+| Method | Path | Auth | Content-Type | Notes |
+|---|---|---|---|---|
+| GET | `/notices?page=&limit=` | Public | — | |
+| POST | `/notices` | Admin | `multipart/form-data` | Optional `image` file + form fields |
+| PATCH | `/notices/:id` | Admin | `application/json` | Toggle isActive |
+| DELETE | `/notices/:id` | Admin | — | |
 
 ### Gallery
-| Method | Path | Auth |
-|---|---|---|
-| GET | `/gallery?page=&limit=` | Public |
-| POST | `/gallery` | Admin |
-| DELETE | `/gallery/:id` | Admin |
+| Method | Path | Auth | Content-Type | Notes |
+|---|---|---|---|---|
+| GET | `/gallery?page=&limit=` | Public | — | |
+| POST | `/gallery` | Admin | `multipart/form-data` | `image` file + optional `caption` |
+| DELETE | `/gallery/:id` | Admin | — | |
 
 ### Events
-| Method | Path | Auth |
-|---|---|---|
-| GET | `/events?page=&limit=` | Public |
-| POST | `/events` | Admin |
-| PATCH | `/events/:id` | Admin |
-| DELETE | `/events/:id` | Admin |
+| Method | Path | Auth | Content-Type | Notes |
+|---|---|---|---|---|
+| GET | `/events?page=&limit=` | Public | — | |
+| POST | `/events` | Admin | `multipart/form-data` | `images` files array + `captions` array + form fields |
+| PATCH | `/events/:id` | Admin | `multipart/form-data` | `images`, `existingUrls`, `captions` + form fields |
+| DELETE | `/events/:id` | Admin | — | |
 
 ### Team
-| Method | Path | Auth |
-|---|---|---|
-| GET | `/team` | Public |
-| PATCH | `/team/:slot` | Admin |
-| PATCH | `/team/:slot/clear` | Admin |
-| POST | `/team/add-slot` | Admin |
-| DELETE | `/team/slot/:slot` | Admin |
+| Method | Path | Auth | Content-Type | Notes |
+|---|---|---|---|---|
+| GET | `/team` | Public | — | |
+| PATCH | `/team/:slot` | Admin | `multipart/form-data` | Optional `photo` file + `name`, `designation` |
+| PATCH | `/team/:slot/clear` | Admin | — | Resets slot and removes Cloudinary asset |
+| POST | `/team/add-slot` | Admin | — | |
+| DELETE | `/team/slot/:slot` | Admin | — | |
 
 ### Users
 | Method | Path | Auth |
@@ -248,8 +253,14 @@ All images go through `CloudinaryService.Upload(ctx, base64Str)`:
 
 ---
 
-## 9. Approval Flow (Transactions)
+## 9. Request & Approval Flow (Transactions & Notifications)
 
+### On Request Creation (`POST /donations`, `POST /id-cards`):
+1. File uploaded via streaming to Cloudinary.
+2. Record created in DB with `status = 'pending'`.
+3. If `manager_phone` is configured in `org_settings`, an asynchronous goroutine sends an instant WhatsApp alert to the manager with applicant/donor details and a direct URL to review in the admin panel.
+
+### On Review / Approval:
 Both donations and ID cards wrap approval in a DB transaction:
 ```
 BEGIN
@@ -257,10 +268,10 @@ BEGIN
   [approval] UPDATE certificate_number / unique_card_number
              (unique constraint → retry up to 3x on collision)
 COMMIT
-→ async goroutine: SMS + Email notification
+→ async goroutine: WhatsApp/SMS + Email notification to user
 ```
 
-If transaction fails → status stays `pending`, no notification sent.
+If transaction fails → status stays `pending`, no user notification sent.
 
 ---
 
@@ -304,11 +315,11 @@ All successes:
 
 ## 13. DB Schema Summary
 
-| Table | Key Indexes |
+| Table | Key Indexes / Columns |
 |---|---|
 | users | phone (UNIQUE) |
 | otps | (phone, used, expires_at) |
-| org_settings | key (UNIQUE) — key-value config store with 'meta' JSON key |
+| org_settings | key (UNIQUE) — key-value config store with JSONB `meta` column on every row (`id`, `key`, `value`, `meta`, `created_at`, `updated_at`) |
 | donations | status, requested_at DESC, user_id (FK), certificate_number (UNIQUE) |
 | id_cards | status, requested_at DESC, user_id (FK), unique_card_number (UNIQUE) |
 | notices | is_active |
@@ -318,7 +329,7 @@ All successes:
 | team_members | slot (PK) |
 | idempotency_keys | (key, endpoint) composite PK |
 
-All timestamps: `TIMESTAMPTZ`.
+All timestamps: `TIMESTAMPTZ`. Optional unique columns (`donations.certificate_number`, `id_cards.unique_card_number`) are modeled as `*string` so unassigned/pending rows store SQL `NULL` and avoid unique constraint collisions.
 
 ---
 
@@ -536,3 +547,15 @@ Exposes `POST /send`, `GET /status`, `GET /qr`.
 Session persisted in SQLite (`store/whatsapp.db`) — auto-reconnects on restart.
 
 See `whatsapp_service/kt.md` for full documentation.
+
+---
+
+## 15. Logging
+
+- **HTTP Request Logger (`internal/middleware/logger.go`)**:
+  - Automatically logs method, path, status, latency, client IP, and request ID for all incoming HTTP requests via Zerolog.
+  - Formatted with console color and RFC3339 timestamps.
+- **Database Query Logger (`internal/database/postgres.go`)**:
+  - In `DEV_MODE=true`, GORM runs in `logger.Info` mode to output executed SQL statements and execution durations to stderr.
+  - In production, GORM runs in `logger.Warn` mode.
+

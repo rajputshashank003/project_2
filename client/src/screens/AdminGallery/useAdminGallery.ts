@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { getGalleryImages, uploadGalleryImage, deleteGalleryImage } from '../../utils/api_request/gallery';
-import { fileToBase64, validateImageFile } from '../../utils/helpers';
+import { validateImageFile } from '../../utils/helpers';
 import type { GalleryImage } from '../../types/ngo';
 
 export const useAdminGallery = () => {
@@ -31,10 +31,9 @@ export const useAdminGallery = () => {
         if (error) { toast.error(error); return; }
         setUploading(true);
         try {
-            const base64   = await fileToBase64(file);
             const newImage = await uploadGalleryImage({
-                imageBase64: base64,
-                caption:     caption.trim() || undefined,
+                image:   file,
+                caption: caption.trim() || undefined,
             });
             setImages((prev) => [newImage, ...prev]);
             setCaption('');

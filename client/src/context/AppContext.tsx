@@ -16,6 +16,9 @@ const DEFAULT_NGO_CONFIG: NgoConfig = {
   presidentName:      '',
   secretaryName:      '',
   foundedYear:        2020,
+  mission:            '',
+  vision:             '',
+  managerPhone:       '',
 };
 
 interface AppContextType {

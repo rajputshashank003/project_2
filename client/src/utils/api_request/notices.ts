@@ -13,11 +13,21 @@ export const getNotices = async (page = 1, limit = 50): Promise<PaginatedRespons
     });
 };
 
-export const createNotice = async (data: CreateNoticePayload): Promise<Notice> => {
+export const createNotice = async (data: CreateNoticePayload | FormData): Promise<Notice> => {
+    let body: FormData;
+    if (data instanceof FormData) {
+        body = data;
+    } else {
+        body = new FormData();
+        body.append('title', data.title);
+        body.append('content', data.content);
+        body.append('isActive', String(data.isActive));
+        if (data.image) body.append('image', data.image);
+    }
     const res = await request<ApiResponse<Notice>>({
         url:    '/notices',
         method: 'POST',
-        data,
+        data:   body,
     });
     return unwrap(res);
 };

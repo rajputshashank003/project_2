@@ -29,8 +29,8 @@ export interface CreateIdCardPayload {
     email: string;
     address: string;
     designation: UserDesignation;
-    passportPhotoBase64: string;
-    paymentScreenshotBase64: string;
+    passportPhoto: File;
+    paymentProof: File;
 }
 
 export interface UpdateIdCardStatusPayload {

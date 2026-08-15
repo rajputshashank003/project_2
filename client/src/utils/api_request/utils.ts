@@ -10,11 +10,17 @@ export const axiosInstance = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach auth token
+// Attach auth token and handle FormData Content-Type
 axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
   if (token) {
     config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+    if (typeof config.headers.delete === 'function') {
+      config.headers.delete('Content-Type');
+    }
   }
   return config;
 });

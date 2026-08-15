@@ -21,11 +21,23 @@ export const getDonationById = async (id: string): Promise<Donation> => {
     return unwrap(res);
 };
 
-export const createDonation = async (data: CreateDonationPayload): Promise<Donation> => {
+export const createDonation = async (data: CreateDonationPayload | FormData): Promise<Donation> => {
+    let body: FormData;
+    if (data instanceof FormData) {
+        body = data;
+    } else {
+        body = new FormData();
+        body.append('donorName', data.donorName);
+        body.append('phone', data.phone);
+        body.append('email', data.email);
+        body.append('amount', String(data.amount));
+        body.append('paymentProof', data.paymentProof);
+        if (data.utrNumber) body.append('utrNumber', data.utrNumber);
+    }
     const res = await request<ApiResponse<Donation>>({
         url:    '/donations',
         method: 'POST',
-        data,
+        data:   body,
         headers: { 'Idempotency-Key': crypto.randomUUID() },
     });
     return unwrap(res);
