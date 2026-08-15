@@ -56,9 +56,9 @@ jobs:
 
       - name: Trigger Render deploy
         env:
-          RENDER_API_DEPLOY_HOOK: ${{ secrets.RENDER_API_DEPLOY_HOOK }}
+          RENDER_API_DEPLOY_HOOK_API: ${{ secrets.RENDER_API_DEPLOY_HOOK_API }}
         run: |
-          response=$(curl --silent --fail-with-body -X POST "$RENDER_API_DEPLOY_HOOK")
+          response=$(curl --silent --fail-with-body -X POST "$RENDER_API_DEPLOY_HOOK_API")
           echo "$response"
 
   deploy-whatsapp:
@@ -90,3 +90,11 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/ngo-sandeep-whatsapp-service:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/ngo-sandeep-whatsapp-service:${{ github.sha }}
+
+      - name: Trigger Render deploy
+        env:
+          RENDER_API_DEPLOY_HOOK_WHATSAPP_SERVICE: ${{ secrets.RENDER_API_DEPLOY_HOOK_WHATSAPP_SERVICE }}
+        run: |
+          response=$(curl --silent --fail-with-body -X POST "$RENDER_API_DEPLOY_HOOK_WHATSAPP_SERVICE")
+          echo "$response"
+
