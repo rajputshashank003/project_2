@@ -58,6 +58,20 @@ func (r *DonationRepository) IsCertNumberTaken(number string) (bool, error) {
 	return count > 0, err
 }
 
+// ListByUserID returns paginated donations for a specific user ordered by requested_at DESC.
+func (r *DonationRepository) ListByUserID(userID uuid.UUID, offset, limit int) ([]models.Donation, int64, error) {
+	var donations []models.Donation
+	var total int64
+
+	if err := r.db.Model(&models.Donation{}).Where("user_id = ?", userID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	if err := r.db.Where("user_id = ?", userID).Order("requested_at DESC").Offset(offset).Limit(limit).Find(&donations).Error; err != nil {
+		return nil, 0, err
+	}
+	return donations, total, nil
+}
+
 // Begin starts a DB transaction.
 func (r *DonationRepository) Begin() *gorm.DB {
 	return r.db.Begin()

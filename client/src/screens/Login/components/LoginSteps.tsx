@@ -56,7 +56,7 @@ export const PhoneStep: React.FC = () => {
       </button>
 
       <p className="text-xs text-slate-400 text-center mt-4">
-        By continuing you agree to our terms. OTP will be sent via SMS.
+        By continuing you agree to our terms. OTP will be sent to your WhatsApp number.
       </p>
     </div>
   );
@@ -78,11 +78,10 @@ export const OtpStep: React.FC = () => {
       </button>
 
       <h1 className="text-2xl font-bold text-slate-900 mb-1">Verify OTP</h1>
-      <p className="text-slate-500 text-sm mb-2">
-        We've sent a 6-digit code to{' '}
+      <p className="text-slate-500 text-sm mb-8">
+        We've sent a 6-digit OTP on WhatsApp to{' '}
         <span className="font-semibold text-slate-700">+91 {phone}</span>
       </p>
-      <p className="text-xs text-slate-400 mb-8">(For demo, enter any 6 digits)</p>
 
       <div className="flex items-center justify-center gap-2 sm:gap-3 mb-8">
         {otp.map((digit, i) => (

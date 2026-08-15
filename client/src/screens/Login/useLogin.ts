@@ -39,7 +39,7 @@ export const useLogin = () => {
     setIsLoading(true);
     try {
       await sendOtp(cleaned);
-      toast.success('OTP sent to your mobile number');
+      toast.success(`OTP sent on WhatsApp to +91 ${cleaned}`);
       setStep('otp');
       setResendTimer(OTP_RESEND_SECONDS);
     } catch {

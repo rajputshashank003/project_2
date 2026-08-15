@@ -8,6 +8,7 @@ import (
 
 type Donation struct {
 	ID                   uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	UserID               *uuid.UUID `gorm:"type:uuid;column:user_id;index"                json:"userId,omitempty"`
 	DonorName            string     `gorm:"size:255;not null"                              json:"donorName"`
 	Phone                string     `gorm:"size:15"                                        json:"phone"`
 	Email                string     `gorm:"size:255"                                       json:"email"`

@@ -57,6 +57,20 @@ func (r *IDCardRepository) IsCardNumberTaken(number string) (bool, error) {
 	return count > 0, err
 }
 
+// ListByUserID returns paginated ID cards for a specific user ordered by requested_at DESC.
+func (r *IDCardRepository) ListByUserID(userID uuid.UUID, offset, limit int) ([]models.IDCard, int64, error) {
+	var cards []models.IDCard
+	var total int64
+
+	if err := r.db.Model(&models.IDCard{}).Where("user_id = ?", userID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	if err := r.db.Where("user_id = ?", userID).Order("requested_at DESC").Offset(offset).Limit(limit).Find(&cards).Error; err != nil {
+		return nil, 0, err
+	}
+	return cards, total, nil
+}
+
 // Begin starts a DB transaction.
 func (r *IDCardRepository) Begin() *gorm.DB {
 	return r.db.Begin()

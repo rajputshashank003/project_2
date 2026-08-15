@@ -121,12 +121,16 @@ const Navbar: React.FC = () => {
             <div className="hidden md:flex items-center gap-2">
               {isAuthenticated ? (
                 <React.Fragment>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200">
-                    <div className="h-7 w-7 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-emerald-50 hover:border-emerald-200 transition-colors group"
+                    title="View Profile"
+                  >
+                    <div className="h-7 w-7 rounded-full bg-emerald-100 flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
                       <User className="h-3.5 w-3.5 text-emerald-700" />
                     </div>
-                    <span className="text-sm font-medium text-slate-700">{user?.name || user?.phone}</span>
-                  </div>
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-emerald-800">{user?.name || user?.phone}</span>
+                  </Link>
                   <button
                     onClick={() => setShowLogoutConfirm(true)}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors duration-150"
@@ -204,13 +208,23 @@ const Navbar: React.FC = () => {
               )}
               <div className="pt-2 border-t border-slate-100">
                 {isAuthenticated ? (
-                  <button
-                    onClick={() => { setShowLogoutConfirm(true); setMenuOpen(false); }}
-                    className="w-full text-left flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Logout
-                  </button>
+                  <React.Fragment>
+                    <Link
+                      to="/profile"
+                      onClick={() => setMenuOpen(false)}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      <User className="h-4 w-4 text-emerald-600" />
+                      My Profile
+                    </Link>
+                    <button
+                      onClick={() => { setShowLogoutConfirm(true); setMenuOpen(false); }}
+                      className="w-full text-left flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </button>
+                  </React.Fragment>
                 ) : (
                   <Link
                     to="/login"

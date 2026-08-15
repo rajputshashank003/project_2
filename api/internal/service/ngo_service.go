@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/shashankrajput/ngo-platform/api/internal/dto"
@@ -10,113 +11,170 @@ import (
 	"github.com/shashankrajput/ngo-platform/api/internal/repository"
 )
 
-// NgoService handles NGO config business logic.
+// NgoService handles NGO/org config business logic.
+// Data is stored in org_settings (key-value table); this service maps KV → struct.
 type NgoService struct {
-	repo       *repository.NgoRepository
+	repo      *repository.OrgSettingsRepository
 	cloudinary *CloudinaryService
 }
 
 // NewNgoService constructs a NgoService.
-func NewNgoService(repo *repository.NgoRepository, cloudinary *CloudinaryService) *NgoService {
+func NewNgoService(repo *repository.OrgSettingsRepository, cloudinary *CloudinaryService) *NgoService {
 	return &NgoService{repo: repo, cloudinary: cloudinary}
 }
 
-// Get returns the NGO config.
-func (s *NgoService) Get() (*models.NgoConfig, error) {
-	return s.repo.Get()
+// Get returns the NGO config as a structured response by reading all KV rows.
+func (s *NgoService) Get() (*models.NgoConfigResponse, error) {
+	kvMap, err := s.repo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	return s.kvToResponse(kvMap), nil
 }
 
-// Update partially updates the NGO config. Uploads new logo/signature to Cloudinary
-// and deletes the old one if replaced.
-func (s *NgoService) Update(ctx context.Context, req dto.UpdateNgoConfigRequest) (*models.NgoConfig, error) {
-	current, err := s.repo.Get()
-	if err != nil {
-		return nil, fmt.Errorf("ngo: config not found")
+// Update partially updates the org config. Uploads new logo/signature to Cloudinary
+// and deletes the old assets if replaced. Returns the updated config.
+func (s *NgoService) Update(ctx context.Context, req dto.UpdateNgoConfigRequest) (*models.NgoConfigResponse, error) {
+	updates := map[string]string{
+		// always touch updated_at indirectly via BulkSet's updated_at column
 	}
 
-	updates := map[string]interface{}{"updated_at": time.Now()}
-
+	// --- Scalar fields ---
 	if req.Name != nil {
-		updates["name"] = *req.Name
+		updates[models.OrgKeyName] = *req.Name
 	}
 	if req.Tagline != nil {
-		updates["tagline"] = *req.Tagline
+		updates[models.OrgKeyTagline] = *req.Tagline
 	}
 	if req.Address != nil {
-		updates["address"] = *req.Address
+		updates[models.OrgKeyAddress] = *req.Address
 	}
 	if req.Phone != nil {
-		updates["phone"] = *req.Phone
+		updates[models.OrgKeyPhone] = *req.Phone
 	}
 	if req.Email != nil {
-		updates["email"] = *req.Email
+		updates[models.OrgKeyEmail] = *req.Email
 	}
 	if req.Website != nil {
-		updates["website"] = *req.Website
+		updates[models.OrgKeyWebsite] = *req.Website
 	}
 	if req.RegistrationNumber != nil {
-		updates["registration_number"] = *req.RegistrationNumber
+		updates[models.OrgKeyRegistrationNumber] = *req.RegistrationNumber
 	}
 	if req.UPIID != nil {
-		updates["upi_id"] = *req.UPIID
+		updates[models.OrgKeyUPIID] = *req.UPIID
 	}
 	if req.UPIName != nil {
-		updates["upi_name"] = *req.UPIName
+		updates[models.OrgKeyUPIName] = *req.UPIName
 	}
 	if req.BankName != nil {
-		updates["bank_name"] = *req.BankName
+		updates[models.OrgKeyBankName] = *req.BankName
 	}
 	if req.AccountNumber != nil {
-		updates["account_number"] = *req.AccountNumber
+		updates[models.OrgKeyAccountNumber] = *req.AccountNumber
 	}
 	if req.IFSCCode != nil {
-		updates["ifsc_code"] = *req.IFSCCode
+		updates[models.OrgKeyIFSCCode] = *req.IFSCCode
 	}
 	if req.AccountHolderName != nil {
-		updates["account_holder_name"] = *req.AccountHolderName
+		updates[models.OrgKeyAccountHolderName] = *req.AccountHolderName
 	}
 	if req.PresidentName != nil {
-		updates["president_name"] = *req.PresidentName
+		updates[models.OrgKeyPresidentName] = *req.PresidentName
 	}
 	if req.SecretaryName != nil {
-		updates["secretary_name"] = *req.SecretaryName
+		updates[models.OrgKeySecretaryName] = *req.SecretaryName
 	}
 	if req.FoundedYear != nil {
-		updates["founded_year"] = *req.FoundedYear
+		updates[models.OrgKeyFoundedYear] = strconv.Itoa(*req.FoundedYear)
 	}
 	if req.Description != nil {
-		updates["description"] = *req.Description
+		updates[models.OrgKeyDescription] = *req.Description
 	}
 
-	// Logo replacement
+	// --- Logo replacement ---
 	if req.LogoB64 != nil && *req.LogoB64 != "" {
-		if current.LogoCloudinaryID != "" {
-			s.cloudinary.Delete(ctx, current.LogoCloudinaryID)
+		// Fetch current meta to delete old Cloudinary asset
+		meta, _ := s.repo.GetMeta()
+		if meta.LogoCloudinaryID != "" {
+			s.cloudinary.Delete(ctx, meta.LogoCloudinaryID)
 		}
-		result, err := s.cloudinary.Upload(ctx, *req.LogoB64)
+		uploadResult, err := s.cloudinary.Upload(ctx, *req.LogoB64)
 		if err != nil {
 			return nil, fmt.Errorf("ngo: logo upload failed: %w", err)
 		}
-		updates["logo_url"] = result.SecureURL
-		updates["logo_cloudinary_id"] = result.PublicID
+		updates[models.OrgKeyLogoURL] = uploadResult.SecureURL
+		// Persist new Cloudinary ID in meta
+		meta.LogoCloudinaryID = uploadResult.PublicID
+		if err := s.repo.SetMeta(meta); err != nil {
+			return nil, fmt.Errorf("ngo: meta update failed: %w", err)
+		}
 	}
 
-	// Signature replacement
-	if req.SignatureB64 != nil && *req.SignatureB64 != "" {
-		if current.SignatureCloudinaryID != "" {
-			s.cloudinary.Delete(ctx, current.SignatureCloudinaryID)
+	// --- Signature replacement ---
+	if req.SignatureB64 != nil {
+		if *req.SignatureB64 == "" {
+			// Delete signature
+			meta, _ := s.repo.GetMeta()
+			if meta.SignatureCloudinaryID != "" {
+				s.cloudinary.Delete(ctx, meta.SignatureCloudinaryID)
+				meta.SignatureCloudinaryID = ""
+				_ = s.repo.SetMeta(meta)
+			}
+			updates[models.OrgKeySignatureURL] = ""
+		} else {
+			meta, _ := s.repo.GetMeta()
+			if meta.SignatureCloudinaryID != "" {
+				s.cloudinary.Delete(ctx, meta.SignatureCloudinaryID)
+			}
+			uploadResult, err := s.cloudinary.Upload(ctx, *req.SignatureB64)
+			if err != nil {
+				return nil, fmt.Errorf("ngo: signature upload failed: %w", err)
+			}
+			updates[models.OrgKeySignatureURL] = uploadResult.SecureURL
+			meta.SignatureCloudinaryID = uploadResult.PublicID
+			if err := s.repo.SetMeta(meta); err != nil {
+				return nil, fmt.Errorf("ngo: meta update failed: %w", err)
+			}
 		}
-		result, err := s.cloudinary.Upload(ctx, *req.SignatureB64)
-		if err != nil {
-			return nil, fmt.Errorf("ngo: signature upload failed: %w", err)
-		}
-		updates["signature_url"] = result.SecureURL
-		updates["signature_cloudinary_id"] = result.PublicID
 	}
 
-	if err := s.repo.Update(updates); err != nil {
+	if len(updates) == 0 {
+		// Nothing to update — return current config
+		return s.Get()
+	}
+
+	if err := s.repo.BulkSet(updates); err != nil {
 		return nil, fmt.Errorf("ngo: update failed: %w", err)
 	}
 
-	return s.repo.Get()
+	return s.Get()
+}
+
+// kvToResponse maps the raw KV map from org_settings into a NgoConfigResponse struct.
+// Missing keys default to zero values (empty string / 0).
+func (s *NgoService) kvToResponse(kv map[string]string) *models.NgoConfigResponse {
+	foundedYear, _ := strconv.Atoi(kv[models.OrgKeyFoundedYear])
+	return &models.NgoConfigResponse{
+		Name:               kv[models.OrgKeyName],
+		Tagline:            kv[models.OrgKeyTagline],
+		LogoURL:            kv[models.OrgKeyLogoURL],
+		Address:            kv[models.OrgKeyAddress],
+		Phone:              kv[models.OrgKeyPhone],
+		Email:              kv[models.OrgKeyEmail],
+		Website:            kv[models.OrgKeyWebsite],
+		RegistrationNumber: kv[models.OrgKeyRegistrationNumber],
+		UPIID:              kv[models.OrgKeyUPIID],
+		UPIName:            kv[models.OrgKeyUPIName],
+		BankName:           kv[models.OrgKeyBankName],
+		AccountNumber:      kv[models.OrgKeyAccountNumber],
+		IFSCCode:           kv[models.OrgKeyIFSCCode],
+		AccountHolderName:  kv[models.OrgKeyAccountHolderName],
+		SignatureURL:       kv[models.OrgKeySignatureURL],
+		PresidentName:      kv[models.OrgKeyPresidentName],
+		SecretaryName:      kv[models.OrgKeySecretaryName],
+		FoundedYear:        foundedYear,
+		Description:        kv[models.OrgKeyDescription],
+		UpdatedAt:          time.Now(), // approximate; real per-key updated_at not surfaced
+	}
 }

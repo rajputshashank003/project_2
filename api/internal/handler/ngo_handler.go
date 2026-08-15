@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 	"github.com/shashankrajput/ngo-platform/api/internal/dto"
 	"github.com/shashankrajput/ngo-platform/api/internal/service"
 )
@@ -22,6 +23,7 @@ func NewNgoHandler(svc *service.NgoService) *NgoHandler {
 func (h *NgoHandler) GetConfig(c *gin.Context) {
 	cfg, err := h.svc.Get()
 	if err != nil {
+		log.Error().Err(err).Msg("ngo_handler: GetConfig failed")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "DB_ERROR", "message": "Failed to fetch NGO config"}})
 		return
 	}

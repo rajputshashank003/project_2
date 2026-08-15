@@ -31,9 +31,9 @@ func NewDonationService(
 	return &DonationService{repo: repo, cloudinary: cloudinary, messenger: messenger, email: email}
 }
 
-// Create creates a donation request. Uploads screenshot to Cloudinary first.
-// Uses orphan-protection: if DB write fails, Cloudinary asset is deleted.
-func (s *DonationService) Create(ctx context.Context, req dto.CreateDonationRequest) (*models.Donation, error) {
+// Create creates a donation request linked to the given userID.
+// Uploads screenshot to Cloudinary first. Orphan-protection applied on DB error.
+func (s *DonationService) Create(ctx context.Context, userID uuid.UUID, req dto.CreateDonationRequest) (*models.Donation, error) {
 	// Upload payment screenshot to Cloudinary
 	result, err := s.cloudinary.Upload(ctx, req.PaymentScreenshotB64)
 	if err != nil {
@@ -41,6 +41,7 @@ func (s *DonationService) Create(ctx context.Context, req dto.CreateDonationRequ
 	}
 
 	donation := &models.Donation{
+		UserID:               &userID,
 		DonorName:            req.DonorName,
 		Phone:                req.Phone,
 		Email:                req.Email,
@@ -64,10 +65,16 @@ func (s *DonationService) GetByID(id uuid.UUID) (*models.Donation, error) {
 	return s.repo.FindByID(id)
 }
 
-// List returns paginated donations.
+// List returns paginated donations (admin — all users).
 func (s *DonationService) List(page, limit int) ([]models.Donation, int64, error) {
 	offset := (page - 1) * limit
 	return s.repo.ListPaginated(offset, limit)
+}
+
+// ListByUser returns paginated donations for a specific user.
+func (s *DonationService) ListByUser(userID uuid.UUID, page, limit int) ([]models.Donation, int64, error) {
+	offset := (page - 1) * limit
+	return s.repo.ListByUserID(userID, offset, limit)
 }
 
 // UpdateStatus approves or rejects a donation inside a DB transaction.

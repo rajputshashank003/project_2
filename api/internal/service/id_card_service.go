@@ -71,10 +71,16 @@ func (s *IDCardService) GetByID(id uuid.UUID) (*models.IDCard, error) {
 	return s.repo.FindByID(id)
 }
 
-// List returns paginated ID cards.
+// List returns paginated ID cards (admin — all users).
 func (s *IDCardService) List(page, limit int) ([]models.IDCard, int64, error) {
 	offset := (page - 1) * limit
 	return s.repo.ListPaginated(offset, limit)
+}
+
+// ListByUser returns paginated ID cards for a specific user.
+func (s *IDCardService) ListByUser(userID uuid.UUID, page, limit int) ([]models.IDCard, int64, error) {
+	offset := (page - 1) * limit
+	return s.repo.ListByUserID(userID, offset, limit)
 }
 
 // UpdateStatus approves or rejects an ID card in a DB transaction.

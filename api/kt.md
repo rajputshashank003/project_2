@@ -135,11 +135,17 @@ All routes under `/api/v1/` unless noted.
 | POST | `/auth/send-otp` | `{phone}` | Rate-limited 3/10 min |
 | POST | `/auth/verify-otp` | `{phone, otp}` | Returns `{token, user}` |
 
-### NGO Config
-| Method | Path | Auth | Body |
+### Org / NGO Config
+| Method | Path | Auth | Body | Notes |
+|---|---|---|---|---|
+| GET | `/ngo/config` | Public | — | Reads all rows from `org_settings` KV table |
+| PATCH | `/ngo/config` | Admin | `UpdateNgoConfigRequest` | Upserts KV pairs into `org_settings` |
+
+### User Profile (My Records)
+| Method | Path | Auth | Notes |
 |---|---|---|---|
-| GET | `/ngo/config` | Public | — |
-| PATCH | `/ngo/config` | Admin | `UpdateNgoConfigRequest` |
+| GET | `/my/donations?page=&limit=` | Auth | Returns current user's donations (all statuses) |
+| GET | `/my/id-cards?page=&limit=` | Auth | Returns current user's ID card requests (all statuses) |
 
 ### Donations
 | Method | Path | Auth | Notes |
@@ -302,9 +308,9 @@ All successes:
 |---|---|
 | users | phone (UNIQUE) |
 | otps | (phone, used, expires_at) |
-| ngo_config | id=1 always |
-| donations | status, requested_at DESC, certificate_number (UNIQUE) |
-| id_cards | status, requested_at DESC, user_id, unique_card_number (UNIQUE) |
+| org_settings | key (UNIQUE) — key-value config store with 'meta' JSON key |
+| donations | status, requested_at DESC, user_id (FK), certificate_number (UNIQUE) |
+| id_cards | status, requested_at DESC, user_id (FK), unique_card_number (UNIQUE) |
 | notices | is_active |
 | gallery_images | uploaded_at DESC |
 | events | created_at DESC |
@@ -379,13 +385,9 @@ File: `.github/workflows/backend.yaml`
 
 ## 18. Gotchas
 
-- **Migrations run on every startup** — `migrate.ErrNoChange` is silently ignored; real errors panic.
-- **Admin phone bypass** — `ADMIN_PHONE` user is seeded only if not already in DB. After seed, they log in with OTP like anyone else.
-- **DEV_MODE=true** — Twilio and Resend are completely skipped. OTP is logged. `DEV_OTP` is accepted for any phone.
-- **Cloudinary Base64** — strip the data URI prefix before sending. The client should send raw Base64 or the full data URI (server strips it automatically).
-- **Team slots** — max 5 slots enforced in service. Slot numbers re-index (1..N) after deletion.
-- **TIMESTAMPTZ** — all timestamps stored with timezone. Go `time.Time` maps correctly with `TimeZone=UTC` in DSN.
-- **`GIN_MODE=release`** hides stack traces in responses — always set in production.
+- **GORM table names** — GORM v2 automatically pluralises struct names (e.g. `OrgSetting` -> `org_settings`). Always implement `func (Model) TableName() string` if the table name is singular or custom.
+- **`org_settings` key-value model** — replaces the single-row `ngo_config` table. `GetAll()` returns a map, `BulkSet()` upserts atomically. Cloudinary IDs for logo/signature are stored inside the `meta` key as JSON: `{"logo_cloudinary_id":"...","signature_cloudinary_id":"..."}`.
+- **User Profile records** — `donations` has `user_id` FK linked during `POST /donations`. `id_cards` has `user_id` FK linked during `POST /id-cards`. Authenticated users query `/api/v1/my/donations` and `/api/v1/my/id-cards`.
 
 ---
 

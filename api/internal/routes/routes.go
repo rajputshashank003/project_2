@@ -154,5 +154,13 @@ func Setup(
 		notify.POST("/whatsapp_local", notifyH.SendWhatsAppLocal)
 	}
 
+	// User profile: authenticated user's own records
+	my := v1.Group("/my")
+	my.Use(middleware.Auth(authSvc, userRepo))
+	{
+		my.GET("/donations", donationH.ListMy)
+		my.GET("/id-cards", idCardH.ListMy)
+	}
+
 	return r
 }

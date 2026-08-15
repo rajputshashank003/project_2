@@ -121,3 +121,34 @@ func (h *IDCardHandler) UpdateStatus(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": card})
 }
+
+// ListMy godoc — GET /api/v1/my/id-cards
+// Returns the authenticated user's own ID card requests (all statuses), paginated.
+func (h *IDCardHandler) ListMy(c *gin.Context) {
+	userIDRaw, _ := c.Get(middleware.AuthUserIDKey)
+	userID, ok := userIDRaw.(uuid.UUID)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": gin.H{"code": "UNAUTHORIZED", "message": "Invalid user session"}})
+		return
+	}
+
+	var pq dto.PaginationQuery
+	_ = c.ShouldBindQuery(&pq)
+	pq.Normalize()
+
+	cards, total, err := h.svc.ListByUser(userID, pq.Page, pq.Limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "DB_ERROR", "message": "Failed to fetch your ID cards"}})
+		return
+	}
+
+	totalPages := int(total) / pq.Limit
+	if int(total)%pq.Limit != 0 {
+		totalPages++
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":       cards,
+		"pagination": gin.H{"page": pq.Page, "limit": pq.Limit, "total": total, "totalPages": totalPages},
+	})
+}

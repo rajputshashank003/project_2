@@ -60,6 +60,7 @@ screens/
 | `useAdminTeam` | `getTeamMembers`, `updateTeamMember`, `clearTeamMember`, `addTeamSlot`, `removeTeamSlot` |
 | `useAdminUsers` | `getUsers`, `updateUserDesignation` |
 | `useAdminSettings` | `updateNgoConfig`, `uploadSignature`, `deleteSignature` |
+| `useUserProfile` | `getMyDonations`, `getMyIdCards` |
 
 ---
 
@@ -83,12 +84,10 @@ All HTTP calls go through `src/utils/api_request/`:
 | Events | `/events` | Public | Paginated from `/api/v1/events` |
 | Notices | `/notices` | Public | Paginated from `/api/v1/notices` |
 | Contact | `/contact` | Public | NGO config from `/api/v1/ngo/config` |
-| Login | `/login` | Public | Phone → OTP → JWT stored in localStorage |
-| Dashboard | `/dashboard` | Auth | User overview |
+| Login | `/login` | Public | Phone → OTP via WhatsApp → JWT stored in localStorage |
+| UserProfile | `/profile` | Auth | User overview showing all donations, certificates, and ID cards |
 | DonateForm | `/donate` | Auth | POST `/donations` with Idempotency-Key |
-| IDCardForm | `/id-card/apply` | Auth | POST `/id-cards` with Idempotency-Key |
-| MyCertificates | `/my-certificates` | Auth | Lists user donations, downloads cert PDF |
-| MyIDCard | `/my-id-card` | Auth | Shows approved card, downloads PDF |
+| IDCardForm | `/id-generate` | Auth | POST `/id-cards` with Idempotency-Key |
 | AdminDashboard | `/admin` | Admin | Stats overview |
 | AdminDonations | `/admin/donations` | Admin | List + approve/reject |
 | AdminIDCards | `/admin/id-cards` | Admin | List + approve with validityYears |
@@ -107,7 +106,7 @@ All HTTP calls go through `src/utils/api_request/`:
 Login screen
   → user enters phone
   → POST /api/v1/auth/send-otp {phone}
-  → user enters 6-digit OTP
+  → user receives 6-digit OTP on WhatsApp
   → POST /api/v1/auth/verify-otp {phone, otp}
   → response: {token, user}
   → stored in localStorage: ngo_token, ngo_user
@@ -241,7 +240,7 @@ npm run dev            # http://localhost:5173
 
 ### API Function Files (`src/utils/api_request/*.ts`)
 
-9 files: `auth`, `donations`, `id_cards`, `ngo`, `notices`, `events`, `gallery`, `team_members`, `users`
+10 files: `auth`, `donations`, `id_cards`, `my`, `ngo`, `notices`, `events`, `gallery`, `team_members`, `users`
 
 **Response pattern:**
 - Paginated lists: return `PaginatedResponse<T>` directly (caller extracts `.data`)

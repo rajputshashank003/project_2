@@ -22,6 +22,7 @@ const AdminGallery = lazy(() => import('./screens/AdminGallery/AdminGallery'));
 const AdminEvents = lazy(() => import('./screens/AdminEvents/AdminEvents'));
 const AdminTeam = lazy(() => import('./screens/AdminTeam/AdminTeam'));
 const AdminSettings = lazy(() => import('./screens/AdminSettings/AdminSettings'));
+const UserProfile = lazy(() => import('./screens/UserProfile/UserProfile'));
 
 const LoadingFallback = () => (
     <div className="flex-1 flex items-center justify-center min-h-[60vh]">
@@ -61,6 +62,7 @@ function App() {
                         <Route path="/about" element={<About />} />
 
                         {/* Auth-required routes */}
+                        <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
                         <Route path="/donate" element={<ProtectedRoute><Donate /></ProtectedRoute>} />
                         <Route path="/id-generate" element={<ProtectedRoute><IDGenerate /></ProtectedRoute>} />
                         <Route path="/certificate/:id" element={<ProtectedRoute><CertificateView /></ProtectedRoute>} />

@@ -45,7 +45,7 @@ func main() {
 	galleryRepo := repository.NewGalleryRepository(db)
 	eventRepo := repository.NewEventRepository(db)
 	teamRepo := repository.NewTeamRepository(db)
-	ngoRepo := repository.NewNgoRepository(db)
+	ngoRepo := repository.NewOrgSettingsRepository(db)
 	idempotencyRepo := repository.NewIdempotencyRepository(db)
 
 	// ---- External services -------------------------------------------------

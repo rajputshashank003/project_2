@@ -79,7 +79,11 @@ func (h *DonationHandler) Create(c *gin.Context) {
 		return
 	}
 
-	donation, err := h.svc.Create(c.Request.Context(), req)
+	// Extract authenticated user ID set by Auth middleware
+	userIDRaw, _ := c.Get(middleware.AuthUserIDKey)
+	userID, _ := userIDRaw.(uuid.UUID)
+
+	donation, err := h.svc.Create(c.Request.Context(), userID, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "CREATE_FAILED", "message": err.Error()}})
 		return
@@ -117,4 +121,35 @@ func (h *DonationHandler) UpdateStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": donation})
+}
+
+// ListMy godoc — GET /api/v1/my/donations
+// Returns the authenticated user's own donations (all statuses), paginated.
+func (h *DonationHandler) ListMy(c *gin.Context) {
+	userIDRaw, _ := c.Get(middleware.AuthUserIDKey)
+	userID, ok := userIDRaw.(uuid.UUID)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": gin.H{"code": "UNAUTHORIZED", "message": "Invalid user session"}})
+		return
+	}
+
+	var pq dto.PaginationQuery
+	_ = c.ShouldBindQuery(&pq)
+	pq.Normalize()
+
+	donations, total, err := h.svc.ListByUser(userID, pq.Page, pq.Limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "DB_ERROR", "message": "Failed to fetch your donations"}})
+		return
+	}
+
+	totalPages := int(total) / pq.Limit
+	if int(total)%pq.Limit != 0 {
+		totalPages++
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":       donations,
+		"pagination": gin.H{"page": pq.Page, "limit": pq.Limit, "total": total, "totalPages": totalPages},
+	})
 }
