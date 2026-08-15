@@ -60,6 +60,8 @@ func Setup(
 	// ---- Infra routes (no version prefix) ----------------------------------
 	r.GET("/healthz", healthH.Liveness)
 	r.GET("/readyz", healthH.Readiness)
+	r.GET("/api/health", healthH.Liveness)
+	r.GET("/health", healthH.Liveness)
 
 	// ---- API v1 routes -----------------------------------------------------
 	v1 := r.Group("/api/v1")

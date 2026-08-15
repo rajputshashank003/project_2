@@ -64,10 +64,13 @@ func main() {
 
 	authMiddleware := handler.RequireAPIKey(cfg.APIKey)
 
+	healthHandler := func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "ok"}) }
 	r.POST("/send",   authMiddleware, sendH.Send)
 	r.GET("/status",  statusH.Status)
 	r.GET("/qr",      qrH.QR)
-	r.GET("/healthz", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "ok"}) })
+	r.GET("/healthz", healthHandler)
+	r.GET("/api/health", healthHandler)
+	r.GET("/health", healthHandler)
 
 	// ---- Server ------------------------------------------------------------
 	srv := &http.Server{
