@@ -1,5 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { useAuth } from './context/AuthContext';
@@ -43,8 +44,13 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
 function App() {
     return (
         <div className="flex flex-col min-h-screen bg-slate-50">
+            {/* Vercel analytics */}
+            <Analytics />
+
+            {/* Navbar */}
             <Navbar />
 
+            {/* Main content */}
             <main className="flex-1">
                 <Suspense fallback={<LoadingFallback />}>
                     <Routes>

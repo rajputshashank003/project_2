@@ -16,6 +16,7 @@ import (
 // Implements the Messenger interface.
 type WhatsAppLocalService struct {
 	baseURL string // e.g. "http://localhost:8080"
+	apiKey  string // secret API key for authentication
 	devMode bool
 }
 
@@ -23,6 +24,7 @@ type WhatsAppLocalService struct {
 func NewWhatsAppLocalService(cfg *config.Config) *WhatsAppLocalService {
 	return &WhatsAppLocalService{
 		baseURL: cfg.WhatsAppLocalURL,
+		apiKey:  cfg.WhatsAppLocalAPIKey,
 		devMode: cfg.DevMode,
 	}
 }
@@ -50,11 +52,18 @@ func (s *WhatsAppLocalService) Send(phone, message string) {
 		return
 	}
 
-	resp, err := http.Post(
-		fmt.Sprintf("%s/send", s.baseURL),
-		"application/json",
-		bytes.NewBuffer(payload),
-	)
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/send", s.baseURL), bytes.NewBuffer(payload))
+	if err != nil {
+		log.Error().Err(err).Str("to", phone).Msg("whatsapp_local: request creation failed")
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if s.apiKey != "" {
+		req.Header.Set("X-API-Key", s.apiKey)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		log.Error().Err(err).Str("to", phone).Msg("whatsapp_local: send failed")
 		return

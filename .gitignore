@@ -1,7 +1,15 @@
 # Environment secrets — never commit
 api/.env
 client/.env
+whatsapp_service/.env
 .env
+
+# WhatsApp session database — contains private keys & tokens
+whatsapp_service/store/*.db*
+whatsapp_service/whatsapp_service
+*.db
+*.db-shm
+*.db-wal
 
 # Go build artifacts
 api/server

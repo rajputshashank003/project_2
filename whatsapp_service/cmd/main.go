@@ -62,7 +62,9 @@ func main() {
 	r := gin.New()
 	r.Use(gin.Recovery())
 
-	r.POST("/send",   sendH.Send)
+	authMiddleware := handler.RequireAPIKey(cfg.APIKey)
+
+	r.POST("/send",   authMiddleware, sendH.Send)
 	r.GET("/status",  statusH.Status)
 	r.GET("/qr",      qrH.QR)
 	r.GET("/healthz", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "ok"}) })

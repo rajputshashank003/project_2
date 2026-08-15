@@ -13,6 +13,7 @@ type Config struct {
 	DBPath   string // SQLite path for WhatsApp session (default "store/whatsapp.db")
 	DevMode  bool   // if true, log sends instead of actually sending
 	LogLevel string // "debug" | "info" | "warn" | "error"
+	APIKey   string // Secret key required to authenticate requests to this service
 }
 
 // Load reads .env (if present) then environment variables.
@@ -24,6 +25,7 @@ func Load() (*Config, error) {
 		DBPath:   getEnv("WHATSAPP_DB_PATH", "store/whatsapp.db"),
 		DevMode:  getEnv("DEV_MODE", "false") == "true",
 		LogLevel: getEnv("LOG_LEVEL", "info"),
+		APIKey:   getEnv("API_KEY", getEnv("WHATSAPP_API_KEY", "")),
 	}
 
 	return cfg, nil

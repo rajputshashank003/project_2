@@ -46,8 +46,9 @@ type Config struct {
 	TwilioWhatsAppFrom string // "whatsapp:+14155238886" for sandbox; production: "whatsapp:+91XXXXXXXXXX"
 
 	// Messaging
-	MessagingType    string // "sms" | "whatsapp_twilio" | "whatsapp_local"
-	WhatsAppLocalURL string // base URL of standalone whatsapp_service (e.g. "http://localhost:8080")
+	MessagingType       string // "sms" | "whatsapp_twilio" | "whatsapp_local"
+	WhatsAppLocalURL    string // base URL of standalone whatsapp_service (e.g. "http://localhost:8080")
+	WhatsAppLocalAPIKey string // API key for authenticating with whatsapp_service
 
 	// Resend
 	ResendAPIKey    string
@@ -99,8 +100,9 @@ func Load() (*Config, error) {
 		TwilioFromPhone:    getEnv("TWILIO_FROM_PHONE", ""),
 		TwilioWhatsAppFrom: getEnv("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886"),
 
-		MessagingType:    getEnv("MESSAGING_TYPE", "sms"),
-		WhatsAppLocalURL: getEnv("WHATSAPP_LOCAL_URL", "http://localhost:8080"),
+		MessagingType:       getEnv("MESSAGING_TYPE", "sms"),
+		WhatsAppLocalURL:    getEnv("WHATSAPP_LOCAL_URL", "http://localhost:8080"),
+		WhatsAppLocalAPIKey: getEnv("WHATSAPP_LOCAL_API_KEY", ""),
 
 		ResendAPIKey:    getEnv("RESEND_API_KEY", ""),
 		ResendFromEmail: getEnv("RESEND_FROM_EMAIL", "noreply@example.com"),
