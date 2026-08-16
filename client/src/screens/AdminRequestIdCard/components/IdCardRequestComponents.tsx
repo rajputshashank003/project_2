@@ -284,6 +284,7 @@ export const IDCardPreviewModal: React.FC = () => {
         designation: previewItem.designation,
         passportPhotoUrl: previewItem.passportPhotoUrl,
         issueDate: previewItem.issueDate || previewItem.requestedAt,
+        expiryDate: previewItem.expiryDate,
         address: previewItem.address,
         presidentName: ngoConfig.presidentName,
         signatureUrl: ngoConfig.signatureUrl,

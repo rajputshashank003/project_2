@@ -40,6 +40,7 @@ export const useIDCardView = () => {
                 designation: data.designation,
                 passportPhotoUrl: data.passportPhotoUrl,
                 issueDate: data.issueDate || data.requestedAt,
+                expiryDate: data.expiryDate,
                 address: data.address,
                 presidentName: activeConfig.presidentName,
                 signatureUrl: activeConfig.signatureUrl,

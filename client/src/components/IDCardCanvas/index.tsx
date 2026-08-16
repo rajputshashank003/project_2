@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 import { Download, FileImage } from "lucide-react";
@@ -38,13 +38,42 @@ const IDCardCanvas: React.FC<IDCardCanvasProps> = ({
     data,
     showDownloadButtons = true,
 }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
     const cardRef = useRef<HTMLDivElement>(null);
     const frontRef = useRef<HTMLDivElement>(null);
     const backRef = useRef<HTMLDivElement>(null);
+    const [scale, setScale] = useState(1);
+    const [isStacked, setIsStacked] = useState(false);
     const [isDownloadingPng, setIsDownloadingPng] = useState(false);
     const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
     const designationColor = DESIGNATION_COLORS[data.designation] || "#059669";
+
+    useEffect(() => {
+        const updateScale = () => {
+            if (!containerRef.current) return;
+            const containerWidth = containerRef.current.clientWidth;
+            const stacked = containerWidth < 680;
+            setIsStacked(stacked);
+            const baseWidth = stacked ? 320 : 656;
+            if (containerWidth < baseWidth && containerWidth > 0) {
+                setScale(containerWidth / baseWidth);
+            } else {
+                setScale(1);
+            }
+        };
+
+        updateScale();
+        const observer = new ResizeObserver(updateScale);
+        if (containerRef.current) {
+            observer.observe(containerRef.current);
+        }
+        window.addEventListener("resize", updateScale);
+        return () => {
+            observer.disconnect();
+            window.removeEventListener("resize", updateScale);
+        };
+    }, []);
 
     const downloadPng = async () => {
         if (!cardRef.current || isDownloadingPng) return;
@@ -73,10 +102,14 @@ const IDCardCanvas: React.FC<IDCardCanvasProps> = ({
             const frontUrl = await toPng(frontRef.current, {
                 pixelRatio: 2.5,
                 cacheBust: false,
+                width: 320,
+                height: 200,
             });
             const backUrl = await toPng(backRef.current, {
                 pixelRatio: 2.5,
                 cacheBust: false,
+                width: 320,
+                height: 200,
             });
 
             const cardWidth = 320;
@@ -129,16 +162,44 @@ const IDCardCanvas: React.FC<IDCardCanvasProps> = ({
         }
     };
 
+    const baseWidth = isStacked ? 320 : 656;
+    const baseHeight = isStacked ? 416 : 200;
+
     return (
-        <div className="flex flex-col items-center gap-6">
-            {/* Card container */}
+        <div ref={containerRef} className="flex flex-col items-center gap-6 w-full">
+            {/* Card Scaled Container */}
             <div
-                ref={cardRef}
-                className="flex flex-col sm:flex-row gap-4 p-2 bg-transparent"
+                className="flex justify-center items-center overflow-hidden"
+                style={{
+                    width: `${Math.round(baseWidth * scale)}px`,
+                    height: `${Math.round(baseHeight * scale)}px`,
+                    position: "relative",
+                    flexShrink: 0,
+                    maxWidth: "100%",
+                }}
             >
-                {/* FRONT */}
                 <div
-                    ref={frontRef}
+                    style={{
+                        transform: `scale(${scale})`,
+                        transformOrigin: "top left",
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: `${baseWidth}px`,
+                        height: `${baseHeight}px`,
+                    }}
+                >
+                    <div
+                        ref={cardRef}
+                        className={`flex ${isStacked ? "flex-col" : "flex-row"} gap-4 p-0 bg-transparent shrink-0`}
+                        style={{
+                            width: `${baseWidth}px`,
+                            height: `${baseHeight}px`,
+                        }}
+                    >
+                        {/* FRONT */}
+                        <div
+                            ref={frontRef}
                     style={{
                         width: 320,
                         height: 200,
@@ -495,6 +556,8 @@ const IDCardCanvas: React.FC<IDCardCanvasProps> = ({
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
             {/* Download buttons */}
             {showDownloadButtons && (

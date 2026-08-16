@@ -39,7 +39,7 @@ const CertificateViewContent: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 overflow-x-auto">
+            <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-6 flex justify-center">
                 <CertificateCanvas data={certificateData} showDownloadButtons />
             </div>
         </div>

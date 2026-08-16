@@ -295,3 +295,20 @@ npm run dev            # http://localhost:5173
   - `index.html` includes full OpenGraph, Twitter card, theme-color, and meta descriptions.
   - `App.tsx` wraps route chunks with `lazyWithRetry` to handle deployment mismatches cleanly.
 
+---
+
+## 19. Responsive Canvas Aspect-Ratio Scaling & ID Card Validity
+
+- **Certificate Canvas Scaling (`CertificateCanvas`)**:
+  - Automatically calculates scale `scale = Math.min(1, containerWidth / 794)` using a container `ResizeObserver`.
+  - Outer container dynamically sizes to `794 * scale` x `562 * scale` with `transform: scale(scale)` centered in the layout flow.
+  - Preserves standard A4 landscape aspect ratio across mobile viewports (360px–414px) and admin modals with zero horizontal scrollbars or cropping.
+  - PNG/PDF downloads export unscaled `794px x 562px` at `pixelRatio: 2.5` (`1985x1405px`) for ultra-high-resolution output.
+- **ID Card Canvas Scaling (`IDCardCanvas`)**:
+  - Calculates responsive scale `scale = Math.min(1, containerWidth / baseWidth)` (baseWidth: 320px stacked on `<680px`, 656px side-by-side on `>=680px`).
+  - Scales cleanly inside narrow phone viewports and modal bodies.
+  - PNG/PDF downloads export unscaled `320px x 200px` cards at `pixelRatio: 2.5`.
+- **ID Card Validity Display (`expiryDate`)**:
+  - `useIDCardView.ts` and `IdCardRequestComponents.tsx` map `expiryDate: data.expiryDate` into `cardData`.
+  - `IDCardCanvas` displays `Valid till: <Formatted Date>` (e.g. `Valid till: 16 Aug 2027`) when validity > 0, and `Valid till: Lifetime` when validity is 0.
+

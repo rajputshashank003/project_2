@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 import { Download, FileImage } from "lucide-react";
@@ -30,9 +30,34 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
     data,
     showDownloadButtons = true,
 }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
     const certRef = useRef<HTMLDivElement>(null);
+    const [scale, setScale] = useState(1);
     const [isDownloadingPng, setIsDownloadingPng] = useState(false);
     const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+    useEffect(() => {
+        const updateScale = () => {
+            if (!containerRef.current) return;
+            const containerWidth = containerRef.current.clientWidth;
+            if (containerWidth < 794 && containerWidth > 0) {
+                setScale(containerWidth / 794);
+            } else {
+                setScale(1);
+            }
+        };
+
+        updateScale();
+        const observer = new ResizeObserver(updateScale);
+        if (containerRef.current) {
+            observer.observe(containerRef.current);
+        }
+        window.addEventListener("resize", updateScale);
+        return () => {
+            observer.disconnect();
+            window.removeEventListener("resize", updateScale);
+        };
+    }, []);
 
     const amountWords = (n: number): string => {
         return new Intl.NumberFormat("en-IN", {
@@ -49,6 +74,8 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
             const dataUrl = await toPng(certRef.current, {
                 pixelRatio: 2.5,
                 cacheBust: false,
+                width: 794,
+                height: 562,
             });
             const link = document.createElement("a");
             link.download = `certificate_${data.certificateNumber}.png`;
@@ -69,6 +96,8 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
             const dataUrl = await toPng(certRef.current, {
                 pixelRatio: 2.5,
                 cacheBust: false,
+                width: 794,
+                height: 562,
             });
             const img = new Image();
             img.src = dataUrl;
@@ -94,24 +123,44 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
     };
 
     return (
-        <div className="flex flex-col items-center gap-6 w-full">
-            {/* Certificate Scroll Wrapper for Mobile */}
-            <div className="w-full overflow-x-auto flex justify-center p-1 sm:p-2">
+        <div ref={containerRef} className="flex flex-col items-center gap-6 w-full">
+            {/* Certificate Scaled Wrapper for Mobile */}
+            <div
+                className="flex justify-center items-center overflow-hidden"
+                style={{
+                    width: `${Math.round(794 * scale)}px`,
+                    height: `${Math.round(562 * scale)}px`,
+                    position: "relative",
+                    flexShrink: 0,
+                    maxWidth: "100%",
+                }}
+            >
                 <div
-                    ref={certRef}
-                    id="certificate-print-area"
-                    className="relative bg-white shadow-xl rounded-sm shrink-0"
                     style={{
+                        transform: `scale(${scale})`,
+                        transformOrigin: "top left",
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
                         width: "794px",
-                        minHeight: "562px",
-                        fontFamily: "Georgia, serif",
-                        border: "12px solid #059669",
-                        outline: "3px solid #d1fae5",
-                        outlineOffset: "-18px",
-                        padding: "40px 56px",
-                        boxSizing: "border-box",
+                        height: "562px",
                     }}
                 >
+                    <div
+                        ref={certRef}
+                        id="certificate-print-area"
+                        className="relative bg-white shadow-xl rounded-sm shrink-0"
+                        style={{
+                            width: "794px",
+                            height: "562px",
+                            fontFamily: "Georgia, serif",
+                            border: "12px solid #059669",
+                            outline: "3px solid #d1fae5",
+                            outlineOffset: "-18px",
+                            padding: "36px 52px",
+                            boxSizing: "border-box",
+                        }}
+                    >
                     {/* Corner decorations */}
                     <div
                         style={{
@@ -346,6 +395,7 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
                     </div>
                 </div>
             </div>
+        </div>
 
             {/* Download buttons */}
             {showDownloadButtons && (
