@@ -523,8 +523,8 @@ MESSAGING_TYPE=whatsapp_local   # standalone whatsapp_service microservice (free
 | Service | Usage |
 |---|---|
 | `OTPService` | Sends OTP code on login |
-| `DonationService` | Sends approval/rejection notification |
-| `IDCardService` | Sends approval/rejection notification |
+| `DonationService` | Sends approval/rejection notification (includes rejection reason, branded email, and CTA to `/donate`) |
+| `IDCardService` | Sends approval/rejection notification (includes rejection reason, branded email, and CTA to `/id-card/generate`) |
 
 ### Manual Notify API Endpoints
 

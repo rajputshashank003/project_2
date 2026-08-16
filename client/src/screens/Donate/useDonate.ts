@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import toast from "react-hot-toast";
 import { createDonation } from "../../utils/api_request/donations";
 import { useApp } from "../../context/AppContext";
@@ -34,7 +34,18 @@ export const useDonate = () => {
         ...EMPTY_FORM,
         donorName: user?.name || "",
         phone: user?.phone || "",
+        email: user?.email || "",
     });
+
+    useEffect(() => {
+        if (!user) return;
+        setForm((prev) => ({
+            ...prev,
+            donorName: prev.donorName || user.name || "",
+            phone: prev.phone || user.phone || "",
+            email: prev.email || user.email || "",
+        }));
+    }, [user]);
     const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
     const [screenshotPreview, setScreenshotPreview] = useState("");
     const [errors, setErrors] = useState<

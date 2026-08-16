@@ -326,4 +326,24 @@ npm run dev            # http://localhost:5173
   - Calls `GET /api/v1/my/profile` via `refreshUser()` on app load and on `/profile` screen mount.
   - Updates `user` state and `localStorage` so role badges (`Admin` / `Member`) and designations reflect database truth in real time.
 
+---
+
+## 21. Form Email Auto-Fill & Profile Designation Badge Fix
+
+- **Email Auto-Fill in Forms (`useIDGenerate.ts` & `useDonate.ts`)**:
+  - Auto-fills `email: user.email` in ID Card generation and Donation/Certificate forms on mount and when `user` updates from DB.
+  - Users are fully able to edit or change the email in the input field prior to submitting.
+- **Profile Designation Badge (`UserProfile.tsx`)**:
+  - Corrected badge display so user's actual designation (`user.designation`, e.g. "Secretary") is always shown.
+  - Adds an `Admin` badge alongside designation when `user.role === "admin" && user.designation !== "admin"`.
+
+---
+
+## 22. Enhanced Rejection Email Templates & UI/UX
+
+- **Rejection Notification Templates (`notification_service.ts`)**:
+  - Updated `buildDonationRejectionMessages` and `buildIdCardRejectionMessages` with a structured layout, dark NGO branded header, styled rejection reason callout box (`#fff1f2` with `#e11d48` border), and action button linking directly to `/donate` or `/id-card/generate`.
+
+
+
 

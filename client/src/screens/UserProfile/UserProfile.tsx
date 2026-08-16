@@ -109,10 +109,13 @@ const UserProfileContent: React.FC = () => {
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2 mt-2">
                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 capitalize">
-                                        {user?.role === "admin"
-                                            ? "Admin"
-                                            : user?.designation || "Member"}
+                                        {user?.designation || "Member"}
                                     </span>
+                                    {user?.role === "admin" && user?.designation !== "admin" && (
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                            Admin
+                                        </span>
+                                    )}
                                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
                                         <HeartPulse className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                                         Blood Group:{" "}

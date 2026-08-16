@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import toast from "react-hot-toast";
 import { createIdCardRequest } from "../../utils/api_request/id_cards";
 import { useAuth } from "../../context/AuthContext";
@@ -35,7 +35,18 @@ export const useIDGenerate = () => {
         ...EMPTY_FORM,
         userName: user?.name || "",
         phone: user?.phone || "",
+        email: user?.email || "",
     });
+
+    useEffect(() => {
+        if (!user) return;
+        setForm((prev) => ({
+            ...prev,
+            userName: prev.userName || user.name || "",
+            phone: prev.phone || user.phone || "",
+            email: prev.email || user.email || "",
+        }));
+    }, [user]);
     const [passportFile, setPassportFile] = useState<File | null>(null);
     const [passportPreview, setPassportPreview] = useState("");
     const [paymentFile, setPaymentFile] = useState<File | null>(null);

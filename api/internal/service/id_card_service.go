@@ -180,42 +180,88 @@ func (s *IDCardService) generateUniqueCardNumber() (string, error) {
 func (s *IDCardService) notify(card *models.IDCard, status, cardNumber string) {
 	baseURL := s.appBaseURL
 	var userMsg, subject, html string
+
+	ngoName := "Sarv Brahman Ekta Manch"
+	if s.orgRepo != nil {
+		if name, err := s.orgRepo.GetValue(models.OrgKeyName); err == nil && name != "" {
+			ngoName = name
+		}
+	}
+
 	if status == "approved" {
 		cardLink := fmt.Sprintf("%s/id-card/%s", baseURL, card.ID.String())
 		userMsg = fmt.Sprintf(
 			"✅ Hi %s, your NGO ID Card has been approved!\nCard No: %s\nDownload it here: %s",
 			card.UserName, cardNumber, cardLink,
 		)
-		subject = "NGO ID Card Approved"
-		html = fmt.Sprintf(`<div style="font-family:Inter,sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#f8fafc;">
-<div style="background:#059669;padding:20px 24px;border-radius:12px 12px 0 0;">
-  <h2 style="color:#fff;margin:0;font-size:20px;">✅ ID Card Approved</h2>
+		subject = fmt.Sprintf("NGO ID Card Approved — %s", ngoName)
+		html = fmt.Sprintf(`<div style="font-family:Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#f8fafc;">
+<div style="background:#059669;padding:20px 24px;border-radius:12px 12px 0 0;text-align:center;">
+  <h2 style="color:#fff;margin:0;font-size:18px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">%s</h2>
 </div>
-<div style="background:#fff;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;">
-  <p style="color:#334155;margin-top:0;">Hi <strong>%s</strong>,</p>
-  <p style="color:#334155;">Your NGO ID card has been <strong style="color:#059669;">approved</strong>.</p>
-  <p style="color:#334155;">Card No: <strong style="font-family:monospace;">%s</strong></p>
-  <div style="text-align:center;margin:24px 0;">
-    <a href="%s" style="display:inline-block;background:#059669;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;">View &amp; Download ID Card →</a>
+<div style="background:#fff;padding:28px 24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
+  <div style="display:inline-block;background:#d1fae5;color:#065f46;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:16px;">
+    Approved ✓
   </div>
-  <p style="color:#64748b;font-size:13px;">If the button doesn't work, copy this link: <a href="%s" style="color:#059669;">%s</a></p>
-  <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0;">
-  <p style="color:#94a3b8;font-size:12px;text-align:center;">%s — <a href="%s" style="color:#059669;">%s</a></p>
+  <h3 style="color:#0f172a;margin:0 0 16px 0;font-size:20px;font-weight:700;">ID Card Approved</h3>
+  <p style="color:#334155;font-size:15px;margin-top:0;">Hi <strong>%s</strong>,</p>
+  <p style="color:#334155;font-size:14px;line-height:1.6;">Your NGO ID card request has been <strong style="color:#059669;">approved</strong>.</p>
+  <p style="color:#334155;font-size:14px;">Card No: <strong style="font-family:monospace;color:#0f172a;">%s</strong></p>
+  <div style="text-align:center;margin:28px 0;">
+    <a href="%s" style="display:inline-block;background:#059669;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;box-shadow:0 2px 4px rgba(5,150,105,0.2);">View &amp; Download ID Card →</a>
+  </div>
+  <p style="color:#64748b;font-size:13px;line-height:1.5;">If the button doesn't work, copy this link: <a href="%s" style="color:#059669;word-break:break-all;">%s</a></p>
+  <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+  <p style="color:#94a3b8;font-size:12px;text-align:center;margin:0;">%s — <a href="%s" style="color:#059669;text-decoration:none;">%s</a></p>
 </div>
 </div>`,
-			card.UserName, cardNumber, cardLink, cardLink, cardLink,
-			"NGO Platform", baseURL, baseURL,
+			ngoName, card.UserName, cardNumber, cardLink, cardLink, cardLink,
+			ngoName, baseURL, baseURL,
 		)
 	} else {
+		rejectionReason := "Submitted details or photo could not be verified."
+		if card.RejectionReason != nil && *card.RejectionReason != "" {
+			rejectionReason = *card.RejectionReason
+		}
+		reapplyLink := fmt.Sprintf("%s/id-card/generate", baseURL)
+
 		userMsg = fmt.Sprintf(
-			"Hi %s, your NGO ID card request has been declined. Please reapply at %s",
-			card.UserName, baseURL,
+			"Hi %s, your NGO ID card request has been declined.\nReason: %s\nPlease reapply at %s",
+			card.UserName, rejectionReason, reapplyLink,
 		)
-		subject = "NGO ID Card Request Update"
-		html = fmt.Sprintf(`<div style="font-family:Inter,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
-<p>Hi <strong>%s</strong>,</p>
-<p>Your ID card request was <strong style="color:#dc2626;">declined</strong>. Please <a href="%s">reapply here</a>.</p>
-</div>`, card.UserName, baseURL)
+		subject = fmt.Sprintf("NGO ID Card Request Update — %s", ngoName)
+		html = fmt.Sprintf(`<div style="font-family:Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#f8fafc;">
+<div style="background:#0f172a;padding:20px 24px;border-radius:12px 12px 0 0;text-align:center;">
+  <h2 style="color:#ffffff;margin:0;font-size:18px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">%s</h2>
+</div>
+<div style="background:#ffffff;padding:28px 24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
+  <div style="display:inline-block;background:#fee2e2;color:#dc2626;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:16px;">
+    Application Update
+  </div>
+  <h3 style="color:#0f172a;margin:0 0 16px 0;font-size:20px;font-weight:700;">ID Card Request Declined</h3>
+  <p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 12px 0;">Hi <strong>%s</strong>,</p>
+  <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
+    Thank you for your interest in volunteering with us. We reviewed your ID card request, but were unable to approve the application with the current details.
+  </p>
+  <div style="background:#fff1f2;border-left:4px solid #e11d48;border-radius:6px;padding:14px 16px;margin:20px 0;">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#be123c;margin-bottom:4px;">Reason for Rejection</div>
+    <div style="font-size:14px;color:#1e293b;font-weight:600;line-height:1.5;">%s</div>
+  </div>
+  <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 20px 0;">
+    You are welcome to reapply with updated information and a clear passport photo.
+  </p>
+  <div style="text-align:center;margin:28px 0;">
+    <a href="%s" style="display:inline-block;background:#059669;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;box-shadow:0 2px 4px rgba(5,150,105,0.2);">Reapply for ID Card →</a>
+  </div>
+  <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+  <p style="color:#94a3b8;font-size:12px;text-align:center;margin:0;">
+    %s — <a href="%s" style="color:#059669;text-decoration:none;">%s</a>
+  </p>
+</div>
+</div>`,
+			ngoName, card.UserName, rejectionReason, reapplyLink,
+			ngoName, baseURL, baseURL,
+		)
 	}
 
 	if card.Phone != "" {
