@@ -307,11 +307,14 @@ export const ScreenshotModal: React.FC = () => {
         donationDate: screenshotModal.reviewedAt || screenshotModal.requestedAt,
         certificateNumber: screenshotModal.id,
         ngoName: ngoConfig.name,
+        ngoLogo: ngoConfig.logoUrl,
         ngoAddress: ngoConfig.address,
+        ngoEmail: ngoConfig.email,
         presidentName: ngoConfig.presidentName,
         secretaryName: ngoConfig.secretaryName,
         signatureUrl: ngoConfig.signatureUrl,
         registrationNumber: ngoConfig.registrationNumber,
+        purpose: "General NGO Activities",
     };
 
     return (
@@ -326,28 +329,28 @@ export const ScreenshotModal: React.FC = () => {
         >
             <div className="space-y-4">
                 {/* Navigation Tabs */}
-                <div className="flex border-b border-slate-200">
+                <div className="flex border-b border-slate-200 gap-1 sm:gap-2">
                     <button
                         onClick={() => setActiveTab("screenshot")}
-                        className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+                        className={`px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold border-b-2 transition-colors flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap flex-1 sm:flex-initial ${
                             activeTab === "screenshot"
                                 ? "border-emerald-600 text-emerald-700"
                                 : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                     >
-                        <Image className="h-4 w-4" />
-                        Payment Screenshot
+                        <Image className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                        <span>Payment Screenshot</span>
                     </button>
                     <button
                         onClick={() => setActiveTab("certificate")}
-                        className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+                        className={`px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold border-b-2 transition-colors flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap flex-1 sm:flex-initial ${
                             activeTab === "certificate"
                                 ? "border-emerald-600 text-emerald-700"
                                 : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                     >
-                        <Award className="h-4 w-4" />
-                        Certificate Preview
+                        <Award className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                        <span>Certificate Preview</span>
                     </button>
                 </div>
 

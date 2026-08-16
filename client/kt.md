@@ -312,3 +312,18 @@ npm run dev            # http://localhost:5173
   - `useIDCardView.ts` and `IdCardRequestComponents.tsx` map `expiryDate: data.expiryDate` into `cardData`.
   - `IDCardCanvas` displays `Valid till: <Formatted Date>` (e.g. `Valid till: 16 Aug 2027`) when validity > 0, and `Valid till: Lifetime` when validity is 0.
 
+---
+
+## 20. Certificate Flex Layout, Single-Line Mobile Tabs & DB Profile Sync
+
+- **Certificate Canvas Proportional Flex Layout (`CertificateCanvas`)**:
+  - `#certificate-print-area` uses `flex flex-col justify-between` within `794px` x `562px` canvas (`padding: 22px 48px 18px`).
+  - Balanced element heights and line-heights ensure the President signature block, President title, and Certificate Number sit comfortably `~25px` above the bottom green border with zero overflow under all conditions (with/without logo, with/without purpose).
+- **Admin Modal Mobile Single-Line Tabs (`DonationRequestComponents.tsx`)**:
+  - Tab buttons use `px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold whitespace-nowrap gap-1.5 sm:gap-2 flex-1 sm:flex-initial justify-center` so "Payment Screenshot" and "Certificate Preview" remain on a single line on mobile screens.
+  - Matches public certificate data by providing `ngoLogo` and `purpose`.
+- **Live User Profile & Role from DB (`AuthContext`)**:
+  - Calls `GET /api/v1/my/profile` via `refreshUser()` on app load and on `/profile` screen mount.
+  - Updates `user` state and `localStorage` so role badges (`Admin` / `Member`) and designations reflect database truth in real time.
+
+

@@ -150,7 +150,8 @@ All routes under `/api/v1/` unless noted.
 |---|---|---|---|---|
 | GET | `/my/donations?page=&limit=` | Auth | — | Returns current user's donations (all statuses) |
 | GET | `/my/id-cards?page=&limit=` | Auth | — | Returns current user's ID card requests (all statuses) |
-| PATCH | `/my/profile` | Auth | `{name, email}` | User self-onboarding / update |
+| GET | `/my/profile` | Auth | — | Returns current user's fresh database profile and role |
+| PATCH | `/my/profile` | Auth | `{name, email, bloodGroup}` | User self-onboarding / update |
 
 ### Donations
 | Method | Path | Auth | Content-Type | Notes |

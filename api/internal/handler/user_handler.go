@@ -134,3 +134,23 @@ func (h *UserHandler) UpdateMyProfile(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": user})
 }
+
+// GetMyProfile godoc — GET /api/v1/my/profile
+// Returns the profile of the currently authenticated user directly from the database.
+func (h *UserHandler) GetMyProfile(c *gin.Context) {
+	userIDRaw, _ := c.Get(middleware.AuthUserIDKey)
+	userID, ok := userIDRaw.(uuid.UUID)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": gin.H{"code": "UNAUTHORIZED", "message": "Invalid user session"}})
+		return
+	}
+
+	user, err := h.svc.GetMyProfile(userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": gin.H{"code": "NOT_FOUND", "message": "User not found"}})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": user})
+}
+

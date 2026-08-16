@@ -161,6 +161,7 @@ func Setup(
 	{
 		my.GET("/donations", donationH.ListMy)
 		my.GET("/id-cards", idCardH.ListMy)
+		my.GET("/profile", userH.GetMyProfile)
 		my.PATCH("/profile", userH.UpdateMyProfile)
 	}
 

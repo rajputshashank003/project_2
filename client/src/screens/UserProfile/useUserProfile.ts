@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { getMyDonations, getMyIdCards } from "../../utils/api_request/my";
+import { useAuth } from "../../context/AuthContext";
 import type { Donation } from "../../types/donation";
 import type { IdCard } from "../../types/id_card";
 
 type ProfileTab = "donations" | "idcards";
 
 export const useUserProfile = () => {
+    const { refreshUser } = useAuth();
     const [activeTab, setActiveTab] = useState<ProfileTab>("donations");
 
     // Donations state
@@ -52,11 +54,12 @@ export const useUserProfile = () => {
         }
     }, []);
 
-    // Load both on mount
+    // Load both on mount and refresh user profile from DB
     useEffect(() => {
+        void refreshUser();
         loadDonations(1);
         loadIdCards(1);
-    }, [loadDonations, loadIdCards]);
+    }, [refreshUser, loadDonations, loadIdCards]);
 
     return {
         activeTab,

@@ -149,7 +149,7 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
                     <div
                         ref={certRef}
                         id="certificate-print-area"
-                        className="relative bg-white shadow-xl rounded-sm shrink-0"
+                        className="relative bg-white shadow-xl rounded-sm shrink-0 flex flex-col justify-between"
                         style={{
                             width: "794px",
                             height: "562px",
@@ -157,7 +157,7 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
                             border: "12px solid #059669",
                             outline: "3px solid #d1fae5",
                             outlineOffset: "-18px",
-                            padding: "36px 52px",
+                            padding: "22px 48px 18px",
                             boxSizing: "border-box",
                         }}
                     >
@@ -167,8 +167,8 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
                             position: "absolute",
                             top: 18,
                             left: 18,
-                            width: 40,
-                            height: 40,
+                            width: 36,
+                            height: 36,
                             borderTop: "4px solid #059669",
                             borderLeft: "4px solid #059669",
                         }}
@@ -178,8 +178,8 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
                             position: "absolute",
                             top: 18,
                             right: 18,
-                            width: 40,
-                            height: 40,
+                            width: 36,
+                            height: 36,
                             borderTop: "4px solid #059669",
                             borderRight: "4px solid #059669",
                         }}
@@ -189,8 +189,8 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
                             position: "absolute",
                             bottom: 18,
                             left: 18,
-                            width: 40,
-                            height: 40,
+                            width: 36,
+                            height: 36,
                             borderBottom: "4px solid #059669",
                             borderLeft: "4px solid #059669",
                         }}
@@ -200,172 +200,188 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
                             position: "absolute",
                             bottom: 18,
                             right: 18,
-                            width: 40,
-                            height: 40,
+                            width: 36,
+                            height: 36,
                             borderBottom: "4px solid #059669",
                             borderRight: "4px solid #059669",
                         }}
                     />
 
-                    {/* Header */}
-                    <div style={{ textAlign: "center", marginBottom: 24 }}>
-                        {data.ngoLogo && (
-                            <img
-                                src={data.ngoLogo}
-                                alt="NGO Logo"
-                                style={{
-                                    height: 64,
-                                    margin: "0 auto 12px",
-                                    objectFit: "contain",
-                                }}
-                            />
-                        )}
-                        <div
-                            style={{
-                                fontSize: 24,
-                                fontWeight: "bold",
-                                color: "#065f46",
-                                letterSpacing: 1,
-                                textTransform: "uppercase",
-                            }}
-                        >
-                            {data.ngoName}
-                        </div>
-                        {data.ngoAddress && (
+                    {/* Top Group: Header & Title */}
+                    <div>
+                        {/* Header */}
+                        <div style={{ textAlign: "center", marginBottom: 12 }}>
+                            {data.ngoLogo && (
+                                <img
+                                    src={data.ngoLogo}
+                                    alt="NGO Logo"
+                                    style={{
+                                        height: 40,
+                                        margin: "0 auto 4px",
+                                        objectFit: "contain",
+                                        display: "block",
+                                    }}
+                                />
+                            )}
                             <div
                                 style={{
-                                    fontSize: 11,
-                                    color: "#64748b",
-                                    marginTop: 4,
+                                    fontSize: 19,
+                                    fontWeight: "bold",
+                                    color: "#065f46",
+                                    letterSpacing: 1,
+                                    textTransform: "uppercase",
+                                    lineHeight: 1.2,
                                 }}
                             >
-                                {data.ngoAddress}
+                                {data.ngoName}
                             </div>
-                        )}
-                        {data.registrationNumber && (
-                            <div style={{ fontSize: 11, color: "#64748b" }}>
-                                Reg. No: {data.registrationNumber}
+                            {data.ngoAddress && (
+                                <div
+                                    style={{
+                                        fontSize: 9.5,
+                                        color: "#64748b",
+                                        marginTop: 2,
+                                    }}
+                                >
+                                    {data.ngoAddress}
+                                </div>
+                            )}
+                            {data.registrationNumber && (
+                                <div style={{ fontSize: 9.5, color: "#64748b" }}>
+                                    Reg. No: {data.registrationNumber}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Title */}
+                        <div style={{ textAlign: "center", marginBottom: 10 }}>
+                            <div
+                                style={{
+                                    display: "inline-block",
+                                    borderBottom: "2px solid #059669",
+                                    paddingBottom: 2,
+                                }}
+                            >
+                                <h1
+                                    style={{
+                                        fontSize: 19,
+                                        fontWeight: 800,
+                                        color: "#059669",
+                                        margin: 0,
+                                        letterSpacing: 2,
+                                        textTransform: "uppercase",
+                                        fontFamily: "Georgia, serif",
+                                        lineHeight: 1.2,
+                                    }}
+                                >
+                                    Certificate of Appreciation
+                                </h1>
                             </div>
-                        )}
+                            <div
+                                style={{
+                                    fontSize: 9.5,
+                                    color: "#94a3b8",
+                                    marginTop: 4,
+                                    fontStyle: "italic",
+                                }}
+                            >
+                                This is to gratefully acknowledge the generous contribution of
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Title */}
-                    <div style={{ textAlign: "center", marginBottom: 28 }}>
-                        <div
-                            style={{
-                                display: "inline-block",
-                                borderBottom: "2px solid #059669",
-                                paddingBottom: 6,
-                            }}
-                        >
-                            <h1
+                    {/* Middle Group: Donor & Donation Details */}
+                    <div>
+                        {/* Donor Name */}
+                        <div style={{ textAlign: "center", marginBottom: 8 }}>
+                            <div
                                 style={{
-                                    fontSize: 26,
+                                    fontSize: 23,
                                     fontWeight: 800,
-                                    color: "#059669",
-                                    margin: 0,
-                                    letterSpacing: 2,
-                                    textTransform: "uppercase",
-                                    fontFamily: "Georgia, serif",
+                                    color: "#0f172a",
+                                    borderBottom: "1px dotted #cbd5e1",
+                                    display: "inline-block",
+                                    paddingBottom: 2,
+                                    minWidth: 260,
+                                    lineHeight: 1.2,
                                 }}
                             >
-                                Certificate of Appreciation
-                            </h1>
+                                {data.donorName}
+                            </div>
                         </div>
+
+                        {/* Donation Details */}
                         <div
                             style={{
-                                fontSize: 11,
+                                textAlign: "center",
+                                fontSize: 12.5,
+                                color: "#475569",
+                                marginBottom: 8,
+                                lineHeight: 1.5,
+                            }}
+                        >
+                            <span>who generously donated</span>{" "}
+                            <strong style={{ color: "#059669", fontSize: 15, fontWeight: 700 }}>
+                                {amountWords(data.amount)}
+                            </strong>{" "}
+                            <span>on</span>{" "}
+                            <strong style={{ color: "#0f172a", fontWeight: 700 }}>
+                                {formatDate(data.donationDate)}
+                            </strong>
+                            {data.purpose && (
+                                <React.Fragment>
+                                    <br />
+                                    <span style={{ fontSize: 11 }}>
+                                        towards: <em>{data.purpose}</em>
+                                    </span>
+                                </React.Fragment>
+                            )}
+                        </div>
+
+                        <div
+                            style={{
+                                textAlign: "center",
+                                fontSize: 10.5,
                                 color: "#94a3b8",
-                                marginTop: 6,
                                 fontStyle: "italic",
                             }}
                         >
-                            This is to gratefully acknowledge the generous
-                            contribution of
+                            We are deeply grateful for your support in our mission to uplift communities and transform lives.
                         </div>
                     </div>
 
-                    {/* Donor Name */}
-                    <div style={{ textAlign: "center", marginBottom: 20 }}>
-                        <div
-                            style={{
-                                fontSize: 28,
-                                fontWeight: 800,
-                                color: "#0f172a",
-                                borderBottom: "1px dotted #cbd5e1",
-                                display: "inline-block",
-                                paddingBottom: 4,
-                                minWidth: 280,
-                            }}
-                        >
-                            {data.donorName}
-                        </div>
-                    </div>
-
-                    {/* Donation Details */}
-                    <div
-                        style={{
-                            textAlign: "center",
-                            fontSize: 14,
-                            color: "#475569",
-                            marginBottom: 24,
-                            lineHeight: 1.8,
-                        }}
-                    >
-                        <span>who generously donated</span>{" "}
-                        <strong style={{ color: "#059669", fontSize: 18 }}>
-                            {amountWords(data.amount)}
-                        </strong>{" "}
-                        <span>on</span>{" "}
-                        <strong style={{ color: "#0f172a" }}>
-                            {formatDate(data.donationDate)}
-                        </strong>
-                        {data.purpose && (
-                            <React.Fragment>
-                                <br />
-                                <span>
-                                    towards: <em>{data.purpose}</em>
-                                </span>
-                            </React.Fragment>
-                        )}
-                    </div>
-
-                    <div
-                        style={{
-                            textAlign: "center",
-                            fontSize: 12,
-                            color: "#94a3b8",
-                            marginBottom: 28,
-                            fontStyle: "italic",
-                        }}
-                    >
-                        We are deeply grateful for your support in our mission
-                        to uplift communities and transform lives.
-                    </div>
-
-                    {/* Signatures */}
+                    {/* Bottom Group: Signatures & Certificate Number */}
                     <div
                         style={{
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "flex-end",
-                            marginTop: 16,
+                            paddingTop: 8,
                         }}
                     >
-                        <div style={{ textAlign: "center", minWidth: 160 }}>
-                            {data.signatureUrl && (
+                        <div style={{ textAlign: "center", minWidth: 150 }}>
+                            {data.signatureUrl ? (
                                 <img
                                     src={data.signatureUrl}
                                     alt="Signature"
-                                    style={{ height: 38, marginBottom: 4 }}
+                                    style={{
+                                        height: 32,
+                                        maxHeight: 32,
+                                        margin: "0 auto 2px",
+                                        objectFit: "contain",
+                                        display: "block",
+                                    }}
                                 />
+                            ) : (
+                                <div style={{ height: 32, marginBottom: 2 }} />
                             )}
                             <div
                                 style={{
                                     borderTop: "1px solid #334155",
-                                    paddingTop: 4,
-                                    fontSize: 11,
+                                    paddingTop: 3,
+                                    fontSize: 9.5,
                                     color: "#334155",
+                                    lineHeight: 1.3,
                                 }}
                             >
                                 <div style={{ fontWeight: 700 }}>
@@ -378,12 +394,12 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
                         </div>
 
                         <div style={{ textAlign: "right" }}>
-                            <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                            <div style={{ fontSize: 9.5, color: "#94a3b8" }}>
                                 Certificate No.
                             </div>
                             <div
                                 style={{
-                                    fontSize: 12,
+                                    fontSize: 10.5,
                                     fontWeight: 700,
                                     color: "#334155",
                                     fontFamily: "monospace",

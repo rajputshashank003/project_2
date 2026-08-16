@@ -6,6 +6,7 @@ import React, {
     useCallback,
 } from "react";
 import { storageService } from "../services/storage_service";
+import { getMyProfile } from "../utils/api_request/auth";
 import type { AuthUser } from "../types/user";
 
 interface AuthContextType {
@@ -16,6 +17,7 @@ interface AuthContextType {
     isProfileComplete: boolean;
     login: (user: AuthUser) => void;
     updateUser: (fields: Partial<AuthUser>) => void;
+    refreshUser: () => Promise<void>;
     logout: () => void;
 }
 
@@ -27,6 +29,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const [user, setUser] = useState<AuthUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    const refreshUser = useCallback(async () => {
+        const token = storageService.getToken();
+        if (!token) return;
+        try {
+            const profile = await getMyProfile();
+            setUser((prev) => {
+                const freshUser: AuthUser = {
+                    id: profile.id,
+                    phone: profile.phone,
+                    name: profile.name,
+                    email: profile.email,
+                    bloodGroup: profile.bloodGroup,
+                    role: profile.role,
+                    designation: (profile.designation as AuthUser["designation"]) || "member",
+                    token: prev?.token || token,
+                };
+                storageService.setUser(freshUser);
+                return freshUser;
+            });
+        } catch {
+            // Handled gracefully if session expires
+        }
+    }, []);
+
     useEffect(() => {
         const savedUser = storageService.getUser();
         const token = storageService.getToken();
@@ -34,7 +60,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setUser(savedUser);
         }
         setIsLoading(false);
-    }, []);
+
+        if (token) {
+            void refreshUser();
+        }
+    }, [refreshUser]);
 
     const login = useCallback((authUser: AuthUser) => {
         storageService.setToken(authUser.token);
@@ -76,6 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 isProfileComplete,
                 login,
                 updateUser,
+                refreshUser,
                 logout,
             }}
         >

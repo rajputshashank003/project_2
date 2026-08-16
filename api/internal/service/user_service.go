@@ -67,6 +67,15 @@ func (s *UserService) UpdateMyProfile(id uuid.UUID, req dto.UpdateMyProfileReque
 	return user, nil
 }
 
+// GetMyProfile retrieves the profile for a given user ID.
+func (s *UserService) GetMyProfile(id uuid.UUID) (*models.User, error) {
+	user, err := s.repo.FindByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("user: not found")
+	}
+	return user, nil
+}
+
 // Promote sets a user's role to admin.
 func (s *UserService) Promote(adminID, targetID uuid.UUID) error {
 	if adminID == targetID {

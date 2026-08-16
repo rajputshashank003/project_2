@@ -72,3 +72,33 @@ export const updateMyProfile = async (payload: {
     });
     return unwrap(res);
 };
+
+export const getMyProfile = async (): Promise<{
+    id: string;
+    phone: string;
+    name: string;
+    email?: string;
+    bloodGroup?: string;
+    role: "admin" | "user";
+    designation: string;
+    joinedAt: string;
+    isActive: boolean;
+}> => {
+    const res = await request<
+        ApiResponse<{
+            id: string;
+            phone: string;
+            name: string;
+            email?: string;
+            bloodGroup?: string;
+            role: "admin" | "user";
+            designation: string;
+            joinedAt: string;
+            isActive: boolean;
+        }>
+    >({
+        url: "/my/profile",
+        method: "GET",
+    });
+    return unwrap(res);
+};
