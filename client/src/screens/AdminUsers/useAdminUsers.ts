@@ -4,9 +4,10 @@ import filter from 'lodash/filter';
 import type { User, UserDesignation } from '../../types/user';
 
 export const useAdminUsers = () => {
-    const [users, setUsers]             = useState<User[]>([]);
-    const [isLoading, setIsLoading]     = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [users, setUsers]                       = useState<User[]>([]);
+    const [isLoading, setIsLoading]               = useState(true);
+    const [searchQuery, setSearchQuery]           = useState('');
+    const [selectedBloodGroup, setSelectedBloodGroup] = useState<string>('all');
 
     useEffect(() => { loadUsers(); }, []);
 
@@ -22,15 +23,23 @@ export const useAdminUsers = () => {
         }
     };
 
-    const filteredUsers = searchQuery.trim()
-        ? filter(
-              users,
-              (u) =>
-                  u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  u.phone.includes(searchQuery) ||
-                  (u.email || '').toLowerCase().includes(searchQuery.toLowerCase())
-          )
-        : users;
+    const filteredUsers = filter(users, (u) => {
+        const matchesBloodGroup =
+            selectedBloodGroup === 'all' ||
+            (selectedBloodGroup === 'Unknown' ? (!u.bloodGroup || u.bloodGroup === 'Unknown') : u.bloodGroup === selectedBloodGroup);
+
+        if (!matchesBloodGroup) return false;
+
+        if (!searchQuery.trim()) return true;
+
+        const q = searchQuery.toLowerCase();
+        return (
+            u.name.toLowerCase().includes(q) ||
+            u.phone.includes(q) ||
+            (u.email || '').toLowerCase().includes(q) ||
+            (u.bloodGroup || '').toLowerCase().includes(q)
+        );
+    });
 
     const handleDesignationChange = async (userId: string, designation: UserDesignation) => {
         // Optimistic update
@@ -45,7 +54,9 @@ export const useAdminUsers = () => {
         filteredUsers,
         isLoading,
         searchQuery,
+        selectedBloodGroup,
         setSearchQuery,
+        setSelectedBloodGroup,
         handleDesignationChange,
         loadUsers,
     };

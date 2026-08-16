@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useApp } from '../../context/AppContext';
-import { updateNgoConfig, uploadLogo, deleteLogo, uploadSignature, deleteSignature } from '../../utils/api_request/ngo';
+import { updateNgoConfig } from '../../utils/api_request/ngo';
 import { validateImageFile } from '../../utils/helpers';
 import type { NgoConfig } from '../../types/ngo';
 
@@ -11,8 +11,22 @@ export const useAdminSettings = () => {
   const [isSaving, setIsSaving]       = useState(false);
   const [isDirty, setIsDirty]         = useState(false);
 
+  const [logoFile, setLogoFile]               = useState<File | null>(null);
+  const [logoPreview, setLogoPreview]         = useState<string | null>(ngoConfig.logoUrl || null);
+  const [removeLogo, setRemoveLogo]           = useState(false);
+
+  const [signatureFile, setSignatureFile]       = useState<File | null>(null);
+  const [signaturePreview, setSignaturePreview] = useState<string | null>(ngoConfig.signatureUrl || null);
+  const [removeSignature, setRemoveSignature]   = useState(false);
+
   useEffect(() => {
     setForm({ ...ngoConfig });
+    setLogoPreview(ngoConfig.logoUrl || null);
+    setSignaturePreview(ngoConfig.signatureUrl || null);
+    setLogoFile(null);
+    setSignatureFile(null);
+    setRemoveLogo(false);
+    setRemoveSignature(false);
   }, [ngoConfig]);
 
   const handleFormChange = (field: keyof NgoConfig, value: any) => {
@@ -20,52 +34,38 @@ export const useAdminSettings = () => {
     setIsDirty(true);
   };
 
-  const handleLogoUpload = async (file: File) => {
+  const handleSelectLogo = (file: File) => {
     const error = validateImageFile(file);
     if (error) { toast.error(error); return; }
-    try {
-      const updated = await uploadLogo(file);
-      setNgoConfig(updated);
-      setForm(updated);
-      toast.success('Organization logo updated successfully!');
-    } catch {
-      toast.error('Failed to upload logo image.');
-    }
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+    setRemoveLogo(false);
+    setIsDirty(true);
+    toast.success('Logo selected. Click "Save All Settings" below to apply.');
   };
 
-  const handleDeleteLogo = async () => {
-    try {
-      const updated = await deleteLogo();
-      setNgoConfig(updated);
-      setForm(updated);
-      toast.success('Organization logo removed.');
-    } catch {
-      toast.error('Failed to remove logo.');
-    }
+  const handleRemoveLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    setRemoveLogo(true);
+    setIsDirty(true);
   };
 
-  const handleSignatureUpload = async (file: File) => {
+  const handleSelectSignature = (file: File) => {
     const error = validateImageFile(file);
     if (error) { toast.error(error); return; }
-    try {
-      const updated = await uploadSignature(file);
-      setNgoConfig(updated);
-      setForm(updated);
-      toast.success('Digital signature updated successfully!');
-    } catch {
-      toast.error('Failed to upload digital signature.');
-    }
+    setSignatureFile(file);
+    setSignaturePreview(URL.createObjectURL(file));
+    setRemoveSignature(false);
+    setIsDirty(true);
+    toast.success('Signature selected. Click "Save All Settings" below to apply.');
   };
 
-  const handleDeleteSignature = async () => {
-    try {
-      const updated = await deleteSignature();
-      setNgoConfig(updated);
-      setForm(updated);
-      toast.success('Digital signature deleted.');
-    } catch {
-      toast.error('Failed to delete digital signature.');
-    }
+  const handleRemoveSignature = () => {
+    setSignatureFile(null);
+    setSignaturePreview(null);
+    setRemoveSignature(true);
+    setIsDirty(true);
   };
 
   const handleSaveSettings = useCallback(async () => {
@@ -75,27 +75,39 @@ export const useAdminSettings = () => {
 
     setIsSaving(true);
     try {
-      const updated = await updateNgoConfig(form);
+      const updated = await updateNgoConfig({
+        ...form,
+        logoFile: logoFile || undefined,
+        signatureFile: signatureFile || undefined,
+        removeLogo: removeLogo || undefined,
+        removeSignature: removeSignature || undefined,
+      });
       setNgoConfig(updated);
       setForm(updated);
+      setLogoFile(null);
+      setSignatureFile(null);
+      setRemoveLogo(false);
+      setRemoveSignature(false);
       setIsDirty(false);
-      toast.success('Organization settings updated globally across website!');
+      toast.success('Organization settings and assets updated successfully!');
     } catch {
       toast.error('Failed to save settings.');
     } finally {
       setIsSaving(false);
     }
-  }, [form, setNgoConfig]);
+  }, [form, logoFile, signatureFile, removeLogo, removeSignature, setNgoConfig]);
 
   return {
     form,
     isSaving,
     isDirty,
+    logoPreview,
+    signaturePreview,
     handleFormChange,
-    handleLogoUpload,
-    handleDeleteLogo,
-    handleSignatureUpload,
-    handleDeleteSignature,
+    handleSelectLogo,
+    handleRemoveLogo,
+    handleSelectSignature,
+    handleRemoveSignature,
     handleSaveSettings,
   };
 };

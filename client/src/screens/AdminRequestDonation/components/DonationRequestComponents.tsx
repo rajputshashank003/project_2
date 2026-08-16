@@ -288,7 +288,7 @@ export const ScreenshotModal: React.FC = () => {
           </div>
         ) : (
           <div className="flex justify-center overflow-x-auto p-4 bg-slate-50 rounded-xl">
-            <CertificateCanvas data={certificateData} showDownloadButtons />
+            <CertificateCanvas data={certificateData} showDownloadButtons={screenshotModal.status === 'approved'} />
           </div>
         )}
       </div>

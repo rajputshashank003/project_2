@@ -23,6 +23,11 @@ type UpdateNgoConfigRequest struct {
 	Mission            *string `json:"mission"            form:"mission"`
 	Vision             *string `json:"vision"             form:"vision"`
 	ManagerPhone       *string `json:"managerPhone"       form:"managerPhone"`
+	StatBeneficiaries  *string `json:"statBeneficiaries"  form:"statBeneficiaries"`
+	StatVolunteers     *string `json:"statVolunteers"     form:"statVolunteers"`
+	StatEventsHeld     *string `json:"statEventsHeld"     form:"statEventsHeld"`
+	StatDonations      *string `json:"statDonations"      form:"statDonations"`
+	StatYearsActive    *string `json:"statYearsActive"    form:"statYearsActive"`
 	RemoveLogo         *bool   `json:"removeLogo"         form:"removeLogo"`
 	RemoveSignature    *bool   `json:"removeSignature"    form:"removeSignature"`
 }

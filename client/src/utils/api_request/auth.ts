@@ -15,6 +15,7 @@ export interface VerifyOtpResponse {
         phone: string;
         name: string;
         email?: string;
+        bloodGroup?: string;
         role: 'admin' | 'user';
         designation: string;
     };
@@ -38,11 +39,12 @@ export const verifyOtp = async (phone: string, otp: string): Promise<VerifyOtpRe
     return unwrap(res);
 };
 
-export const updateMyProfile = async (payload: { name: string; email: string }): Promise<{
+export const updateMyProfile = async (payload: { name: string; email: string; bloodGroup?: string }): Promise<{
     id: string;
     phone: string;
     name: string;
     email: string;
+    bloodGroup?: string;
     role: string;
     designation: string;
 }> => {
@@ -51,6 +53,7 @@ export const updateMyProfile = async (payload: { name: string; email: string }):
         phone: string;
         name: string;
         email: string;
+        bloodGroup?: string;
         role: string;
         designation: string;
     }>>({

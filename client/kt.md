@@ -278,3 +278,20 @@ npm run dev            # http://localhost:5173
 - If empty or set to `"false"`, all valid 10-digit mobile numbers are permitted to log in.
 - Normalized and validated via `isLoginAllowedForPhone(phone)` in `src/utils/helpers.ts`.
 
+---
+
+## 18. Staged Uploads, Blood Group & App Polish
+
+- **Staged Uploads**:
+  - `AdminSettings`: Logo and signature files are staged locally and submitted together on "Save All Settings" via `updateNgoConfig()`. Form inputs are never wiped on asset selection.
+  - `AdminGallery`: Selected file is previewed with a remove button and uploaded only when clicking "Submit / Upload Photo".
+- **Blood Group Support**:
+  - Added to `ProfileCompletionModal`, `AdminUsers` table with filtering dropdown, and `UserProfile` with editing.
+- **Canvas Generation & Loaders**:
+  - `IDCardCanvas` and `CertificateCanvas` show spinners during export (`isDownloadingPng`, `isDownloadingPdf`).
+  - Disables `cacheBust: true` to prevent Cloudinary 404s/CORS issues.
+  - Download buttons only display on approved cards/certificates in admin review modals.
+- **SEO & Dynamic Import Resilience**:
+  - `index.html` includes full OpenGraph, Twitter card, theme-color, and meta descriptions.
+  - `App.tsx` wraps route chunks with `lazyWithRetry` to handle deployment mismatches cleanly.
+

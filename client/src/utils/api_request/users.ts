@@ -5,24 +5,31 @@ import { request, unwrap } from './utils';
 import type { ApiResponse, PaginatedResponse } from './utils';
 import type { User, UserDesignation } from '../../types/user';
 
-export const getUsers = async (page = 1, limit = 100): Promise<PaginatedResponse<User>> => {
+export const getUsers = async (page = 1, limit = 100, bloodGroup?: string): Promise<PaginatedResponse<User>> => {
     return request<PaginatedResponse<User>>({
         url:    '/users',
         method: 'GET',
-        params: { page, limit },
+        params: { page, limit, blood_group: bloodGroup || undefined },
     });
+};
+
+export const updateUser = async (
+    id: string,
+    data: { name?: string; email?: string; designation?: UserDesignation; bloodGroup?: string }
+): Promise<User> => {
+    const res = await request<ApiResponse<User>>({
+        url:    `/users/${id}`,
+        method: 'PATCH',
+        data,
+    });
+    return unwrap(res);
 };
 
 export const updateUserDesignation = async (
     id: string,
     designation: UserDesignation
 ): Promise<User> => {
-    const res = await request<ApiResponse<User>>({
-        url:    `/users/${id}`,
-        method: 'PATCH',
-        data:   { designation },
-    });
-    return unwrap(res);
+    return updateUser(id, { designation });
 };
 
 export const promoteUser = async (id: string): Promise<void> => {

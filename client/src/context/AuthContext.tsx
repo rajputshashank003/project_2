@@ -49,7 +49,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const isProfileComplete = Boolean(
-    user && user.name && user.name.trim().length > 0 && user.email && user.email.trim().length > 0
+    user &&
+    user.name && user.name.trim().length > 0 &&
+    user.email && user.email.trim().length > 0 &&
+    user.bloodGroup && user.bloodGroup.trim().length > 0
   );
 
   return (

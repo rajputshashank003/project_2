@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 import { Download, FileImage } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { formatDateShort, capitalize } from '../../utils/helpers';
 
 export interface IdCardData {
@@ -40,23 +41,34 @@ const IDCardCanvas: React.FC<IDCardCanvasProps> = ({
   const cardRef  = useRef<HTMLDivElement>(null);
   const frontRef = useRef<HTMLDivElement>(null);
   const backRef  = useRef<HTMLDivElement>(null);
+  const [isDownloadingPng, setIsDownloadingPng] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   const designationColor = DESIGNATION_COLORS[data.designation] || '#059669';
 
   const downloadPng = async () => {
-    if (!cardRef.current) return;
-    const dataUrl = await toPng(cardRef.current, { cacheBust: true, pixelRatio: 3 });
-    const link = document.createElement('a');
-    link.download = `id_card_${data.cardNumber || 'card'}.png`;
-    link.href = dataUrl;
-    link.click();
+    if (!cardRef.current || isDownloadingPng) return;
+    setIsDownloadingPng(true);
+    try {
+      const dataUrl = await toPng(cardRef.current, { pixelRatio: 2.5, cacheBust: false });
+      const link = document.createElement('a');
+      link.download = `id_card_${data.cardNumber || 'card'}.png`;
+      link.href = dataUrl;
+      link.click();
+      toast.success('ID Card PNG downloaded!');
+    } catch {
+      toast.error('Failed to generate PNG. Please try again.');
+    } finally {
+      setIsDownloadingPng(false);
+    }
   };
 
   const downloadPdf = async () => {
-    if (!frontRef.current || !backRef.current) return;
+    if (!frontRef.current || !backRef.current || isDownloadingPdf) return;
+    setIsDownloadingPdf(true);
     try {
-      const frontUrl = await toPng(frontRef.current, { cacheBust: true, pixelRatio: 3 });
-      const backUrl  = await toPng(backRef.current,  { cacheBust: true, pixelRatio: 3 });
+      const frontUrl = await toPng(frontRef.current, { pixelRatio: 2.5, cacheBust: false });
+      const backUrl  = await toPng(backRef.current,  { pixelRatio: 2.5, cacheBust: false });
 
       const cardWidth  = 320;
       const cardHeight = 200;
@@ -73,13 +85,21 @@ const IDCardCanvas: React.FC<IDCardCanvasProps> = ({
       pdf.addImage(frontUrl, 'PNG', margin, margin, cardWidth, cardHeight);
       pdf.addImage(backUrl,  'PNG', margin, margin + cardHeight + margin, cardWidth, cardHeight);
       pdf.save(`id_card_${data.cardNumber || 'card'}.pdf`);
+      toast.success('ID Card PDF downloaded!');
     } catch {
       // Fallback to cardRef
-      if (!cardRef.current) return;
-      const dataUrl = await toPng(cardRef.current, { cacheBust: true, pixelRatio: 3 });
-      const pdf = new jsPDF({ unit: 'px', format: [680, 240] });
-      pdf.addImage(dataUrl, 'PNG', 20, 20, 640, 200);
-      pdf.save(`id_card_${data.cardNumber || 'card'}.pdf`);
+      try {
+        if (!cardRef.current) return;
+        const dataUrl = await toPng(cardRef.current, { pixelRatio: 2, cacheBust: false });
+        const pdf = new jsPDF({ unit: 'px', format: [680, 240] });
+        pdf.addImage(dataUrl, 'PNG', 20, 20, 640, 200);
+        pdf.save(`id_card_${data.cardNumber || 'card'}.pdf`);
+        toast.success('ID Card PDF downloaded!');
+      } catch {
+        toast.error('Failed to generate PDF. Please try again.');
+      }
+    } finally {
+      setIsDownloadingPdf(false);
     }
   };
 
@@ -222,14 +242,40 @@ const IDCardCanvas: React.FC<IDCardCanvasProps> = ({
 
       {/* Download buttons */}
       {showDownloadButtons && (
-        <div className="flex items-center gap-3">
-          <button onClick={downloadPng} className="btn-outline flex items-center gap-2">
-            <FileImage className="h-4 w-4" />
-            Download PNG
+        <div className="flex flex-wrap items-center justify-center gap-3 w-full">
+          <button
+            onClick={downloadPng}
+            disabled={isDownloadingPng || isDownloadingPdf}
+            className="btn-outline flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm min-w-[140px]"
+          >
+            {isDownloadingPng ? (
+              <React.Fragment>
+                <span className="h-4 w-4 rounded-full border-2 border-slate-400 border-t-emerald-600 animate-spin" />
+                Generating…
+              </React.Fragment>
+            ) : (
+              <React.Fragment>
+                <FileImage className="h-4 w-4" />
+                Download PNG
+              </React.Fragment>
+            )}
           </button>
-          <button onClick={downloadPdf} className="btn-primary flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Download PDF
+          <button
+            onClick={downloadPdf}
+            disabled={isDownloadingPng || isDownloadingPdf}
+            className="btn-primary flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm min-w-[140px]"
+          >
+            {isDownloadingPdf ? (
+              <React.Fragment>
+                <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                Generating…
+              </React.Fragment>
+            ) : (
+              <React.Fragment>
+                <Download className="h-4 w-4" />
+                Download PDF
+              </React.Fragment>
+            )}
           </button>
         </div>
       )}

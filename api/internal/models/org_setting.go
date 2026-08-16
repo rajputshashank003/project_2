@@ -43,6 +43,11 @@ const (
 	OrgKeyMission            = "mission"
 	OrgKeyVision             = "vision"
 	OrgKeyManagerPhone       = "manager_phone"
+	OrgKeyStatBeneficiaries  = "stat_beneficiaries"
+	OrgKeyStatVolunteers     = "stat_volunteers"
+	OrgKeyStatEventsHeld     = "stat_events_held"
+	OrgKeyStatDonations      = "stat_donations"
+	OrgKeyStatYearsActive    = "stat_years_active"
 )
 
 // NgoConfigResponse is the structured response returned by GET /ngo/config.
@@ -70,6 +75,11 @@ type NgoConfigResponse struct {
 	Mission            string    `json:"mission,omitempty"`
 	Vision             string    `json:"vision,omitempty"`
 	ManagerPhone       string    `json:"managerPhone,omitempty"`
+	StatBeneficiaries  string    `json:"statBeneficiaries,omitempty"`
+	StatVolunteers     string    `json:"statVolunteers,omitempty"`
+	StatEventsHeld     string    `json:"statEventsHeld,omitempty"`
+	StatDonations      string    `json:"statDonations,omitempty"`
+	StatYearsActive    string    `json:"statYearsActive,omitempty"`
 	UpdatedAt          time.Time `json:"updatedAt"`
 }
 

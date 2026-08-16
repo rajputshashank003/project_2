@@ -136,6 +136,7 @@ func (s *EventService) Update(ctx context.Context, id uuid.UUID, req dto.UpdateE
 		if err := s.repo.AddImages(newImages); err != nil {
 			return nil, fmt.Errorf("event: failed to save new images: %w", err)
 		}
+		event.Images = nil
 	}
 
 	if err := s.repo.Update(event); err != nil {

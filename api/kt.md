@@ -559,3 +559,16 @@ See `whatsapp_service/kt.md` for full documentation.
   - In `DEV_MODE=true`, GORM runs in `logger.Info` mode to output executed SQL statements and execution durations to stderr.
   - In production, GORM runs in `logger.Warn` mode.
 
+---
+
+## 16. Blood Group, Org Statistics & Event Image Updates
+
+- **Blood Group (`users.blood_group`)**:
+  - Added migration `000015_add_blood_group_to_users.up.sql`.
+  - Supported in `GET /users?blood_group=...`, `PATCH /users/:id`, and `PATCH /my/profile`.
+- **Org Impact Statistics**:
+  - Org settings support keys: `stat_beneficiaries`, `stat_volunteers`, `stat_events_held`, `stat_donations`, `stat_years_active`.
+  - Managed via `PATCH /admin/ngo` and returned in `GET /ngo`.
+- **Event Update Safety**:
+  - Event update modifies scalar fields directly via GORM `Select("Title", "Description", "UpdatedAt").Updates(...)` to prevent re-inserting stale preloaded associations after image deletion.
+

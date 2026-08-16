@@ -62,11 +62,14 @@ export const useAdminTeam = () => {
     }));
   }, []);
 
+  const [isAddingSlot, setIsAddingSlot] = useState(false);
+
   const handleAddSlot = useCallback(async () => {
-    if (members.length >= 5) {
-      toast.error('Maximum 5 team member slots allowed');
+    if (members.length >= 5 || isAddingSlot) {
+      if (members.length >= 5) toast.error('Maximum 5 team member slots allowed');
       return;
     }
+    setIsAddingSlot(true);
     try {
       const updatedList = await addTeamSlot();
       setMembers(updatedList);
@@ -78,8 +81,10 @@ export const useAdminTeam = () => {
       toast.success('Team slot added');
     } catch {
       toast.error('Failed to add slot');
+    } finally {
+      setIsAddingSlot(false);
     }
-  }, [members.length, forms]);
+  }, [members.length, forms, isAddingSlot]);
 
   const handleRemoveSlot = useCallback(async (slot: TeamMemberSlot) => {
     if (members.length <= 3) {
@@ -150,9 +155,21 @@ export const useAdminTeam = () => {
   }, [clearTarget]);
 
   return {
-    members, isLoading, forms, saving, clearing, clearTarget,
-    setSlotField, handlePhotoUpload, handleSave, handleAddSlot, handleRemoveSlot,
-    openClearConfirm, cancelClear, confirmClear,
+    members,
+    isLoading,
+    isAddingSlot,
+    forms,
+    saving,
+    clearing,
+    clearTarget,
+    setSlotField,
+    handlePhotoUpload,
+    handleSave,
+    handleAddSlot,
+    handleRemoveSlot,
+    openClearConfirm,
+    cancelClear,
+    confirmClear,
   };
 };
 

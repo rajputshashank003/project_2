@@ -78,6 +78,11 @@ const AdminNoticeboardContent: React.FC = () => {
               {notices.map((n) => (
                 <div key={n.id} className={`card py-4 ${!n.isActive ? 'opacity-60' : ''}`}>
                   <div className="flex items-start justify-between gap-3">
+                    {n.imageUrl && (
+                      <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                        <img src={n.imageUrl} alt={n.title} className="w-full h-full object-cover" />
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-semibold text-slate-900 text-sm truncate">{n.title}</span>

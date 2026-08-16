@@ -15,7 +15,7 @@ export const Noticeboard: React.FC = () => {
   return (
     <div className="relative bg-emerald-700 text-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 min-h-[260px] md:min-h-[200px] justify-center">
+        <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 min-h-[300px] md:min-h-[200px] justify-center">
           {/* Constant image / placeholder slot */}
           <div className="w-full md:w-80 h-44 rounded-2xl overflow-hidden shrink-0 bg-emerald-800/60 border border-white/10 flex items-center justify-center">
             {active.imageUrl ? (
@@ -27,7 +27,7 @@ export const Noticeboard: React.FC = () => {
               </div>
             )}
           </div>
-          <div className="flex-1 min-w-0 flex flex-col justify-center py-2">
+          <div className="flex-1 min-w-0 flex flex-col justify-center py-2 min-h-[110px] md:min-h-0">
             <div className="inline-flex items-center gap-1.5 bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full mb-3 self-start">
               📌 Notice
             </div>
@@ -100,10 +100,10 @@ export const Hero: React.FC = () => {
 
         <div className="mt-16 grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-3xl mx-auto">
           {[
-            { label: 'Lives Impacted',    value: '10,000+' },
-            { label: 'Active Volunteers', value: '500+' },
-            { label: 'Donations Received', value: '₹50L+' },
-            { label: 'Years of Service',  value: `${new Date().getFullYear() - ngoConfig.foundedYear}+` },
+            { label: 'Lives Impacted',    value: ngoConfig.statBeneficiaries || '10,000+' },
+            { label: 'Active Volunteers', value: ngoConfig.statVolunteers || '500+' },
+            { label: 'Donations Received', value: ngoConfig.statDonations || '₹50L+' },
+            { label: 'Years of Service',  value: ngoConfig.statYearsActive || `${new Date().getFullYear() - (ngoConfig.foundedYear || 2020)}+` },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
               <div className="text-2xl sm:text-3xl font-extrabold text-emerald-700 mb-1">{stat.value}</div>

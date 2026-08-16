@@ -101,12 +101,27 @@ func (s *NgoService) Update(ctx context.Context, req dto.UpdateNgoConfigRequest,
 	if req.ManagerPhone != nil {
 		updates[models.OrgKeyManagerPhone] = *req.ManagerPhone
 	}
+	if req.StatBeneficiaries != nil {
+		updates[models.OrgKeyStatBeneficiaries] = *req.StatBeneficiaries
+	}
+	if req.StatVolunteers != nil {
+		updates[models.OrgKeyStatVolunteers] = *req.StatVolunteers
+	}
+	if req.StatEventsHeld != nil {
+		updates[models.OrgKeyStatEventsHeld] = *req.StatEventsHeld
+	}
+	if req.StatDonations != nil {
+		updates[models.OrgKeyStatDonations] = *req.StatDonations
+	}
+	if req.StatYearsActive != nil {
+		updates[models.OrgKeyStatYearsActive] = *req.StatYearsActive
+	}
 
 	// --- Logo replacement ---
 	if logoFile != nil {
 		assetMeta, _ := s.repo.GetAssetMeta(models.OrgKeyLogoURL)
 		if assetMeta.CloudinaryPublicID != "" {
-			s.cloudinary.Delete(ctx, assetMeta.CloudinaryPublicID)
+			go s.cloudinary.Delete(context.Background(), assetMeta.CloudinaryPublicID)
 		}
 		uploadResult, err := s.cloudinary.UploadFile(ctx, logoFile)
 		if err != nil {
@@ -119,7 +134,7 @@ func (s *NgoService) Update(ctx context.Context, req dto.UpdateNgoConfigRequest,
 	} else if req.RemoveLogo != nil && *req.RemoveLogo {
 		assetMeta, _ := s.repo.GetAssetMeta(models.OrgKeyLogoURL)
 		if assetMeta.CloudinaryPublicID != "" {
-			s.cloudinary.Delete(ctx, assetMeta.CloudinaryPublicID)
+			go s.cloudinary.Delete(context.Background(), assetMeta.CloudinaryPublicID)
 		}
 		if err := s.repo.SetWithMeta(models.OrgKeyLogoURL, "", models.CloudinaryAssetMeta{}); err != nil {
 			return nil, fmt.Errorf("ngo: logo removal failed: %w", err)
@@ -130,7 +145,7 @@ func (s *NgoService) Update(ctx context.Context, req dto.UpdateNgoConfigRequest,
 	if signatureFile != nil {
 		assetMeta, _ := s.repo.GetAssetMeta(models.OrgKeySignatureURL)
 		if assetMeta.CloudinaryPublicID != "" {
-			s.cloudinary.Delete(ctx, assetMeta.CloudinaryPublicID)
+			go s.cloudinary.Delete(context.Background(), assetMeta.CloudinaryPublicID)
 		}
 		uploadResult, err := s.cloudinary.UploadFile(ctx, signatureFile)
 		if err != nil {
@@ -143,7 +158,7 @@ func (s *NgoService) Update(ctx context.Context, req dto.UpdateNgoConfigRequest,
 	} else if req.RemoveSignature != nil && *req.RemoveSignature {
 		assetMeta, _ := s.repo.GetAssetMeta(models.OrgKeySignatureURL)
 		if assetMeta.CloudinaryPublicID != "" {
-			s.cloudinary.Delete(ctx, assetMeta.CloudinaryPublicID)
+			go s.cloudinary.Delete(context.Background(), assetMeta.CloudinaryPublicID)
 		}
 		if err := s.repo.SetWithMeta(models.OrgKeySignatureURL, "", models.CloudinaryAssetMeta{}); err != nil {
 			return nil, fmt.Errorf("ngo: signature removal failed: %w", err)
@@ -186,6 +201,11 @@ func (s *NgoService) kvToResponse(kv map[string]string) *models.NgoConfigRespons
 		Mission:            kv[models.OrgKeyMission],
 		Vision:             kv[models.OrgKeyVision],
 		ManagerPhone:       kv[models.OrgKeyManagerPhone],
+		StatBeneficiaries:  kv[models.OrgKeyStatBeneficiaries],
+		StatVolunteers:     kv[models.OrgKeyStatVolunteers],
+		StatEventsHeld:     kv[models.OrgKeyStatEventsHeld],
+		StatDonations:      kv[models.OrgKeyStatDonations],
+		StatYearsActive:    kv[models.OrgKeyStatYearsActive],
 		UpdatedAt:          time.Now(), // approximate; real per-key updated_at not surfaced
 	}
 }

@@ -45,9 +45,9 @@ func (r *EventRepository) FindByID(id uuid.UUID) (*models.Event, error) {
 	return &event, nil
 }
 
-// Update saves event title/description fields.
+// Update saves event title/description fields without cascading associations.
 func (r *EventRepository) Update(event *models.Event) error {
-	return r.db.Save(event).Error
+	return r.db.Model(event).Select("Title", "Description", "UpdatedAt").Updates(event).Error
 }
 
 // DeleteImages removes all event_images for an event (before replacing).

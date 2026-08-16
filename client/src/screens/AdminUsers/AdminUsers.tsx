@@ -1,14 +1,24 @@
 import React from 'react';
 import { useAdminUsers } from './useAdminUsers';
 import { AdminUsersContext } from './context';
-import { Users, Search } from 'lucide-react';
+import { Users, Search, HeartPulse } from 'lucide-react';
 import { DESIGNATIONS } from '../../utils/constants';
 import { getInitials, formatDate } from '../../utils/helpers';
+
+const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'];
 
 const AdminUsersContent: React.FC = () => {
   const ctx = React.useContext(AdminUsersContext);
   if (!ctx) return null;
-  const { filteredUsers, isLoading, searchQuery, setSearchQuery, handleDesignationChange } = ctx;
+  const {
+    filteredUsers,
+    isLoading,
+    searchQuery,
+    selectedBloodGroup,
+    setSearchQuery,
+    setSelectedBloodGroup,
+    handleDesignationChange,
+  } = ctx;
 
   return (
     <div className="page-wrapper">
@@ -18,12 +28,41 @@ const AdminUsersContent: React.FC = () => {
           Admin Panel
         </div>
         <h1 className="section-heading">Registered Users</h1>
-        <p className="section-subheading">View and manage all registered members</p>
+        <p className="section-subheading">View and manage all registered members and blood group directory</p>
       </div>
 
-      <div className="relative mb-4 max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-        <input id="users-search" type="text" placeholder="Search by name, phone…" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="form-input pl-10" />
+      <div className="flex flex-col sm:flex-row gap-3 mb-6 items-stretch sm:items-center justify-between">
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <input
+            id="users-search"
+            type="text"
+            placeholder="Search by name, phone, email, blood group…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="form-input pl-10"
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+            <HeartPulse className="h-4 w-4 text-rose-500" />
+            <span className="hidden sm:inline">Blood Group:</span>
+          </div>
+          <select
+            id="users-filter-blood-group"
+            value={selectedBloodGroup}
+            onChange={(e) => setSelectedBloodGroup(e.target.value)}
+            className="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-white text-slate-700 focus:outline-none focus:border-emerald-500 shadow-sm"
+          >
+            <option value="all">All Blood Groups</option>
+            {BLOOD_GROUPS.map((bg) => (
+              <option key={bg} value={bg}>
+                {bg}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {isLoading ? (
@@ -37,6 +76,7 @@ const AdminUsersContent: React.FC = () => {
               <tr>
                 <th>Member</th>
                 <th>Phone</th>
+                <th>Blood Group</th>
                 <th>Joined On</th>
                 <th>Designation</th>
               </tr>
@@ -56,6 +96,17 @@ const AdminUsersContent: React.FC = () => {
                     </div>
                   </td>
                   <td>{u.phone}</td>
+                  <td>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                        u.bloodGroup && u.bloodGroup !== 'Unknown'
+                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                          : 'bg-slate-100 text-slate-500'
+                      }`}
+                    >
+                      {u.bloodGroup || 'Unknown'}
+                    </span>
+                  </td>
                   <td className="text-slate-500">{formatDate(u.joinedAt)}</td>
                   <td>
                     <select

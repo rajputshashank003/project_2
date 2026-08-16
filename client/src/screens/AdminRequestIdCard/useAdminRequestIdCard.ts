@@ -3,7 +3,6 @@ import toast from 'react-hot-toast';
 import filter from 'lodash/filter';
 import { getIdCardRequests, updateIdCardStatus } from '../../utils/api_request/id_cards';
 import { uploadSignature, deleteSignature } from '../../utils/api_request/ngo';
-import { notifyBoth, buildIdCardApprovalMessages, buildIdCardRejectionMessages } from '../../services/notification_service';
 import { useApp } from '../../context/AppContext';
 import { validateImageFile } from '../../utils/helpers';
 import type { IdCard, IdCardStatus } from '../../types/id_card';
@@ -104,21 +103,6 @@ export const useAdminRequestIdCard = () => {
         validityYears,
       });
 
-      // Build & send dual notifications using backend-generated card number
-      const msgs = buildIdCardApprovalMessages({
-        userName:    actionItem.userName,
-        cardNumber:  updated.uniqueCardNumber,
-        designation: actionItem.designation,
-      });
-      await notifyBoth({
-        user:      { phone: actionItem.phone, email: actionItem.email, name: actionItem.userName },
-        admin:     { phone: ngoConfig.phone, email: ngoConfig.email, name: 'Admin' },
-        userMsg:   msgs.userMsg,
-        adminMsg:  msgs.adminMsg,
-        subject:   msgs.subject,
-        userHtml:  msgs.userHtml,
-      });
-
       // Update local state with the full record returned by backend
       setRequests((prev) =>
         prev.map((r) => r.id === actionItem.id ? updated : r)
@@ -142,16 +126,6 @@ export const useAdminRequestIdCard = () => {
         rejectionReason: rejectReason,
       });
 
-      const msgs = buildIdCardRejectionMessages({ userName: actionItem.userName, reason: rejectReason });
-      await notifyBoth({
-        user:    { phone: actionItem.phone, email: actionItem.email, name: actionItem.userName },
-        admin:   { phone: ngoConfig.phone, email: ngoConfig.email, name: 'Admin' },
-        userMsg:  msgs.userMsg,
-        adminMsg: msgs.adminMsg,
-        subject:  msgs.subject,
-        userHtml: msgs.userHtml,
-      });
-
       setRequests((prev) =>
         prev.map((r) => r.id === actionItem.id ? updated : r)
       );
@@ -162,7 +136,7 @@ export const useAdminRequestIdCard = () => {
     } finally {
       setActionLoading(false);
     }
-  }, [actionItem, rejectReason, ngoConfig]);
+  }, [actionItem, rejectReason]);
 
   return {
     requests,

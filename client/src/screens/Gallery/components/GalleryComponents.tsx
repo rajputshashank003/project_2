@@ -47,23 +47,23 @@ export const GalleryCard: React.FC<GalleryCardProps> = ({ image, onClick }) => {
         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         loading="lazy"
       />
-      {/* Gradient overlay on hover */}
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 text-white">
+      {/* Gradient overlay: visible on mobile, hover on desktop */}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/30 to-transparent opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3.5 sm:p-4 text-white">
         <div className="flex items-center justify-between gap-2 mb-1">
-          <span className="text-xs text-emerald-300 font-medium flex items-center gap-1">
+          <span className="text-[11px] sm:text-xs text-emerald-300 font-medium flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             {image.uploadedAt ? formatDateShort(image.uploadedAt) : 'Photo'}
           </span>
-          <span className="p-1.5 rounded-full bg-white/20 backdrop-blur-xs text-white">
-            <ZoomIn className="h-3.5 w-3.5" />
+          <span className="p-1 sm:p-1.5 rounded-full bg-white/20 backdrop-blur-xs text-white">
+            <ZoomIn className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
           </span>
         </div>
         {image.caption ? (
-          <p className="text-sm font-semibold line-clamp-2 text-slate-100 leading-snug">
+          <p className="text-xs sm:text-sm font-semibold line-clamp-2 text-slate-100 leading-snug">
             {image.caption}
           </p>
         ) : (
-          <p className="text-xs text-slate-300">View photo</p>
+          <p className="text-[11px] sm:text-xs text-slate-300">View photo</p>
         )}
       </div>
     </div>

@@ -2,10 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import filter from 'lodash/filter';
 import { getDonations, updateDonationStatus } from '../../utils/api_request/donations';
-import { notifyBoth, buildDonationApprovalMessages, buildDonationRejectionMessages } from '../../services/notification_service';
 import { exportDonationsToExcel } from '../../utils/excel_exporter';
 import { useApp } from '../../context/AppContext';
-import { formatCurrency } from '../../utils/helpers';
 import type { Donation, DonationStatus } from '../../types/donation';
 
 type FilterStatus = 'all' | DonationStatus;
@@ -66,19 +64,6 @@ export const useAdminRequestDonation = () => {
     try {
       const updated = await updateDonationStatus(actionItem.id, { status: 'approved' });
 
-      const msgs = buildDonationApprovalMessages({
-        donorName: actionItem.donorName,
-        amount:    formatCurrency(actionItem.amount),
-      });
-      await notifyBoth({
-        user:    { phone: actionItem.phone, email: actionItem.email, name: actionItem.donorName },
-        admin:   { phone: ngoConfig.phone, email: ngoConfig.email, name: 'Admin' },
-        userMsg:  msgs.userMsg,
-        adminMsg: msgs.adminMsg,
-        subject:  msgs.subject,
-        userHtml: msgs.userHtml,
-      });
-
       setDonations((prev) =>
         prev.map((d) => d.id === actionItem.id ? updated : d)
       );
@@ -89,7 +74,7 @@ export const useAdminRequestDonation = () => {
     } finally {
       setActionLoading(false);
     }
-  }, [actionItem, ngoConfig]);
+  }, [actionItem]);
 
   const handleReject = useCallback(async () => {
     if (!actionItem) return;
@@ -97,20 +82,6 @@ export const useAdminRequestDonation = () => {
     setActionLoading(true);
     try {
       const updated = await updateDonationStatus(actionItem.id, { status: 'rejected', rejectionReason: rejectReason });
-
-      const msgs = buildDonationRejectionMessages({
-        donorName: actionItem.donorName,
-        amount:    formatCurrency(actionItem.amount),
-        reason:    rejectReason,
-      });
-      await notifyBoth({
-        user:    { phone: actionItem.phone, email: actionItem.email, name: actionItem.donorName },
-        admin:   { phone: ngoConfig.phone, email: ngoConfig.email, name: 'Admin' },
-        userMsg:  msgs.userMsg,
-        adminMsg: msgs.adminMsg,
-        subject:  msgs.subject,
-        userHtml: msgs.userHtml,
-      });
 
       setDonations((prev) =>
         prev.map((d) => d.id === actionItem.id ? updated : d)
@@ -122,7 +93,7 @@ export const useAdminRequestDonation = () => {
     } finally {
       setActionLoading(false);
     }
-  }, [actionItem, rejectReason, ngoConfig]);
+  }, [actionItem, rejectReason]);
 
   const handleExportExcel = () => {
     exportDonationsToExcel(filteredDonations, 'ngo_donations');

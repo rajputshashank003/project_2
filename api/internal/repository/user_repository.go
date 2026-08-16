@@ -46,15 +46,20 @@ func (r *UserRepository) Update(user *models.User) error {
 	return r.db.Save(user).Error
 }
 
-// ListPaginated returns paginated users ordered by joined_at DESC.
-func (r *UserRepository) ListPaginated(offset, limit int) ([]models.User, int64, error) {
+// ListPaginated returns paginated users ordered by joined_at DESC with optional blood_group filter.
+func (r *UserRepository) ListPaginated(offset, limit int, bloodGroup string) ([]models.User, int64, error) {
 	var users []models.User
 	var total int64
 
-	if err := r.db.Model(&models.User{}).Count(&total).Error; err != nil {
+	query := r.db.Model(&models.User{})
+	if bloodGroup != "" {
+		query = query.Where("blood_group = ?", bloodGroup)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	if err := r.db.Order("joined_at DESC").Offset(offset).Limit(limit).Find(&users).Error; err != nil {
+	if err := query.Order("joined_at DESC").Offset(offset).Limit(limit).Find(&users).Error; err != nil {
 		return nil, 0, err
 	}
 	return users, total, nil

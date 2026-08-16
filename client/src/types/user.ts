@@ -6,6 +6,7 @@ export interface User {
     phone: string;
     name: string;
     email?: string;
+    bloodGroup?: string;
     role: UserRole;
     designation: UserDesignation;
     passportPhotoUrl?: string;
@@ -18,6 +19,7 @@ export interface AuthUser {
     phone: string;
     name: string;
     email?: string;
+    bloodGroup?: string;
     role: UserRole;
     designation: UserDesignation;
     token: string;

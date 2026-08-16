@@ -3,6 +3,7 @@ import { useAdminSettings } from './useAdminSettings';
 import { AdminSettingsContext } from './context';
 import {
   GeneralSettingsForm,
+  StatsSettingsForm,
   MissionVisionSettingsForm,
   OfficialsSettingsForm,
   ContactSettingsForm,
@@ -26,7 +27,7 @@ const AdminSettingsContent: React.FC = () => {
           </div>
           <h1 className="section-heading">Organization Settings</h1>
           <p className="section-subheading">
-            Manage NGO branding, president details, address, payment methods, and digital signature globally.
+            Manage NGO branding, president details, address, payment methods, statistics, and digital signature globally.
           </p>
         </div>
         <button
@@ -49,6 +50,7 @@ const AdminSettingsContent: React.FC = () => {
       </div>
 
       <GeneralSettingsForm />
+      <StatsSettingsForm />
       <MissionVisionSettingsForm />
       <OfficialsSettingsForm />
       <ContactSettingsForm />

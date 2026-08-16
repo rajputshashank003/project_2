@@ -61,8 +61,44 @@ const TeamSection: React.FC = () => {
   );
 };
 
+const AboutSkeleton: React.FC = () => (
+  <div className="page-wrapper animate-pulse space-y-12">
+    <div className="text-center max-w-2xl mx-auto space-y-3">
+      <div className="h-6 w-24 bg-slate-200 rounded-full mx-auto" />
+      <div className="h-9 w-64 bg-slate-200 rounded-xl mx-auto" />
+      <div className="h-4 w-96 max-w-full bg-slate-200 rounded mx-auto" />
+    </div>
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div className="card-md space-y-3 h-48 bg-slate-100/80 rounded-2xl p-6" />
+      <div className="card-md space-y-3 h-48 bg-slate-100/80 rounded-2xl p-6" />
+    </div>
+
+    <div className="h-44 rounded-2xl bg-slate-200" />
+
+    <div className="space-y-6 pt-4">
+      <div className="h-7 w-40 bg-slate-200 rounded-xl mx-auto" />
+      <div className="flex justify-center gap-8">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex flex-col items-center space-y-2">
+            <div className="w-24 h-24 rounded-full bg-slate-200" />
+            <div className="h-4 w-20 bg-slate-200 rounded" />
+            <div className="h-3 w-16 bg-slate-200 rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 const AboutContent: React.FC = () => {
-  const { ngoConfig } = useApp();
+  const { ngoConfig, isConfigLoading } = useApp();
+  const ctx = React.useContext(AboutContext);
+  const isLoading = ctx?.isLoading || isConfigLoading;
+
+  if (isLoading) {
+    return <AboutSkeleton />;
+  }
 
   return (
     <div className="page-wrapper">
@@ -105,10 +141,10 @@ const AboutContent: React.FC = () => {
         <h2 className="text-lg font-bold text-center mb-8 text-emerald-100">Our Impact So Far</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
           {[
-            { label: 'Beneficiaries', value: '10,000+' },
-            { label: 'Volunteers', value: '500+' },
-            { label: 'Events Held', value: '120+' },
-            { label: 'Years Active', value: '8+' },
+            { label: 'Beneficiaries', value: ngoConfig.statBeneficiaries || '10,000+' },
+            { label: 'Volunteers', value: ngoConfig.statVolunteers || '500+' },
+            { label: 'Events Held', value: ngoConfig.statEventsHeld || '120+' },
+            { label: 'Years Active', value: ngoConfig.statYearsActive || `${new Date().getFullYear() - (ngoConfig.foundedYear || 2020)}+` },
           ].map((stat) => (
             <div key={stat.label}>
               <div className="text-3xl font-extrabold mb-1">{stat.value}</div>

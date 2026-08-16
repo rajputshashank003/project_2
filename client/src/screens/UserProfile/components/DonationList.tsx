@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Clock, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, Clock, CheckCircle, XCircle, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { UserProfileContext } from '../context';
 import type { Donation } from '../../../types/donation';
 
@@ -15,35 +15,37 @@ const DonationRow: React.FC<{ donation: Donation }> = ({ donation }) => {
     const Icon   = status.icon;
 
     return (
-        <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-slate-100 bg-white hover:shadow-sm transition-shadow">
-            <div className="flex items-center gap-3 min-w-0">
-                <div className="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
-                    <FileText className="h-5 w-5 text-emerald-600" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-4 rounded-2xl border border-slate-200/80 bg-white hover:shadow-sm transition-shadow">
+            <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+                <div className="h-11 w-11 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
+                    <FileText className="h-5 w-5" />
                 </div>
-                <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 truncate">₹{donation.amount.toLocaleString('en-IN')}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                        {new Date(donation.requestedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-base font-bold text-slate-900">₹{donation.amount.toLocaleString('en-IN')}</span>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${status.className}`}>
+                            <Icon className="h-3 w-3" />
+                            {status.label}
+                        </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                        <span>{new Date(donation.requestedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                         {donation.certificateNumber && (
-                            <span className="ml-2 text-slate-400">#{donation.certificateNumber}</span>
+                            <span className="font-mono text-slate-400">#{donation.certificateNumber}</span>
                         )}
                     </p>
                 </div>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
-                <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${status.className}`}>
-                    <Icon className="h-3 w-3" />
-                    {status.label}
-                </span>
-                {donation.status === 'approved' && donation.id && (
+            {donation.status === 'approved' && donation.id && (
+                <div className="pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex sm:justify-end">
                     <Link
                         to={`/certificate/${donation.id}`}
-                        className="text-xs font-medium text-emerald-700 hover:text-emerald-800 hover:underline transition-colors"
+                        className="btn-outline py-2 px-3.5 text-xs w-full sm:w-auto text-center font-semibold text-emerald-700 flex items-center justify-center gap-1.5 rounded-xl"
                     >
-                        View Certificate →
+                        View Certificate <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 };

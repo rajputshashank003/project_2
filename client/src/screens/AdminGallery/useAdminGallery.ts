@@ -9,6 +9,8 @@ export const useAdminGallery = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
     const [caption, setCaption]     = useState('');
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl]     = useState<string | null>(null);
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting]         = useState(false);
 
@@ -26,24 +28,40 @@ export const useAdminGallery = () => {
         }
     };
 
-    const handleUpload = useCallback(async (file: File) => {
+    const handleSelectFile = useCallback((file: File) => {
         const error = validateImageFile(file);
         if (error) { toast.error(error); return; }
+        setSelectedFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
+    }, []);
+
+    const handleClearSelectedFile = useCallback(() => {
+        setSelectedFile(null);
+        setPreviewUrl(null);
+    }, []);
+
+    const handleSubmitUpload = useCallback(async () => {
+        if (!selectedFile) {
+            toast.error('Please select an image file first');
+            return;
+        }
         setUploading(true);
         try {
             const newImage = await uploadGalleryImage({
-                image:   file,
+                image:   selectedFile,
                 caption: caption.trim() || undefined,
             });
             setImages((prev) => [newImage, ...prev]);
+            setSelectedFile(null);
+            setPreviewUrl(null);
             setCaption('');
-            toast.success('Image uploaded!');
+            toast.success('Image uploaded to gallery successfully!');
         } catch {
             // error toast already shown by axiosInstance interceptor
         } finally {
             setUploading(false);
         }
-    }, [caption]);
+    }, [selectedFile, caption]);
 
     const handleDelete = useCallback(async (id: string) => {
         setImages((prev) => prev.filter((img) => img.id !== id));
@@ -73,10 +91,14 @@ export const useAdminGallery = () => {
         isLoading,
         uploading,
         caption,
+        selectedFile,
+        previewUrl,
         deleteTargetId,
         isDeleting,
         setCaption,
-        handleUpload,
+        handleSelectFile,
+        handleClearSelectedFile,
+        handleSubmitUpload,
         handleDelete,
         openDeleteConfirm,
         cancelDelete,

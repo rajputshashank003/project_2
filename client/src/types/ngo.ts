@@ -22,6 +22,11 @@ export interface NgoConfig {
   mission?: string;
   vision?: string;
   managerPhone?: string;
+  statBeneficiaries?: string;
+  statVolunteers?: string;
+  statEventsHeld?: string;
+  statDonations?: string;
+  statYearsActive?: string;
   updatedAt?: string;
 }
 

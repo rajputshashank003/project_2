@@ -19,13 +19,13 @@ func NewUserService(repo *repository.UserRepository) *UserService {
 	return &UserService{repo: repo}
 }
 
-// List returns paginated users.
-func (s *UserService) List(page, limit int) ([]models.User, int64, error) {
+// List returns paginated users with optional blood_group filter.
+func (s *UserService) List(page, limit int, bloodGroup string) ([]models.User, int64, error) {
 	offset := (page - 1) * limit
-	return s.repo.ListPaginated(offset, limit)
+	return s.repo.ListPaginated(offset, limit, bloodGroup)
 }
 
-// Update partially updates a user's designation, name, email (admin use).
+// Update partially updates a user's designation, name, email, blood group (admin use).
 func (s *UserService) Update(id uuid.UUID, req dto.UpdateUserRequest) (*models.User, error) {
 	user, err := s.repo.FindByID(id)
 	if err != nil {
@@ -40,14 +40,17 @@ func (s *UserService) Update(id uuid.UUID, req dto.UpdateUserRequest) (*models.U
 	if req.Email != "" {
 		user.Email = req.Email
 	}
+	if req.BloodGroup != "" {
+		user.BloodGroup = req.BloodGroup
+	}
 	if err := s.repo.Update(user); err != nil {
 		return nil, fmt.Errorf("user: update failed: %w", err)
 	}
 	return user, nil
 }
 
-// UpdateMyProfile allows a user to self-update only their name and email.
-// Used by the onboarding modal — role and designation are NOT modifiable here.
+// UpdateMyProfile allows a user to self-update their name, email, and blood group.
+// Used by the onboarding modal and profile settings.
 func (s *UserService) UpdateMyProfile(id uuid.UUID, req dto.UpdateMyProfileRequest) (*models.User, error) {
 	user, err := s.repo.FindByID(id)
 	if err != nil {
@@ -55,6 +58,9 @@ func (s *UserService) UpdateMyProfile(id uuid.UUID, req dto.UpdateMyProfileReque
 	}
 	user.Name = req.Name
 	user.Email = req.Email
+	if req.BloodGroup != "" {
+		user.BloodGroup = req.BloodGroup
+	}
 	if err := s.repo.Update(user); err != nil {
 		return nil, fmt.Errorf("user: update failed: %w", err)
 	}

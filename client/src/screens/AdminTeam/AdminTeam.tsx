@@ -112,7 +112,7 @@ const SlotCard: React.FC<{ slot: TeamMemberSlot }> = ({ slot }) => {
 const AdminTeamContent: React.FC = () => {
   const ctx = useContext(AdminTeamContext);
   if (!ctx) return null;
-  const { members, isLoading, clearTarget, cancelClear, confirmClear, clearing, handleAddSlot } = ctx;
+  const { members, isLoading, isAddingSlot, clearTarget, cancelClear, confirmClear, clearing, handleAddSlot } = ctx;
 
   return (
     <div className="page-wrapper">
@@ -129,11 +129,20 @@ const AdminTeamContent: React.FC = () => {
         </div>
         <button
           onClick={handleAddSlot}
-          disabled={members.length >= 5}
+          disabled={members.length >= 5 || isAddingSlot}
           className="btn-primary py-2 px-4 flex items-center gap-2 self-start disabled:opacity-50"
         >
-          <Plus className="h-4 w-4" />
-          Add Member Slot ({members.length}/5)
+          {isAddingSlot ? (
+            <React.Fragment>
+              <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              Adding Slot...
+            </React.Fragment>
+          ) : (
+            <React.Fragment>
+              <Plus className="h-4 w-4" />
+              Add Member Slot ({members.length}/5)
+            </React.Fragment>
+          )}
         </button>
       </div>
 

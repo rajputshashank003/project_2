@@ -19,6 +19,11 @@ const DEFAULT_NGO_CONFIG: NgoConfig = {
   mission:            '',
   vision:             '',
   managerPhone:       '',
+  statBeneficiaries:  '10,000+',
+  statVolunteers:     '500+',
+  statEventsHeld:     '120+',
+  statDonations:      '₹50L+',
+  statYearsActive:    '8+',
 };
 
 interface AppContextType {

@@ -234,7 +234,7 @@ export const IDCardPreviewModal: React.FC = () => {
   return (
     <Modal isOpen={!!previewItem} onClose={() => setPreviewItem(null)} title="ID Card Preview" size="xl">
       <div className="flex justify-center overflow-x-auto">
-        <IDCardCanvas data={cardData} showDownloadButtons />
+        <IDCardCanvas data={cardData} showDownloadButtons={previewItem.status === 'approved'} />
       </div>
     </Modal>
   );

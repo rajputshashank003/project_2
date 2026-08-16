@@ -6,25 +6,45 @@ import Footer from './components/Footer';
 import ProfileCompletionModal from './components/ProfileCompletionModal';
 import { useAuth } from './context/AuthContext';
 
+// Helper to retry lazy import or force reload on deployment chunk mismatches
+const lazyWithRetry = <T extends React.ComponentType<any>>(
+    factory: () => Promise<{ default: T }>
+) =>
+    lazy(async () => {
+        try {
+            const component = await factory();
+            window.sessionStorage.removeItem('chunk-reload-retry');
+            return component;
+        } catch (error) {
+            const hasRetried = window.sessionStorage.getItem('chunk-reload-retry');
+            if (!hasRetried) {
+                window.sessionStorage.setItem('chunk-reload-retry', 'true');
+                window.location.reload();
+                return new Promise<{ default: T }>(() => {});
+            }
+            throw error;
+        }
+    });
+
 // Lazy-loaded screens
-const Home = lazy(() => import('./screens/Home/Home'));
-const Login = lazy(() => import('./screens/Login/Login'));
-const Donate = lazy(() => import('./screens/Donate/Donate'));
-const IDGenerate = lazy(() => import('./screens/IDGenerate/IDGenerate'));
-const CertificateView = lazy(() => import('./screens/CertificateView/CertificateView'));
-const IDCardView = lazy(() => import('./screens/IDCardView/IDCardView'));
-const Events = lazy(() => import('./screens/Events/Events'));
-const Gallery = lazy(() => import('./screens/Gallery/Gallery'));
-const About = lazy(() => import('./screens/About/About'));
-const AdminRequestIdCard = lazy(() => import('./screens/AdminRequestIdCard/AdminRequestIdCard'));
-const AdminRequestDonation = lazy(() => import('./screens/AdminRequestDonation/AdminRequestDonation'));
-const AdminUsers = lazy(() => import('./screens/AdminUsers/AdminUsers'));
-const AdminNoticeboard = lazy(() => import('./screens/AdminNoticeboard/AdminNoticeboard'));
-const AdminGallery = lazy(() => import('./screens/AdminGallery/AdminGallery'));
-const AdminEvents = lazy(() => import('./screens/AdminEvents/AdminEvents'));
-const AdminTeam = lazy(() => import('./screens/AdminTeam/AdminTeam'));
-const AdminSettings = lazy(() => import('./screens/AdminSettings/AdminSettings'));
-const UserProfile = lazy(() => import('./screens/UserProfile/UserProfile'));
+const Home = lazyWithRetry(() => import('./screens/Home/Home'));
+const Login = lazyWithRetry(() => import('./screens/Login/Login'));
+const Donate = lazyWithRetry(() => import('./screens/Donate/Donate'));
+const IDGenerate = lazyWithRetry(() => import('./screens/IDGenerate/IDGenerate'));
+const CertificateView = lazyWithRetry(() => import('./screens/CertificateView/CertificateView'));
+const IDCardView = lazyWithRetry(() => import('./screens/IDCardView/IDCardView'));
+const Events = lazyWithRetry(() => import('./screens/Events/Events'));
+const Gallery = lazyWithRetry(() => import('./screens/Gallery/Gallery'));
+const About = lazyWithRetry(() => import('./screens/About/About'));
+const AdminRequestIdCard = lazyWithRetry(() => import('./screens/AdminRequestIdCard/AdminRequestIdCard'));
+const AdminRequestDonation = lazyWithRetry(() => import('./screens/AdminRequestDonation/AdminRequestDonation'));
+const AdminUsers = lazyWithRetry(() => import('./screens/AdminUsers/AdminUsers'));
+const AdminNoticeboard = lazyWithRetry(() => import('./screens/AdminNoticeboard/AdminNoticeboard'));
+const AdminGallery = lazyWithRetry(() => import('./screens/AdminGallery/AdminGallery'));
+const AdminEvents = lazyWithRetry(() => import('./screens/AdminEvents/AdminEvents'));
+const AdminTeam = lazyWithRetry(() => import('./screens/AdminTeam/AdminTeam'));
+const AdminSettings = lazyWithRetry(() => import('./screens/AdminSettings/AdminSettings'));
+const UserProfile = lazyWithRetry(() => import('./screens/UserProfile/UserProfile'));
 
 const LoadingFallback = () => (
     <div className="flex-1 flex items-center justify-center min-h-[60vh]">
