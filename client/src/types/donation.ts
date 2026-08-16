@@ -1,4 +1,4 @@
-export type DonationStatus = 'pending' | 'approved' | 'rejected';
+export type DonationStatus = "pending" | "approved" | "rejected";
 
 export interface Donation {
     id: string;

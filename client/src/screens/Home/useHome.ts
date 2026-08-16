@@ -1,17 +1,19 @@
-import { useState, useEffect } from 'react';
-import { getNotices } from '../../utils/api_request/notices';
-import { getGalleryImages } from '../../utils/api_request/gallery';
-import filter from 'lodash/filter';
-import type { Notice } from '../../types/notice';
-import type { GalleryImage } from '../../types/ngo';
+import { useState, useEffect } from "react";
+import { getNotices } from "../../utils/api_request/notices";
+import { getGalleryImages } from "../../utils/api_request/gallery";
+import filter from "lodash/filter";
+import type { Notice } from "../../types/notice";
+import type { GalleryImage } from "../../types/ngo";
 
 export const useHome = () => {
-    const [notices, setNotices]           = useState<Notice[]>([]);
-    const [galleryImages, setGallery]     = useState<GalleryImage[]>([]);
-    const [isLoading, setIsLoading]       = useState(true);
+    const [notices, setNotices] = useState<Notice[]>([]);
+    const [galleryImages, setGallery] = useState<GalleryImage[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [activeNoticeIndex, setActiveNoticeIndex] = useState(0);
 
-    useEffect(() => { loadData(); }, []);
+    useEffect(() => {
+        loadData();
+    }, []);
 
     // Auto-advance noticeboard carousel every 5 s
     useEffect(() => {
@@ -30,12 +32,15 @@ export const useHome = () => {
                 getGalleryImages(),
             ]);
 
-            if (noticeResult.status === 'fulfilled') {
-                const active = filter(noticeResult.value.data, (n) => n.isActive);
+            if (noticeResult.status === "fulfilled") {
+                const active = filter(
+                    noticeResult.value.data,
+                    (n) => n.isActive,
+                );
                 setNotices(active);
             }
 
-            if (galleryResult.status === 'fulfilled') {
+            if (galleryResult.status === "fulfilled") {
                 setGallery(galleryResult.value.data);
             }
         } finally {

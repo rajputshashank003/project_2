@@ -1,5 +1,6 @@
-export type UserRole = 'admin' | 'user';
-export type UserDesignation = 'member' | 'admin' | 'president' | 'secretary' | 'volunteer';
+export type UserRole = "admin" | "user";
+export type UserDesignation =
+    "member" | "admin" | "president" | "secretary" | "volunteer";
 
 export interface User {
     id: string;

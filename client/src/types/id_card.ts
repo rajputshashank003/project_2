@@ -1,6 +1,6 @@
-import type { UserDesignation } from './user';
+import type { UserDesignation } from "./user";
 
-export type IdCardStatus = 'pending' | 'approved' | 'rejected';
+export type IdCardStatus = "pending" | "approved" | "rejected";
 
 export interface IdCard {
     id: string;

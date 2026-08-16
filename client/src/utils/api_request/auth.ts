@@ -1,8 +1,8 @@
 /**
  * auth.ts — API module for OTP authentication.
  */
-import { request, unwrap } from './utils';
-import type { ApiResponse } from './utils';
+import { request, unwrap } from "./utils";
+import type { ApiResponse } from "./utils";
 
 export interface SendOtpResponse {
     message: string;
@@ -16,30 +16,37 @@ export interface VerifyOtpResponse {
         name: string;
         email?: string;
         bloodGroup?: string;
-        role: 'admin' | 'user';
+        role: "admin" | "user";
         designation: string;
     };
 }
 
 export const sendOtp = async (phone: string): Promise<SendOtpResponse> => {
     const res = await request<ApiResponse<SendOtpResponse>>({
-        url:    '/auth/send-otp',
-        method: 'POST',
-        data:   { phone },
+        url: "/auth/send-otp",
+        method: "POST",
+        data: { phone },
     });
     return unwrap(res);
 };
 
-export const verifyOtp = async (phone: string, otp: string): Promise<VerifyOtpResponse> => {
+export const verifyOtp = async (
+    phone: string,
+    otp: string,
+): Promise<VerifyOtpResponse> => {
     const res = await request<ApiResponse<VerifyOtpResponse>>({
-        url:    '/auth/verify-otp',
-        method: 'POST',
-        data:   { phone, otp },
+        url: "/auth/verify-otp",
+        method: "POST",
+        data: { phone, otp },
     });
     return unwrap(res);
 };
 
-export const updateMyProfile = async (payload: { name: string; email: string; bloodGroup?: string }): Promise<{
+export const updateMyProfile = async (payload: {
+    name: string;
+    email: string;
+    bloodGroup?: string;
+}): Promise<{
     id: string;
     phone: string;
     name: string;
@@ -48,18 +55,20 @@ export const updateMyProfile = async (payload: { name: string; email: string; bl
     role: string;
     designation: string;
 }> => {
-    const res = await request<ApiResponse<{
-        id: string;
-        phone: string;
-        name: string;
-        email: string;
-        bloodGroup?: string;
-        role: string;
-        designation: string;
-    }>>({
-        url:    '/my/profile',
-        method: 'PATCH',
-        data:   payload,
+    const res = await request<
+        ApiResponse<{
+            id: string;
+            phone: string;
+            name: string;
+            email: string;
+            bloodGroup?: string;
+            role: string;
+            designation: string;
+        }>
+    >({
+        url: "/my/profile",
+        method: "PATCH",
+        data: payload,
     });
     return unwrap(res);
 };

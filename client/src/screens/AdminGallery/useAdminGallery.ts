@@ -1,20 +1,26 @@
-import { useState, useEffect, useCallback } from 'react';
-import toast from 'react-hot-toast';
-import { getGalleryImages, uploadGalleryImage, deleteGalleryImage } from '../../utils/api_request/gallery';
-import { validateImageFile } from '../../utils/helpers';
-import type { GalleryImage } from '../../types/ngo';
+import { useState, useEffect, useCallback } from "react";
+import toast from "react-hot-toast";
+import {
+    getGalleryImages,
+    uploadGalleryImage,
+    deleteGalleryImage,
+} from "../../utils/api_request/gallery";
+import { validateImageFile } from "../../utils/helpers";
+import type { GalleryImage } from "../../types/ngo";
 
 export const useAdminGallery = () => {
-    const [images, setImages]       = useState<GalleryImage[]>([]);
+    const [images, setImages] = useState<GalleryImage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
-    const [caption, setCaption]     = useState('');
+    const [caption, setCaption] = useState("");
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl]     = useState<string | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-    const [isDeleting, setIsDeleting]         = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    useEffect(() => { loadImages(); }, []);
+    useEffect(() => {
+        loadImages();
+    }, []);
 
     const loadImages = async () => {
         setIsLoading(true);
@@ -30,7 +36,10 @@ export const useAdminGallery = () => {
 
     const handleSelectFile = useCallback((file: File) => {
         const error = validateImageFile(file);
-        if (error) { toast.error(error); return; }
+        if (error) {
+            toast.error(error);
+            return;
+        }
         setSelectedFile(file);
         setPreviewUrl(URL.createObjectURL(file));
     }, []);
@@ -42,20 +51,20 @@ export const useAdminGallery = () => {
 
     const handleSubmitUpload = useCallback(async () => {
         if (!selectedFile) {
-            toast.error('Please select an image file first');
+            toast.error("Please select an image file first");
             return;
         }
         setUploading(true);
         try {
             const newImage = await uploadGalleryImage({
-                image:   selectedFile,
+                image: selectedFile,
                 caption: caption.trim() || undefined,
             });
             setImages((prev) => [newImage, ...prev]);
             setSelectedFile(null);
             setPreviewUrl(null);
-            setCaption('');
-            toast.success('Image uploaded to gallery successfully!');
+            setCaption("");
+            toast.success("Image uploaded to gallery successfully!");
         } catch {
             // error toast already shown by axiosInstance interceptor
         } finally {
@@ -66,18 +75,23 @@ export const useAdminGallery = () => {
     const handleDelete = useCallback(async (id: string) => {
         setImages((prev) => prev.filter((img) => img.id !== id));
         await deleteGalleryImage(id);
-        toast.success('Image removed');
+        toast.success("Image removed");
     }, []);
 
-    const openDeleteConfirm  = useCallback((id: string) => setDeleteTargetId(id), []);
-    const cancelDelete       = useCallback(() => setDeleteTargetId(null), []);
-    const confirmDelete      = useCallback(async () => {
+    const openDeleteConfirm = useCallback(
+        (id: string) => setDeleteTargetId(id),
+        [],
+    );
+    const cancelDelete = useCallback(() => setDeleteTargetId(null), []);
+    const confirmDelete = useCallback(async () => {
         if (!deleteTargetId) return;
         setIsDeleting(true);
         try {
-            setImages((prev) => prev.filter((img) => img.id !== deleteTargetId));
+            setImages((prev) =>
+                prev.filter((img) => img.id !== deleteTargetId),
+            );
             await deleteGalleryImage(deleteTargetId);
-            toast.success('Image removed');
+            toast.success("Image removed");
             setDeleteTargetId(null);
         } catch {
             // error toast already shown by axiosInstance interceptor

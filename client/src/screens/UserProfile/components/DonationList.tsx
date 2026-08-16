@@ -1,18 +1,38 @@
-import React, { useContext } from 'react';
-import { Link } from 'react-router-dom';
-import { FileText, Clock, CheckCircle, XCircle, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
-import { UserProfileContext } from '../context';
-import type { Donation } from '../../../types/donation';
+import React, { useContext } from "react";
+import { Link } from "react-router-dom";
+import {
+    FileText,
+    Clock,
+    CheckCircle,
+    XCircle,
+    ChevronLeft,
+    ChevronRight,
+    ArrowRight,
+} from "lucide-react";
+import { UserProfileContext } from "../context";
+import type { Donation } from "../../../types/donation";
 
 const STATUS_CONFIG = {
-    approved: { label: 'Approved', icon: CheckCircle, className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
-    rejected: { label: 'Rejected', icon: XCircle,     className: 'bg-red-50 text-red-600 border border-red-200' },
-    pending:  { label: 'Pending',  icon: Clock,        className: 'bg-amber-50 text-amber-600 border border-amber-200' },
+    approved: {
+        label: "Approved",
+        icon: CheckCircle,
+        className: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    },
+    rejected: {
+        label: "Rejected",
+        icon: XCircle,
+        className: "bg-red-50 text-red-600 border border-red-200",
+    },
+    pending: {
+        label: "Pending",
+        icon: Clock,
+        className: "bg-amber-50 text-amber-600 border border-amber-200",
+    },
 } as const;
 
 const DonationRow: React.FC<{ donation: Donation }> = ({ donation }) => {
     const status = STATUS_CONFIG[donation.status] ?? STATUS_CONFIG.pending;
-    const Icon   = status.icon;
+    const Icon = status.icon;
 
     return (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-4 rounded-2xl border border-slate-200/80 bg-white hover:shadow-sm transition-shadow">
@@ -22,21 +42,36 @@ const DonationRow: React.FC<{ donation: Donation }> = ({ donation }) => {
                 </div>
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-base font-bold text-slate-900">₹{donation.amount.toLocaleString('en-IN')}</span>
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${status.className}`}>
+                        <span className="text-base font-bold text-slate-900">
+                            ₹{donation.amount.toLocaleString("en-IN")}
+                        </span>
+                        <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${status.className}`}
+                        >
                             <Icon className="h-3 w-3" />
                             {status.label}
                         </span>
                     </div>
                     <p className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                        <span>{new Date(donation.requestedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        <span>
+                            {new Date(donation.requestedAt).toLocaleDateString(
+                                "en-IN",
+                                {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                },
+                            )}
+                        </span>
                         {donation.certificateNumber && (
-                            <span className="font-mono text-slate-400">#{donation.certificateNumber}</span>
+                            <span className="font-mono text-slate-400">
+                                #{donation.certificateNumber}
+                            </span>
                         )}
                     </p>
                 </div>
             </div>
-            {donation.status === 'approved' && donation.id && (
+            {donation.status === "approved" && donation.id && (
                 <div className="pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex sm:justify-end">
                     <Link
                         to={`/certificate/${donation.id}`}
@@ -53,13 +88,22 @@ const DonationRow: React.FC<{ donation: Donation }> = ({ donation }) => {
 export const DonationList: React.FC = () => {
     const ctx = useContext(UserProfileContext);
     if (!ctx) return null;
-    const { donations, donationLoading, donationPage, donationTotalPages, loadDonations } = ctx;
+    const {
+        donations,
+        donationLoading,
+        donationPage,
+        donationTotalPages,
+        loadDonations,
+    } = ctx;
 
     if (donationLoading) {
         return (
             <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-16 rounded-xl bg-slate-100 animate-pulse" />
+                    <div
+                        key={i}
+                        className="h-16 rounded-xl bg-slate-100 animate-pulse"
+                    />
                 ))}
             </div>
         );
@@ -70,8 +114,13 @@ export const DonationList: React.FC = () => {
             <div className="text-center py-16">
                 <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />
                 <p className="text-slate-500 font-medium">No donations yet</p>
-                <p className="text-slate-400 text-sm mt-1">Your donation history will appear here</p>
-                <Link to="/donate" className="inline-block mt-4 btn-primary text-sm">
+                <p className="text-slate-400 text-sm mt-1">
+                    Your donation history will appear here
+                </p>
+                <Link
+                    to="/donate"
+                    className="inline-block mt-4 btn-primary text-sm"
+                >
                     Make a Donation
                 </Link>
             </div>
@@ -80,7 +129,9 @@ export const DonationList: React.FC = () => {
 
     return (
         <div className="space-y-3">
-            {donations.map((d) => <DonationRow key={d.id} donation={d} />)}
+            {donations.map((d) => (
+                <DonationRow key={d.id} donation={d} />
+            ))}
 
             {/* Pagination */}
             {donationTotalPages > 1 && (
