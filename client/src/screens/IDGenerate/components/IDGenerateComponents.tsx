@@ -197,6 +197,32 @@ export const IDForm: React.FC = () => {
                         ))}
                     </select>
                 </div>
+                <div className="sm:col-span-2">
+                    <label className="form-label">
+                        Donation / Card Fee Amount (₹) *
+                    </label>
+                    <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-semibold select-none">
+                            ₹
+                        </span>
+                        <input
+                            id="id-amount"
+                            type="number"
+                            min="1"
+                            placeholder="e.g. 500"
+                            value={form.amount}
+                            onChange={(e) =>
+                                handleFormChange("amount", e.target.value)
+                            }
+                            className={`form-input pl-10 ${errors.amount ? "border-red-400" : ""}`}
+                        />
+                    </div>
+                    {errors.amount && (
+                        <p className="text-red-500 text-xs mt-1">
+                            {errors.amount}
+                        </p>
+                    )}
+                </div>
             </div>
 
             <div className="mb-6">

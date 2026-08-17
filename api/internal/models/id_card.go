@@ -14,6 +14,7 @@ type IDCard struct {
 	Email                string     `gorm:"size:255"                                       json:"email"`
 	Address              string     `gorm:"type:text"                                      json:"address"`
 	Designation          string     `gorm:"size:50"                                        json:"designation"`
+	Amount               float64    `gorm:"column:amount;not null;default:0"               json:"amount"`
 	PassportPhotoURL     string     `gorm:"column:passport_photo_url"                      json:"passportPhotoUrl"`
 	PaymentScreenshotURL string     `gorm:"column:payment_screenshot_url"                  json:"paymentScreenshotUrl"`
 	UniqueCardNumber     *string    `gorm:"column:unique_card_number;size:100;uniqueIndex" json:"uniqueCardNumber,omitempty"`

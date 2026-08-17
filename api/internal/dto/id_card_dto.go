@@ -5,8 +5,9 @@ type CreateIDCardRequest struct {
 	UserName    string `json:"userName"    form:"userName"    binding:"required"`
 	Phone       string `json:"phone"       form:"phone"`
 	Email       string `json:"email"       form:"email"`
-	Address     string `json:"address"     form:"address"`
-	Designation string `json:"designation" form:"designation"`
+	Address     string  `json:"address"     form:"address"`
+	Designation string  `json:"designation" form:"designation"`
+	Amount      float64 `json:"amount"      form:"amount"`
 }
 
 // UpdateIDCardStatusRequest is the body for PATCH /id-cards/:id/status.

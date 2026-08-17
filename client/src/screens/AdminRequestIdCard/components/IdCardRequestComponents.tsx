@@ -4,7 +4,7 @@ import { AdminRequestIdCardContext } from "../context";
 import Modal from "../../../components/Modal";
 import IDCardCanvas from "../../../components/IDCardCanvas";
 import Pagination from "../../../components/Pagination";
-import { formatDate, capitalize } from "../../../utils/helpers";
+import { formatDate, capitalize, formatCurrency } from "../../../utils/helpers";
 
 export const IdCardRequestTable: React.FC = () => {
     const ctx = useContext(AdminRequestIdCardContext);
@@ -69,6 +69,7 @@ export const IdCardRequestTable: React.FC = () => {
                                 <th>Applicant</th>
                                 <th>Phone</th>
                                 <th>Designation</th>
+                                <th>Amount</th>
                                 <th>Requested On</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -92,6 +93,11 @@ export const IdCardRequestTable: React.FC = () => {
                                         <span className="badge badge-approved">
                                             {capitalize(item.designation)}
                                         </span>
+                                    </td>
+                                    <td className="font-semibold text-slate-800 text-sm">
+                                        {item.amount
+                                            ? formatCurrency(item.amount)
+                                            : "—"}
                                     </td>
                                     <td className="text-xs text-slate-500">
                                         {formatDate(item.requestedAt)}
@@ -349,18 +355,37 @@ export const IDCardPreviewModal: React.FC = () => {
 
                 {/* Tab Content */}
                 {previewTab === "screenshot" ? (
-                    <div className="flex justify-center p-4 bg-slate-50 rounded-xl">
-                        {previewItem.paymentScreenshotUrl ? (
-                            <img
-                                src={previewItem.paymentScreenshotUrl}
-                                alt="Payment Proof"
-                                className="max-h-96 rounded-xl object-contain shadow-sm border border-slate-200"
-                            />
-                        ) : (
-                            <div className="text-center py-12 text-slate-400">
-                                No payment screenshot uploaded (demo data)
+                    <div className="space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3 bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 text-xs text-slate-700">
+                            <div>
+                                <span className="text-slate-500">Applicant:</span>{" "}
+                                <strong className="text-slate-900 font-semibold">{previewItem.userName}</strong>
                             </div>
-                        )}
+                            <div>
+                                <span className="text-slate-500">Designation:</span>{" "}
+                                <strong className="text-slate-900 font-semibold">{capitalize(previewItem.designation)}</strong>
+                            </div>
+                            <div>
+                                <span className="text-slate-500">Declared Amount:</span>{" "}
+                                <strong className="text-emerald-700 font-bold text-sm">
+                                    {previewItem.amount ? formatCurrency(previewItem.amount) : "—"}
+                                </strong>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-center p-4 bg-slate-50 rounded-xl">
+                            {previewItem.paymentScreenshotUrl ? (
+                                <img
+                                    src={previewItem.paymentScreenshotUrl}
+                                    alt="Payment Proof"
+                                    className="max-h-96 rounded-xl object-contain shadow-sm border border-slate-200"
+                                />
+                            ) : (
+                                <div className="text-center py-12 text-slate-400">
+                                    No payment screenshot uploaded (demo data)
+                                </div>
+                            )}
+                        </div>
                     </div>
                 ) : (
                     <div className="flex justify-center overflow-x-auto py-2">
@@ -419,31 +444,55 @@ export const SignatureModal: React.FC = () => {
                         <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider">
                             Current Signature
                         </span>
-                        <div className="bg-white p-3 rounded-lg border border-amber-200 w-full max-w-xs flex justify-center">
-                            <img
-                                src={ngoConfig.signatureUrl}
-                                alt="Digital Signature"
-                                className="h-14 object-contain"
-                            />
+                        <div className="bg-white p-3 rounded-lg border border-amber-200 w-full max-w-xs flex justify-center relative min-h-[4rem] items-center">
+                            {signatureUploading ? (
+                                <div className="flex flex-col items-center gap-1.5 py-1">
+                                    <span className="h-6 w-6 rounded-full border-2 border-emerald-200 border-t-emerald-600 animate-spin" />
+                                    <span className="text-xs font-medium text-slate-600">Uploading new signature…</span>
+                                </div>
+                            ) : (
+                                <img
+                                    src={ngoConfig.signatureUrl}
+                                    alt="Digital Signature"
+                                    className="h-14 object-contain"
+                                />
+                            )}
                         </div>
                         <div className="flex gap-2 w-full max-w-xs">
                             <button
                                 type="button"
                                 onClick={() => sigRef.current?.click()}
                                 disabled={signatureUploading}
-                                className="btn-outline flex-1 py-2 text-xs"
+                                className="btn-outline flex-1 py-2 text-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
                             >
-                                Change Signature
+                                {signatureUploading ? (
+                                    <React.Fragment>
+                                        <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-400 border-t-emerald-600 animate-spin" />
+                                        Uploading…
+                                    </React.Fragment>
+                                ) : (
+                                    "Change Signature"
+                                )}
                             </button>
                             <button
                                 type="button"
                                 onClick={handleDeleteSignature}
                                 disabled={signatureUploading}
-                                className="btn-danger py-2 text-xs"
+                                className="btn-danger py-2 text-xs disabled:opacity-50"
                             >
                                 Delete Signature
                             </button>
                         </div>
+                    </div>
+                ) : signatureUploading ? (
+                    <div className="border-2 border-dashed border-emerald-300 bg-emerald-50/50 rounded-2xl p-8 flex flex-col items-center justify-center gap-3">
+                        <span className="h-8 w-8 rounded-full border-2 border-emerald-200 border-t-emerald-600 animate-spin" />
+                        <span className="text-sm font-semibold text-emerald-800">
+                            Uploading digital signature…
+                        </span>
+                        <span className="text-xs text-slate-400">
+                            Please wait while the image is being saved
+                        </span>
                     </div>
                 ) : (
                     <div

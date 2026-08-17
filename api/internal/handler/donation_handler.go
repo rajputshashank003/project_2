@@ -33,8 +33,16 @@ func (h *DonationHandler) List(c *gin.Context) {
 	if search == "" {
 		search = c.Query("q")
 	}
+	startDate := c.Query("start_date")
+	if startDate == "" {
+		startDate = c.Query("startDate")
+	}
+	endDate := c.Query("end_date")
+	if endDate == "" {
+		endDate = c.Query("endDate")
+	}
 
-	donations, total, err := h.svc.List(pq.Page, pq.Limit, status, search)
+	donations, total, err := h.svc.List(pq.Page, pq.Limit, status, search, startDate, endDate)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "DB_ERROR", "message": "Failed to fetch donations"}})
 		return

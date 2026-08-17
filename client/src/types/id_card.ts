@@ -10,6 +10,7 @@ export interface IdCard {
     email: string;
     address: string;
     designation: UserDesignation;
+    amount?: number;
     passportPhotoUrl: string;
     paymentScreenshotUrl: string;
     uniqueCardNumber: string;
@@ -29,6 +30,7 @@ export interface CreateIdCardPayload {
     email: string;
     address: string;
     designation: UserDesignation;
+    amount: number;
     passportPhoto: File;
     paymentProof: File;
 }

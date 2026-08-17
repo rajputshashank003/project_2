@@ -1,0 +1,1 @@
+ALTER TABLE id_cards DROP COLUMN IF EXISTS amount;

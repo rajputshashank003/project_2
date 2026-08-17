@@ -231,6 +231,9 @@ select {
         border-color 0.15s,
         box-shadow 0.15s;
 }
+.form-input.pl-8 {
+    padding-left: 2rem !important;
+}
 .form-input.pl-9 {
     padding-left: 2.25rem !important;
 }

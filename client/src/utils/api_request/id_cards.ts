@@ -21,6 +21,8 @@ export const getIdCardRequests = async (
     limit = 20,
     status?: string,
     search?: string,
+    startDate?: string,
+    endDate?: string,
 ): Promise<PaginatedResponse<IdCard, IdCardStats>> => {
     return request<PaginatedResponse<IdCard, IdCardStats>>({
         url: "/id-cards",
@@ -30,6 +32,8 @@ export const getIdCardRequests = async (
             limit,
             status: status && status !== "all" ? status : undefined,
             search: search?.trim() || undefined,
+            start_date: startDate?.trim() || undefined,
+            end_date: endDate?.trim() || undefined,
         },
     });
 };
@@ -55,6 +59,9 @@ export const createIdCardRequest = async (
         body.append("email", data.email);
         body.append("address", data.address);
         body.append("designation", data.designation);
+        if (data.amount !== undefined) {
+            body.append("amount", String(data.amount));
+        }
         body.append("passportPhoto", data.passportPhoto);
         body.append("paymentScreenshot", data.paymentProof);
     }

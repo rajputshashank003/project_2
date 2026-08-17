@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Leaf, Heart, Phone, Mail, MapPin } from "lucide-react";
+import { Leaf, Phone, Mail, MapPin, ExternalLink } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 
 const Footer: React.FC = () => {
@@ -52,7 +52,7 @@ const Footer: React.FC = () => {
                                 {
                                     to: "/id-generate",
                                     label: "Get Volunteer ID",
-                                },
+                                    },
                                 { to: "/about", label: "About Us" },
                             ].map((link) => (
                                 <li key={link.to}>
@@ -95,15 +95,25 @@ const Footer: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="border-t border-slate-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <p className="text-xs">
+                <div className="border-t border-slate-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+                    <p>
                         © {new Date().getFullYear()} {ngoConfig.name}. All
                         rights reserved.
                     </p>
-                    <p className="text-xs flex items-center gap-1">
-                        Made with <Heart className="h-3 w-3 text-emerald-500" />{" "}
-                        for a better world
-                    </p>
+                    <div className="flex items-center gap-1.5 text-slate-400">
+                        <span>Designed &amp; Developed by</span>
+                        <a
+                            href="https://rajputshashank.vercel.app"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-emerald-400 hover:text-emerald-300 transition-colors inline-flex items-center gap-1 group"
+                        >
+                            <span className="underline decoration-emerald-500/40 hover:decoration-emerald-400 underline-offset-2">
+                                Shashank Rajput
+                            </span>
+                            <ExternalLink className="h-3 w-3 opacity-70 group-hover:opacity-100 transition-opacity" />
+                        </a>
+                    </div>
                 </div>
             </div>
         </footer>

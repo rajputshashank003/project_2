@@ -4,7 +4,8 @@ import {
     getDonations,
     updateDonationStatus,
 } from "../../utils/api_request/donations";
-import { exportDonationsToExcel } from "../../utils/excel_exporter";
+import { getIdCardRequests } from "../../utils/api_request/id_cards";
+import { exportContributionsToExcel } from "../../utils/excel_exporter";
 import { useApp } from "../../context/AppContext";
 import type { Donation, DonationStatus } from "../../types/donation";
 
@@ -33,6 +34,13 @@ export const useAdminRequestDonation = () => {
     );
     const [rejectReason, setRejectReason] = useState("");
     const [actionLoading, setActionLoading] = useState(false);
+    const [isExportingExcel, setIsExportingExcel] = useState(false);
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+    const [exportProgress, setExportProgress] = useState({
+        current: 0,
+        total: 0,
+        message: "",
+    });
     const [screenshotModal, setScreenshotModal] = useState<Donation | null>(
         null,
     );
@@ -135,9 +143,128 @@ export const useAdminRequestDonation = () => {
         }
     }, [actionItem, rejectReason]);
 
+    const openExportModal = () => setIsExportModalOpen(true);
+    const closeExportModal = () => {
+        if (!isExportingExcel) {
+            setIsExportModalOpen(false);
+            setExportProgress({ current: 0, total: 0, message: "" });
+        }
+    };
+
+    const handleExportWithDateRange = async (
+        startDate: string,
+        endDate: string,
+    ) => {
+        setIsExportingExcel(true);
+        setExportProgress({
+            current: 0,
+            total: 100,
+            message: "Fetching approved donations…",
+        });
+
+        try {
+            const BATCH_LIMIT = 100;
+            const allDonations: Donation[] = [];
+            const allIdCards: any[] = [];
+
+            // 1. Fetch First Page of Donations
+            const firstDonations = await getDonations(
+                1,
+                BATCH_LIMIT,
+                "approved",
+                undefined,
+                startDate,
+                endDate,
+            );
+            allDonations.push(...firstDonations.data);
+            const totalDonationPages =
+                firstDonations.pagination?.totalPages || 1;
+            const totalDonations =
+                firstDonations.pagination?.total || firstDonations.data.length;
+
+            // Fetch Remaining Donation Pages
+            for (let p = 2; p <= totalDonationPages; p++) {
+                setExportProgress({
+                    current: allDonations.length,
+                    total: totalDonations + 10,
+                    message: `Fetching donations: batch ${p} of ${totalDonationPages} (${allDonations.length}/${totalDonations})…`,
+                });
+                const res = await getDonations(
+                    p,
+                    BATCH_LIMIT,
+                    "approved",
+                    undefined,
+                    startDate,
+                    endDate,
+                );
+                allDonations.push(...res.data);
+            }
+
+            // 2. Fetch First Page of ID Cards
+            setExportProgress({
+                current: allDonations.length,
+                total: allDonations.length + 50,
+                message: "Fetching approved ID cards…",
+            });
+            const firstIdCards = await getIdCardRequests(
+                1,
+                BATCH_LIMIT,
+                "approved",
+                undefined,
+                startDate,
+                endDate,
+            );
+            allIdCards.push(...firstIdCards.data);
+            const totalIdCardPages = firstIdCards.pagination?.totalPages || 1;
+            const totalIdCards =
+                firstIdCards.pagination?.total || firstIdCards.data.length;
+
+            // Fetch Remaining ID Card Pages
+            for (let p = 2; p <= totalIdCardPages; p++) {
+                setExportProgress({
+                    current: allDonations.length + allIdCards.length,
+                    total: totalDonations + totalIdCards,
+                    message: `Fetching ID cards: batch ${p} of ${totalIdCardPages} (${allIdCards.length}/${totalIdCards})…`,
+                });
+                const res = await getIdCardRequests(
+                    p,
+                    BATCH_LIMIT,
+                    "approved",
+                    undefined,
+                    startDate,
+                    endDate,
+                );
+                allIdCards.push(...res.data);
+            }
+
+            if (allDonations.length === 0 && allIdCards.length === 0) {
+                toast.error(
+                    "No approved records found in the selected date range",
+                );
+                return;
+            }
+
+            setExportProgress({
+                current: allDonations.length + allIdCards.length,
+                total: allDonations.length + allIdCards.length,
+                message: "Compiling Excel file…",
+            });
+
+            const filename = `approved_contributions_${startDate}_to_${endDate}`;
+            exportContributionsToExcel(allDonations, allIdCards, filename);
+            toast.success(
+                `Downloaded ${allDonations.length} donations & ${allIdCards.length} ID cards!`,
+            );
+            setIsExportModalOpen(false);
+        } catch {
+            toast.error("Export failed. Please try again.");
+        } finally {
+            setIsExportingExcel(false);
+        }
+    };
+
     const handleExportExcel = () => {
-        exportDonationsToExcel(filteredDonations, "ngo_donations");
-        toast.success("Excel file downloaded!");
+        openExportModal();
     };
 
     return {
@@ -154,6 +281,9 @@ export const useAdminRequestDonation = () => {
         actionType,
         rejectReason,
         actionLoading,
+        isExportingExcel,
+        isExportModalOpen,
+        exportProgress,
         screenshotModal,
         totalAmount,
         ngoConfig,
@@ -167,6 +297,9 @@ export const useAdminRequestDonation = () => {
         handleApprove,
         handleReject,
         handleExportExcel,
+        openExportModal,
+        closeExportModal,
+        handleExportWithDateRange,
         loadDonations,
     };
 };

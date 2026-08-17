@@ -4,6 +4,7 @@ import { AdminRequestDonationContext } from "../context";
 import Modal from "../../../components/Modal";
 import CertificateCanvas from "../../../components/CertificateCanvas";
 import Pagination from "../../../components/Pagination";
+import { ExportExcelModal } from "./ExportExcelModal";
 import { formatCurrency, formatDate, capitalize } from "../../../utils/helpers";
 
 export const ExportBar: React.FC = () => {
@@ -15,6 +16,7 @@ export const ExportBar: React.FC = () => {
         filterStatus,
         setFilterStatus,
         filteredDonations,
+        isExportingExcel,
         handleExportExcel,
     } = ctx;
 
@@ -61,11 +63,20 @@ export const ExportBar: React.FC = () => {
             <button
                 id="export-excel-btn"
                 onClick={handleExportExcel}
-                disabled={filteredDonations.length === 0}
-                className="btn-outline py-2 flex items-center gap-2 shrink-0"
+                disabled={isExportingExcel || filteredDonations.length === 0}
+                className="btn-outline py-2 flex items-center gap-2 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                <FileSpreadsheet className="h-4 w-4" />
-                Export Excel
+                {isExportingExcel ? (
+                    <React.Fragment>
+                        <span className="h-4 w-4 rounded-full border-2 border-slate-400 border-t-emerald-600 animate-spin" />
+                        Exporting…
+                    </React.Fragment>
+                ) : (
+                    <React.Fragment>
+                        <FileSpreadsheet className="h-4 w-4" />
+                        Export Excel
+                    </React.Fragment>
+                )}
             </button>
         </div>
     );
@@ -391,5 +402,27 @@ export const ScreenshotModal: React.FC = () => {
                 )}
             </div>
         </Modal>
+    );
+};
+
+export const ExportExcelModalWrapper: React.FC = () => {
+    const ctx = useContext(AdminRequestDonationContext);
+    if (!ctx) return null;
+    const {
+        isExportModalOpen,
+        closeExportModal,
+        handleExportWithDateRange,
+        isExportingExcel,
+        exportProgress,
+    } = ctx;
+
+    return (
+        <ExportExcelModal
+            isOpen={isExportModalOpen}
+            onClose={closeExportModal}
+            onExport={handleExportWithDateRange}
+            isExporting={isExportingExcel}
+            progress={exportProgress}
+        />
     );
 };

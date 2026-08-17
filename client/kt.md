@@ -397,6 +397,71 @@ npm run dev            # http://localhost:5173
   - Receives `IdCardStats` (`total`, `pending`, `approved`, `rejected`).
   - Top 3 cards render global database metrics (`stats.total`, `stats.pending`, `stats.approved`).
 
+---
+
+## 27. Approved Contributions Excel Export, Certificate Clearance & Developer Attribution
+
+- **Approved-Only Contributions Excel Export (`excel_exporter.ts`, `useAdminRequestDonation.ts`, `DonationRequestComponents.tsx`)**:
+  - Strictly filters records to `status === 'approved'` (excludes pending and rejected entries).
+  - Merges both approved Donations and approved ID Cards in a single `.xlsx` export.
+  - Features dedicated `Type` column (`"Donation"` | `"ID Card"`), numeric amounts for Excel auto-sum, and a bottom grand total summary row.
+  - Multi-page fetch: queries all approved records across the database on export.
+  - **Export Loader & Disabled State**: Button disables, displays an `animate-spin` spinner, and reads `"Exporting…"` during async export generation.
+- **Certificate Canvas Clearance (`CertificateCanvas/index.tsx`)**:
+  - Updated inner padding to `16px 58px 48px` (from `22px 48px 18px`), creating generous clearance above bottom corner brackets.
+- **Developer Attribution (`Footer/index.tsx`)**:
+  - Displays *"Designed & Developed by [Shashank Rajput](https://rajputshashank.vercel.app)"* with external link in footer bottom bar.
+
+---
+
+## 28. Date-Range Excel Export Modal & Batched Paging Orchestrator
+
+- **Export Date Range Modal (`ExportExcelModal.tsx`)**:
+  - Opened upon clicking "Export Excel".
+  - **Strict Datepicker UX Restrictions**:
+    - Start Date: `max={endDate || today}` (cannot select future dates or dates after End Date).
+    - End Date: `min={startDate}` and `max={today}` (cannot select future dates or dates before Start Date).
+    - Auto-adjusts dates if Start Date is moved past current End Date.
+  - **Quick Presets**: 1-click buttons for `"Last 30 Days"`, `"This Month"`, `"This Year"`, and `"All Time"`.
+- **Client-Side Batched Paging Orchestrator (`useAdminRequestDonation.ts`)**:
+  - Queries records in chunks of `BATCH_LIMIT = 100` per HTTP call.
+  - Fetches Page 1 -> checks `totalPages` -> iterates remaining pages with live progress updates.
+  - Fetches approved donations then approved ID cards for the chosen date range.
+  - Accumulates batches in memory and compiles single unified `.xlsx` spreadsheet (`approved_contributions_YYYY-MM-DD_to_YYYY-MM-DD.xlsx`).
+  - Live progress feedback: displays animated bar, current/total record count, and batch step message.
+
+---
+
+## 29. ID Card Contribution Amount & Excel Export
+
+- **ID Card Application Form (`/id-generate`)**:
+  - Added required input **`Donation / Card Fee Amount (₹) *`** (`id-amount`, `min="1"`).
+  - Configured with `pl-10` padding and explicit `.form-input.pl-8` / `.form-input.pl-10` overrides to prevent overlay between the `₹` icon and input digits.
+  - Validation ensures valid positive monetary value (`min ₹1`).
+  - Appended into multipart form payload (`createIdCardRequest`).
+- **Unified Excel Export (`excel_exporter.ts`)**:
+  - For each approved ID card record with `c.amount > 0`:
+    - Populates numeric amount in `"Amount (₹)"` column.
+    - Sums `c.amount` into `totalAmount` for the bottom summary row.
+- **Admin ID Card Panel (`AdminRequestIdCard`)**:
+  - `IdCardRequestTable`: Added **Amount** column displaying formatted currency.
+  - `IDCardPreviewModal`: Added applicant overview card with declared donation amount alongside payment receipt screenshot.
+
+---
+
+## 30. Digital Signature Upload Loading State & Excel Modal Cleanup
+
+- **Digital Signature Upload Loader (`IdCardRequestComponents.tsx`)**:
+  - Displays an animated spinner and `"Uploading digital signature…"` / `"Uploading new signature…"` status text in both the empty dashed upload box and the active preview container during async image uploads.
+  - Disables action buttons with `disabled:opacity-50` while uploading.
+- **Excel Export Modal UI Cleanup (`ExportExcelModal.tsx`)**:
+  - Removed verbose "High-Capacity Batched Export" informational banner for a cleaner, minimal date selection UX.
+
+
+
+
+
+
 
 
 

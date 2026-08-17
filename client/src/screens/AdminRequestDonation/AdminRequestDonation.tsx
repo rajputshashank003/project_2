@@ -6,6 +6,7 @@ import {
     DonationRequestTable,
     DonationActionModal,
     ScreenshotModal,
+    ExportExcelModalWrapper,
 } from "./components/DonationRequestComponents";
 import { Heart, RefreshCw } from "lucide-react";
 import { formatCurrency } from "../../utils/helpers";
@@ -71,6 +72,7 @@ const AdminRequestDonationContent: React.FC = () => {
             <DonationRequestTable />
             <DonationActionModal />
             <ScreenshotModal />
+            <ExportExcelModalWrapper />
         </div>
     );
 };

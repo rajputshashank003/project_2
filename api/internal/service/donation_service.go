@@ -85,10 +85,10 @@ func (s *DonationService) GetByID(id uuid.UUID) (*models.Donation, error) {
 	return s.repo.FindByID(id)
 }
 
-// List returns paginated donations with optional status and search filters (admin — all users).
-func (s *DonationService) List(page, limit int, status, search string) ([]models.Donation, int64, error) {
+// List returns paginated donations with optional status, search, and date filters (admin — all users).
+func (s *DonationService) List(page, limit int, status, search, startDate, endDate string) ([]models.Donation, int64, error) {
 	offset := (page - 1) * limit
-	return s.repo.ListPaginated(offset, limit, status, search)
+	return s.repo.ListPaginated(offset, limit, status, search, startDate, endDate)
 }
 
 // GetStats returns global database-wide donation metrics.

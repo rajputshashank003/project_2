@@ -2,6 +2,7 @@ package repository
 
 import (
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/shashankrajput/ngo-platform/api/internal/models"
@@ -33,8 +34,8 @@ func (r *IDCardRepository) FindByID(id uuid.UUID) (*models.IDCard, error) {
 	return &c, nil
 }
 
-// ListPaginated returns paginated ID cards ordered by requested_at DESC with optional status and search filters.
-func (r *IDCardRepository) ListPaginated(offset, limit int, status, search string) ([]models.IDCard, int64, error) {
+// ListPaginated returns paginated ID cards ordered by requested_at DESC with optional status, search, and date filters.
+func (r *IDCardRepository) ListPaginated(offset, limit int, status, search, startDate, endDate string) ([]models.IDCard, int64, error) {
 	var cards []models.IDCard
 	var total int64
 
@@ -45,6 +46,21 @@ func (r *IDCardRepository) ListPaginated(offset, limit int, status, search strin
 	if search != "" {
 		s := "%" + strings.ToLower(strings.TrimSpace(search)) + "%"
 		query = query.Where("LOWER(user_name) LIKE ? OR phone LIKE ? OR LOWER(email) LIKE ? OR LOWER(unique_card_number) LIKE ? OR LOWER(designation) LIKE ?", s, s, s, s, s)
+	}
+
+	if s := strings.TrimSpace(startDate); s != "" {
+		if t, err := time.Parse("2006-01-02", s); err == nil {
+			query = query.Where("requested_at >= ?", time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC))
+		} else if t, err := time.Parse(time.RFC3339, s); err == nil {
+			query = query.Where("requested_at >= ?", t)
+		}
+	}
+	if e := strings.TrimSpace(endDate); e != "" {
+		if t, err := time.Parse("2006-01-02", e); err == nil {
+			query = query.Where("requested_at <= ?", time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, 999999999, time.UTC))
+		} else if t, err := time.Parse(time.RFC3339, e); err == nil {
+			query = query.Where("requested_at <= ?", t)
+		}
 	}
 
 	if err := query.Count(&total).Error; err != nil {

@@ -637,6 +637,33 @@ See `whatsapp_service/kt.md` for full documentation.
   - `GET /readyz`: Overall readiness report (`database`, `whatsapp` status, HTTP code, latency).
   - `GET /health/whatsapp` & `GET /api/v1/health/whatsapp`: Real-time probe against the WhatsApp microservice.
 
+---
+
+## 22. Date Range Filtering on Donations and ID Cards
+
+- **Date Filtering Query Parameters**:
+  - `GET /api/v1/donations` and `GET /api/v1/id-cards` accept optional `start_date` (`startDate`) and `end_date` (`endDate`) query parameters (format: `YYYY-MM-DD` or RFC3339).
+- **Day Boundary Coverage**:
+  - `startDate` filters with `requested_at >= start 00:00:00 UTC`.
+  - `endDate` filters with `requested_at <= end 23:59:59.999999999 UTC` so records created during the entire end date are included.
+- **Repository Implementation**:
+  - `DonationRepository.ListPaginated(offset, limit int, status, search, startDate, endDate string)`.
+  - `IDCardRepository.ListPaginated(offset, limit int, status, search, startDate, endDate string)`.
+
+---
+
+## 23. ID Card Contribution Amount & Database Migration
+
+- **Database Migration (`000016_add_amount_to_id_cards`)**:
+  - Added `amount NUMERIC(12, 2) NOT NULL DEFAULT 0` column to `id_cards` table.
+- **Model & DTO Updates**:
+  - `models.IDCard`: Added `Amount float64` (`gorm:"column:amount;not null;default:0" json:"amount"`).
+  - `dto.CreateIDCardRequest`: Added `Amount float64` (`json:"amount" form:"amount"`).
+- **Service Notification**:
+  - `IDCardService.notifyManagerNewIDCard`: Includes the applicant's declared donation / fee amount (`INR %.0f`) in the WhatsApp notification to the manager.
+
+
+
 
 
 

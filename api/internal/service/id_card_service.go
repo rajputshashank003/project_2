@@ -62,6 +62,7 @@ func (s *IDCardService) Create(ctx context.Context, req dto.CreateIDCardRequest,
 		UserName:             req.UserName,
 		Phone:                req.Phone,
 		Email:                req.Email,
+		Amount:               req.Amount,
 		Address:              req.Address,
 		Designation:          req.Designation,
 		PassportPhotoURL:     passportResult.SecureURL,
@@ -86,10 +87,10 @@ func (s *IDCardService) GetByID(id uuid.UUID) (*models.IDCard, error) {
 	return s.repo.FindByID(id)
 }
 
-// List returns paginated ID cards with optional status and search filters (admin — all users).
-func (s *IDCardService) List(page, limit int, status, search string) ([]models.IDCard, int64, error) {
+// List returns paginated ID cards with optional status, search, and date filters (admin — all users).
+func (s *IDCardService) List(page, limit int, status, search, startDate, endDate string) ([]models.IDCard, int64, error) {
 	offset := (page - 1) * limit
-	return s.repo.ListPaginated(offset, limit, status, search)
+	return s.repo.ListPaginated(offset, limit, status, search, startDate, endDate)
 }
 
 // GetStats returns global database-wide ID card metrics.
@@ -288,11 +289,16 @@ func (s *IDCardService) notifyManagerNewIDCard(c *models.IDCard) {
 	}
 
 	adminLink := fmt.Sprintf("%s/admin/request/id-card", s.appBaseURL)
+	amountStr := "—"
+	if c.Amount > 0 {
+		amountStr = fmt.Sprintf("INR %.0f", c.Amount)
+	}
 	msg := fmt.Sprintf(
-		"New Volunteer ID Card Request Received\n\nApplicant: %s\nPhone: %s\nDesignation: %s\nAddress: %s\n\nReview in Admin Panel:\n%s",
+		"New Volunteer ID Card Request Received\n\nApplicant: %s\nPhone: %s\nDesignation: %s\nAmount: %s\nAddress: %s\n\nReview in Admin Panel:\n%s",
 		c.UserName,
 		c.Phone,
 		c.Designation,
+		amountStr,
 		c.Address,
 		adminLink,
 	)

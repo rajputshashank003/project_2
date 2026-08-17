@@ -157,7 +157,7 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
                             border: "12px solid #059669",
                             outline: "3px solid #d1fae5",
                             outlineOffset: "-18px",
-                            padding: "22px 48px 18px",
+                            padding: "16px 58px 48px",
                             boxSizing: "border-box",
                         }}
                     >

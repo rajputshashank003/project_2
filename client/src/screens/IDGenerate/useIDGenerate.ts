@@ -15,6 +15,7 @@ interface IdCardFormData {
     userName: string;
     phone: string;
     email: string;
+    amount: string;
     address: string;
     designation: UserDesignation;
 }
@@ -23,6 +24,7 @@ const EMPTY_FORM: IdCardFormData = {
     userName: "",
     phone: "",
     email: "",
+    amount: "",
     address: "",
     designation: "member",
 };
@@ -96,6 +98,9 @@ export const useIDGenerate = () => {
             newErrors.phone = "Enter a valid 10-digit number";
         if (!isValidEmail(form.email))
             newErrors.email = "Enter a valid email address";
+        const numAmount = Number(form.amount);
+        if (!form.amount || isNaN(numAmount) || numAmount <= 0)
+            newErrors.amount = "Enter a valid contribution amount (min ₹1)";
         if (!form.address.trim()) newErrors.address = "Address is required";
         if (!passportFile) newErrors.passport = "Passport photo is required";
         if (!paymentFile) newErrors.payment = "Payment screenshot is required";
@@ -111,6 +116,7 @@ export const useIDGenerate = () => {
                 userName: form.userName.trim(),
                 phone: form.phone,
                 email: form.email,
+                amount: Number(form.amount),
                 address: form.address.trim(),
                 designation: form.designation,
                 passportPhoto: passportFile,
