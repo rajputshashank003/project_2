@@ -486,6 +486,22 @@ npm run dev            # http://localhost:5173
   - Adds an interactive `X` dismiss button (`lucide-react`) to all non-loading toasts.
   - Clicking the `X` button calls `toast.dismiss(t.id)` with `e.stopPropagation()`, allowing users to immediately close notifications without waiting for the auto-dismiss timer.
 
+---
+
+## 34. ID Card Generation Payment Details & Donation Note
+
+- **Payment Details Card (`IDGenerateComponents.tsx`, `IDGenerate.tsx`)**:
+  - Rendered `IDPaymentDetails` on top of `/id-generate` before the application form.
+  - Includes pulse-animated skeleton loader while `isConfigLoading` is active.
+  - Renders UPI ID with `Copy` button, Phone payment with `Copy` button, and Bank Account transfer details (account number and IFSC code) with copy buttons.
+  - Prominently displays the instruction note:
+    ```tsx
+    Donate here to generate ID card and paste screenshot below
+    ```
+- **State & Copy Handlers (`useIDGenerate.ts`)**:
+  - Hook exposes `isConfigLoading`, `copied`, `copiedPhone`, `copiedAccount`, `copiedIfsc` alongside corresponding copy handlers using `copyToClipboard`.
+
+
 
 
 

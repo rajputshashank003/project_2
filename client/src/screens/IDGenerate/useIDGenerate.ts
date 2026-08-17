@@ -7,6 +7,7 @@ import {
     validateImageFile,
     isValidEmail,
     isValidPhone,
+    copyToClipboard,
 } from "../../utils/helpers";
 import type { UserDesignation } from "../../types/user";
 import type { CreateIdCardPayload } from "../../types/id_card";
@@ -31,7 +32,7 @@ const EMPTY_FORM: IdCardFormData = {
 
 export const useIDGenerate = () => {
     const { user } = useAuth();
-    const { ngoConfig } = useApp();
+    const { ngoConfig, isConfigLoading } = useApp();
 
     const [form, setForm] = useState<IdCardFormData>({
         ...EMPTY_FORM,
@@ -59,6 +60,58 @@ export const useIDGenerate = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [submittedId, setSubmittedId] = useState("");
+    const [copied, setCopied] = useState(false);
+    const [copiedPhone, setCopiedPhone] = useState(false);
+    const [copiedAccount, setCopiedAccount] = useState(false);
+    const [copiedIfsc, setCopiedIfsc] = useState(false);
+
+    const handleCopyUpi = async () => {
+        const textToCopy = ngoConfig.upiId || "ngo@upi";
+        const ok = await copyToClipboard(textToCopy);
+        if (ok) {
+            setCopied(true);
+            toast.success("UPI ID copied!");
+            setTimeout(() => setCopied(false), 2500);
+        } else {
+            toast.error("Failed to copy UPI ID");
+        }
+    };
+
+    const handleCopyPhone = async () => {
+        if (!ngoConfig.phone) return;
+        const ok = await copyToClipboard(ngoConfig.phone);
+        if (ok) {
+            setCopiedPhone(true);
+            toast.success("Phone number copied!");
+            setTimeout(() => setCopiedPhone(false), 2500);
+        } else {
+            toast.error("Failed to copy phone number");
+        }
+    };
+
+    const handleCopyAccount = async () => {
+        if (!ngoConfig.accountNumber) return;
+        const ok = await copyToClipboard(ngoConfig.accountNumber);
+        if (ok) {
+            setCopiedAccount(true);
+            toast.success("Account number copied!");
+            setTimeout(() => setCopiedAccount(false), 2500);
+        } else {
+            toast.error("Failed to copy account number");
+        }
+    };
+
+    const handleCopyIfsc = async () => {
+        if (!ngoConfig.ifscCode) return;
+        const ok = await copyToClipboard(ngoConfig.ifscCode);
+        if (ok) {
+            setCopiedIfsc(true);
+            toast.success("IFSC Code copied!");
+            setTimeout(() => setCopiedIfsc(false), 2500);
+        } else {
+            toast.error("Failed to copy IFSC code");
+        }
+    };
 
     const handleFormChange = (field: keyof IdCardFormData, value: string) => {
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -160,10 +213,19 @@ export const useIDGenerate = () => {
         isSubmitting,
         isSuccess,
         submittedId,
+        copied,
+        copiedPhone,
+        copiedAccount,
+        copiedIfsc,
         ngoConfig,
+        isConfigLoading,
         handleFormChange,
         handlePassportUpload,
         handlePaymentUpload,
+        handleCopyUpi,
+        handleCopyPhone,
+        handleCopyAccount,
+        handleCopyIfsc,
         handleSubmit,
         handleReset,
     };

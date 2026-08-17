@@ -1,7 +1,202 @@
 import React, { useContext, useRef } from "react";
-import { User, CheckCircle } from "lucide-react";
+import { User, CheckCircle, Copy, Check } from "lucide-react";
 import { IDGenerateContext } from "../context";
 import { DESIGNATIONS } from "../../../utils/constants";
+
+export const IDPaymentDetails: React.FC = () => {
+    const ctx = useContext(IDGenerateContext);
+    if (!ctx) return null;
+    const {
+        ngoConfig,
+        isConfigLoading,
+        copied,
+        handleCopyUpi,
+        copiedPhone,
+        handleCopyPhone,
+        copiedAccount,
+        handleCopyAccount,
+        copiedIfsc,
+        handleCopyIfsc,
+    } = ctx;
+
+    return (
+        <div className="card-md mb-6 max-w-2xl mx-auto">
+            <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <div className="h-6 w-6 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <span className="text-emerald-700 text-xs font-bold">
+                        ₹
+                    </span>
+                </div>
+                Payment Details
+            </h2>
+
+            {isConfigLoading ? (
+                <div className="space-y-3 py-1">
+                    {/* UPI loading skeleton */}
+                    <div className="bg-emerald-50/60 border border-emerald-200/70 rounded-xl p-4 flex items-center justify-between gap-4 animate-pulse">
+                        <div className="space-y-2">
+                            <div className="h-3 w-16 bg-emerald-200/80 rounded" />
+                            <div className="h-4 w-44 bg-emerald-200 rounded" />
+                            <div className="h-3 w-28 bg-emerald-200/60 rounded" />
+                        </div>
+                        <div className="h-9 w-20 bg-emerald-200/70 rounded-lg shrink-0" />
+                    </div>
+
+                    {/* Phone loading skeleton */}
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-4 animate-pulse">
+                        <div className="space-y-2">
+                            <div className="h-3 w-24 bg-slate-200 rounded" />
+                            <div className="h-4 w-36 bg-slate-200 rounded" />
+                            <div className="h-3 w-52 bg-slate-200/60 rounded" />
+                        </div>
+                        <div className="h-9 w-20 bg-slate-200 rounded-lg shrink-0" />
+                    </div>
+
+                    {/* Bank Transfer loading skeleton */}
+                    <div className="bg-blue-50/60 border border-blue-200/70 rounded-xl p-4 space-y-3 animate-pulse">
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="space-y-2">
+                                <div className="h-3 w-24 bg-blue-200/80 rounded" />
+                                <div className="h-4 w-40 bg-blue-200 rounded" />
+                                <div className="h-3 w-32 bg-blue-200/60 rounded" />
+                            </div>
+                            <div className="h-9 w-20 bg-blue-200/70 rounded-lg shrink-0" />
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <React.Fragment>
+                    {/* UPI row */}
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between gap-4 mb-3">
+                        <div>
+                            <div className="text-xs text-slate-500 mb-0.5">UPI ID</div>
+                            <div className="font-mono font-semibold text-slate-900 text-sm">
+                                {ngoConfig.upiId || "ngo@upi"}
+                            </div>
+                            <div className="text-xs text-slate-400 mt-0.5">
+                                {ngoConfig.upiName}
+                            </div>
+                        </div>
+                        <button
+                            id="copy-id-upi-btn"
+                            type="button"
+                            onClick={handleCopyUpi}
+                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                                copied
+                                    ? "bg-emerald-600 text-white"
+                                    : "bg-white border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                            }`}
+                        >
+                            {copied ? (
+                                <Check className="h-4 w-4" />
+                            ) : (
+                                <Copy className="h-4 w-4" />
+                            )}
+                            {copied ? "Copied!" : "Copy"}
+                        </button>
+                    </div>
+
+                    {/* Phone payment row */}
+                    {ngoConfig.phone && (
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-4 mb-3">
+                            <div>
+                                <div className="text-xs text-slate-500 mb-0.5">
+                                    Pay via Phone
+                                </div>
+                                <div className="font-mono font-semibold text-slate-900 text-sm">
+                                    {ngoConfig.phone}
+                                </div>
+                                <div className="text-xs text-slate-400 mt-0.5">
+                                    Call / WhatsApp to arrange payment
+                                </div>
+                            </div>
+                            <button
+                                id="copy-id-phone-btn"
+                                type="button"
+                                onClick={handleCopyPhone}
+                                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                                    copiedPhone
+                                        ? "bg-emerald-600 text-white"
+                                        : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100"
+                                }`}
+                            >
+                                {copiedPhone ? (
+                                    <Check className="h-4 w-4" />
+                                ) : (
+                                    <Copy className="h-4 w-4" />
+                                )}
+                                {copiedPhone ? "Copied!" : "Copy"}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Bank Account Transfer row */}
+                    {ngoConfig.accountNumber && (
+                        <div className="bg-blue-50/60 border border-blue-200/80 rounded-xl p-4 mb-3 space-y-2">
+                            <div className="flex items-center justify-between gap-4">
+                                <div>
+                                    <div className="text-xs text-blue-700 font-semibold mb-0.5">
+                                        Bank Transfer
+                                    </div>
+                                    <div className="font-mono font-semibold text-slate-900 text-sm">
+                                        {ngoConfig.accountNumber}
+                                    </div>
+                                    <div className="text-xs text-slate-500 mt-0.5">
+                                        {ngoConfig.bankName || "Bank Account"}{" "}
+                                        {ngoConfig.accountHolderName
+                                            ? `(${ngoConfig.accountHolderName})`
+                                            : ""}
+                                    </div>
+                                </div>
+                                <button
+                                    id="copy-id-account-btn"
+                                    type="button"
+                                    onClick={handleCopyAccount}
+                                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                                        copiedAccount
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-white border border-blue-300 text-blue-700 hover:bg-blue-50"
+                                    }`}
+                                >
+                                    {copiedAccount ? (
+                                        <Check className="h-4 w-4" />
+                                    ) : (
+                                        <Copy className="h-4 w-4" />
+                                    )}
+                                    {copiedAccount ? "Copied!" : "Copy"}
+                                </button>
+                            </div>
+
+                            {ngoConfig.ifscCode && (
+                                <div className="pt-2 border-t border-blue-100 flex items-center justify-between gap-2 text-xs">
+                                    <span className="text-slate-600">
+                                        IFSC Code:{" "}
+                                        <strong className="font-mono text-slate-900">
+                                            {ngoConfig.ifscCode}
+                                        </strong>
+                                    </span>
+                                    <button
+                                        id="copy-id-ifsc-btn"
+                                        type="button"
+                                        onClick={handleCopyIfsc}
+                                        className="text-blue-700 hover:underline font-semibold flex items-center gap-1"
+                                    >
+                                        {copiedIfsc ? "Copied!" : "Copy IFSC"}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </React.Fragment>
+            )}
+
+            <p className="text-xs text-slate-500 mt-3 flex items-center gap-1.5 font-medium">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                Donate here to generate ID card and paste screenshot below
+            </p>
+        </div>
+    );
+};
 
 interface PhotoUploadBoxProps {
     id: string;

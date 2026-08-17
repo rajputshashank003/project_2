@@ -1,7 +1,11 @@
 import React from "react";
 import { useIDGenerate } from "./useIDGenerate";
 import { IDGenerateContext } from "./context";
-import { IDForm, IDSuccessModal } from "./components/IDGenerateComponents";
+import {
+    IDPaymentDetails,
+    IDForm,
+    IDSuccessModal,
+} from "./components/IDGenerateComponents";
 import { CreditCard } from "lucide-react";
 
 const IDGenerateContent: React.FC = () => (
@@ -17,6 +21,7 @@ const IDGenerateContent: React.FC = () => (
                 NGO volunteer ID card.
             </p>
         </div>
+        <IDPaymentDetails />
         <IDForm />
         <IDSuccessModal />
     </div>
