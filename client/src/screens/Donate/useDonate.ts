@@ -7,6 +7,7 @@ import {
     validateImageFile,
     isValidEmail,
     isValidPhone,
+    copyToClipboard,
 } from "../../utils/helpers";
 import type { CreateDonationPayload } from "../../types/donation";
 
@@ -27,7 +28,7 @@ const EMPTY_FORM: DonationFormData = {
 };
 
 export const useDonate = () => {
-    const { ngoConfig } = useApp();
+    const { ngoConfig, isConfigLoading } = useApp();
     const { user } = useAuth();
 
     const [form, setForm] = useState<DonationFormData>({
@@ -93,38 +94,52 @@ export const useDonate = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleCopyUpi = () => {
-        navigator.clipboard.writeText(ngoConfig.upiId).then(() => {
+    const handleCopyUpi = async () => {
+        const textToCopy = ngoConfig.upiId || "ngo@upi";
+        const ok = await copyToClipboard(textToCopy);
+        if (ok) {
             setCopied(true);
             toast.success("UPI ID copied!");
             setTimeout(() => setCopied(false), 2500);
-        });
+        } else {
+            toast.error("Failed to copy UPI ID");
+        }
     };
 
-    const handleCopyPhone = () => {
-        navigator.clipboard.writeText(ngoConfig.phone).then(() => {
+    const handleCopyPhone = async () => {
+        if (!ngoConfig.phone) return;
+        const ok = await copyToClipboard(ngoConfig.phone);
+        if (ok) {
             setCopiedPhone(true);
             toast.success("Phone number copied!");
             setTimeout(() => setCopiedPhone(false), 2500);
-        });
+        } else {
+            toast.error("Failed to copy phone number");
+        }
     };
 
-    const handleCopyAccount = () => {
+    const handleCopyAccount = async () => {
         if (!ngoConfig.accountNumber) return;
-        navigator.clipboard.writeText(ngoConfig.accountNumber).then(() => {
+        const ok = await copyToClipboard(ngoConfig.accountNumber);
+        if (ok) {
             setCopiedAccount(true);
             toast.success("Account number copied!");
             setTimeout(() => setCopiedAccount(false), 2500);
-        });
+        } else {
+            toast.error("Failed to copy account number");
+        }
     };
 
-    const handleCopyIfsc = () => {
+    const handleCopyIfsc = async () => {
         if (!ngoConfig.ifscCode) return;
-        navigator.clipboard.writeText(ngoConfig.ifscCode).then(() => {
+        const ok = await copyToClipboard(ngoConfig.ifscCode);
+        if (ok) {
             setCopiedIfsc(true);
             toast.success("IFSC Code copied!");
             setTimeout(() => setCopiedIfsc(false), 2500);
-        });
+        } else {
+            toast.error("Failed to copy IFSC code");
+        }
     };
 
     const handleSubmit = useCallback(async () => {
@@ -178,6 +193,7 @@ export const useDonate = () => {
         copiedAccount,
         copiedIfsc,
         ngoConfig,
+        isConfigLoading,
         handleFormChange,
         handleScreenshotUpload,
         handleCopyUpi,

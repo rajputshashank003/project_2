@@ -457,6 +457,38 @@ npm run dev            # http://localhost:5173
 - **Excel Export Modal UI Cleanup (`ExportExcelModal.tsx`)**:
   - Removed verbose "High-Capacity Batched Export" informational banner for a cleaner, minimal date selection UX.
 
+---
+
+## 31. Robust Clipboard Copy Utility (`copyToClipboard`)
+
+- **Cross-Browser Clipboard Helper (`helpers.ts`)**:
+  - Implemented `copyToClipboard(text: string): Promise<boolean>`.
+  - Attempts modern asynchronous `navigator.clipboard.writeText(text)` first.
+  - Automatically falls back to off-screen textarea with `document.execCommand('copy')` if modern clipboard API is blocked, unsupported, or restricted by browser security policies.
+- **Donation Page Copy Handlers (`useDonate.ts`)**:
+  - Updated `handleCopyUpi`, `handleCopyPhone`, `handleCopyAccount`, and `handleCopyIfsc` to use `copyToClipboard`.
+  - Added fallback default values (`ngoConfig.upiId || "ngo@upi"`) and error toast notifications on failure.
+
+---
+
+## 32. Donation Payment Details Config Loading Skeleton
+
+- **Payment Details Skeleton Loader (`DonateComponents.tsx`)**:
+  - In `UpiDetails`, renders pulse-animated placeholder skeleton cards for UPI ID, Pay via Phone, and Bank Transfer while `isConfigLoading` is `true`.
+  - Seamlessly transitions to active payment cards once `getNgoConfig()` finishes fetching, preventing premature default/empty values from flashing on page load.
+
+---
+
+## 33. Toast Dismiss (X) Button
+
+- **Custom ToastBar Render Function (`main.tsx`)**:
+  - Configured `<Toaster>` with `<ToastBar>` child render function.
+  - Adds an interactive `X` dismiss button (`lucide-react`) to all non-loading toasts.
+  - Clicking the `X` button calls `toast.dismiss(t.id)` with `e.stopPropagation()`, allowing users to immediately close notifications without waiting for the auto-dismiss timer.
+
+
+
+
 
 
 

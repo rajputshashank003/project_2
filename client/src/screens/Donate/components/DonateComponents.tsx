@@ -9,6 +9,7 @@ export const UpiDetails: React.FC = () => {
     if (!ctx) return null;
     const {
         ngoConfig,
+        isConfigLoading,
         copied,
         handleCopyUpi,
         copiedPhone,
@@ -30,34 +31,70 @@ export const UpiDetails: React.FC = () => {
                 Payment Details
             </h2>
 
-            {/* UPI row */}
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between gap-4 mb-3">
-                <div>
-                    <div className="text-xs text-slate-500 mb-0.5">UPI ID</div>
-                    <div className="font-mono font-semibold text-slate-900 text-sm">
-                        {ngoConfig.upiId || "ngo@upi"}
+            {isConfigLoading ? (
+                <div className="space-y-3 py-1">
+                    {/* UPI loading skeleton */}
+                    <div className="bg-emerald-50/60 border border-emerald-200/70 rounded-xl p-4 flex items-center justify-between gap-4 animate-pulse">
+                        <div className="space-y-2">
+                            <div className="h-3 w-16 bg-emerald-200/80 rounded" />
+                            <div className="h-4 w-44 bg-emerald-200 rounded" />
+                            <div className="h-3 w-28 bg-emerald-200/60 rounded" />
+                        </div>
+                        <div className="h-9 w-20 bg-emerald-200/70 rounded-lg shrink-0" />
                     </div>
-                    <div className="text-xs text-slate-400 mt-0.5">
-                        {ngoConfig.upiName}
+
+                    {/* Phone loading skeleton */}
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-4 animate-pulse">
+                        <div className="space-y-2">
+                            <div className="h-3 w-24 bg-slate-200 rounded" />
+                            <div className="h-4 w-36 bg-slate-200 rounded" />
+                            <div className="h-3 w-52 bg-slate-200/60 rounded" />
+                        </div>
+                        <div className="h-9 w-20 bg-slate-200 rounded-lg shrink-0" />
+                    </div>
+
+                    {/* Bank Transfer loading skeleton */}
+                    <div className="bg-blue-50/60 border border-blue-200/70 rounded-xl p-4 space-y-3 animate-pulse">
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="space-y-2">
+                                <div className="h-3 w-24 bg-blue-200/80 rounded" />
+                                <div className="h-4 w-40 bg-blue-200 rounded" />
+                                <div className="h-3 w-32 bg-blue-200/60 rounded" />
+                            </div>
+                            <div className="h-9 w-20 bg-blue-200/70 rounded-lg shrink-0" />
+                        </div>
                     </div>
                 </div>
-                <button
-                    id="copy-upi-btn"
-                    onClick={handleCopyUpi}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                        copied
-                            ? "bg-emerald-600 text-white"
-                            : "bg-white border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                    }`}
-                >
-                    {copied ? (
-                        <Check className="h-4 w-4" />
-                    ) : (
-                        <Copy className="h-4 w-4" />
-                    )}
-                    {copied ? "Copied!" : "Copy"}
-                </button>
-            </div>
+            ) : (
+                <React.Fragment>
+                    {/* UPI row */}
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between gap-4 mb-3">
+                        <div>
+                            <div className="text-xs text-slate-500 mb-0.5">UPI ID</div>
+                            <div className="font-mono font-semibold text-slate-900 text-sm">
+                                {ngoConfig.upiId || "ngo@upi"}
+                            </div>
+                            <div className="text-xs text-slate-400 mt-0.5">
+                                {ngoConfig.upiName}
+                            </div>
+                        </div>
+                        <button
+                            id="copy-upi-btn"
+                            onClick={handleCopyUpi}
+                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                                copied
+                                    ? "bg-emerald-600 text-white"
+                                    : "bg-white border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                            }`}
+                        >
+                            {copied ? (
+                                <Check className="h-4 w-4" />
+                            ) : (
+                                <Copy className="h-4 w-4" />
+                            )}
+                            {copied ? "Copied!" : "Copy"}
+                        </button>
+                    </div>
 
             {/* Phone payment row */}
             {ngoConfig.phone && (
@@ -146,6 +183,8 @@ export const UpiDetails: React.FC = () => {
                         </div>
                     )}
                 </div>
+            )}
+                </React.Fragment>
             )}
 
             <p className="text-xs text-slate-400 mt-2">
