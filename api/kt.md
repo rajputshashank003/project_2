@@ -573,3 +573,72 @@ See `whatsapp_service/kt.md` for full documentation.
 - **Event Update Safety**:
   - Event update modifies scalar fields directly via GORM `Select("Title", "Description", "UpdatedAt").Updates(...)` to prevent re-inserting stale preloaded associations after image deletion.
 
+---
+
+## 17. Pagination & Notification Brand Theme
+
+- **Pagination Query**:
+  - `PaginationQuery` in `dto/common_dto.go` defaults `Limit` to 20 (max 100).
+  - List endpoints (`GET /donations`, `GET /id-cards`, `GET /users`, `GET /my/donations`, `GET /my/id-cards`) return `{ data: [...], pagination: { page, limit, total, totalPages } }`.
+- **Notification Brand Palette**:
+  - Rejection email templates in `donation_service.go` and `id_card_service.go` use the NGO website emerald brand color (`#065f46` header with `#059669` accents and `#fff1f2` rejection reason alert box).
+
+---
+
+## 18. Server-Side List Search & Route Aliases
+
+- **Server-Side Search & Filter Query Parameters**:
+  - `GET /api/v1/users`: supports `blood_group` and `search` (searches `name`, `phone`, `email`, `blood_group`, `designation` with SQL `ILIKE`/`LIKE`).
+  - `GET /api/v1/donations`: supports `status` and `search` (searches `donor_name`, `phone`, `email`, `utr_number`, `certificate_number`).
+  - `GET /api/v1/id-cards`: supports `status` and `search` (searches `user_name`, `phone`, `email`, `unique_card_number`, `designation`).
+- **Resilient Route Aliases (`routes.go`)**:
+  - Added aliases under `/api/v1` and root `r` to prevent 404s:
+    - `/config`, `/ngo/config`, `/ngo` -> `GetConfig` / `UpdateConfig`
+    - `/profile`, `/user/profile`, `/my/profile` -> `GetMyProfile` / `UpdateMyProfile`
+
+---
+
+## 19. Cleanup Service (OOP Background Worker)
+
+- **OOP Architecture (`internal/service/cleanup_service.go`)**:
+  - `CleanupService` encapsulates periodic purging of expired temporary records with configurable execution intervals and retention periods.
+  - Dependencies: `IdempotencyRepository`, `OTPRepository`.
+  - Methods: `NewCleanupService`, `Run(ctx context.Context)`, `PerformCleanup()`.
+- **24-Hour Unified Retention**:
+  - **Idempotency Keys**: Purged if `created_at < NOW() - 24 hours` (`idempotencyRepo.Cleanup()`).
+  - **OTPs**: Purged if `created_at < NOW() - 24 hours` (`otpRepo.CleanupOlderThan(24 * time.Hour)`). Safely cleans expired OTPs while preserving the 10-minute rate-limit window.
+- **Execution Schedule**:
+  - Runs on server startup and every 1 hour via background ticker in `main.go`.
+
+---
+
+## 20. Single-API Global Statistics on Donation & ID Card Lists
+
+- **Global Stats SQL Aggregations**:
+  - `DonationRepository.GetStats()`: Runs single SQL query returning `total`, `pending`, `approved`, `rejected`, and `total_collected` (sum of approved amounts).
+  - `IDCardRepository.GetStats()`: Runs single SQL query returning `total`, `pending`, `approved`, and `rejected`.
+- **Single-API Response Envelope**:
+  - `GET /api/v1/donations`: Returns `{ data: [...], pagination: {...}, stats: { total, pending, approved, rejected, totalCollected } }`.
+  - `GET /api/v1/id-cards`: Returns `{ data: [...], pagination: {...}, stats: { total, pending, approved, rejected } }`.
+  - 0 additional network calls; runs in <1ms alongside page query.
+
+---
+
+## 21. Health Service & WhatsApp 13-Minute Keep-Alive Worker
+
+- **OOP Health Architecture (`internal/service/health_service.go`)**:
+  - `HealthService` manages DB connectivity checking, WhatsApp microservice health probing, and keep-alive ping loops.
+  - Dependencies: `*gorm.DB`, `whatsAppURL string`, `pingInterval time.Duration`, `httpClient *http.Client`.
+  - Methods: `CheckDatabase(ctx)`, `CheckWhatsAppService(ctx)`, `GetOverallHealth(ctx)`, `StartKeepAliveWorker(ctx)`.
+- **13-Minute Anti-Sleep Ping**:
+  - Automatically pings `{WHATSAPP_LOCAL_URL}/api/health` every 13 minutes via background ticker loop in `main.go`. Keeps free tier Render instances awake and operational.
+- **Health Endpoints**:
+  - `GET /healthz`, `GET /health`, `GET /api/health`: Liveness probe (HTTP 200 OK).
+  - `GET /readyz`: Overall readiness report (`database`, `whatsapp` status, HTTP code, latency).
+  - `GET /health/whatsapp` & `GET /api/v1/health/whatsapp`: Real-time probe against the WhatsApp microservice.
+
+
+
+
+
+

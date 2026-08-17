@@ -1,8 +1,9 @@
 import React, { useContext, useRef } from "react";
-import { Check, X, Eye, PenTool } from "lucide-react";
+import { Check, X, Eye, PenTool, Image, CreditCard } from "lucide-react";
 import { AdminRequestIdCardContext } from "../context";
 import Modal from "../../../components/Modal";
 import IDCardCanvas from "../../../components/IDCardCanvas";
+import Pagination from "../../../components/Pagination";
 import { formatDate, capitalize } from "../../../utils/helpers";
 
 export const IdCardRequestTable: React.FC = () => {
@@ -15,7 +16,11 @@ export const IdCardRequestTable: React.FC = () => {
         setFilterStatus,
         openApprove,
         openReject,
-        setPreviewItem,
+        openPreview,
+        page,
+        totalPages,
+        totalCount,
+        loadRequests,
     } = ctx;
 
     const FILTERS: Array<{ label: string; value: string }> = [
@@ -102,10 +107,10 @@ export const IdCardRequestTable: React.FC = () => {
                                         <div className="flex items-center gap-2">
                                             <button
                                                 onClick={() =>
-                                                    setPreviewItem(item)
+                                                    openPreview(item)
                                                 }
                                                 className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                                                title="Preview ID Card"
+                                                title="Verify Payment & Preview ID Card"
                                             >
                                                 <Eye className="h-4 w-4" />
                                             </button>
@@ -140,6 +145,15 @@ export const IdCardRequestTable: React.FC = () => {
                     </table>
                 </div>
             )}
+
+            <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={loadRequests}
+                totalItems={totalCount}
+                pageSize={20}
+                className="mt-4"
+            />
         </div>
     );
 };
@@ -270,7 +284,13 @@ export const RequestActionModal: React.FC = () => {
 export const IDCardPreviewModal: React.FC = () => {
     const ctx = useContext(AdminRequestIdCardContext);
     if (!ctx) return null;
-    const { previewItem, setPreviewItem, ngoConfig } = ctx;
+    const {
+        previewItem,
+        setPreviewItem,
+        previewTab,
+        setPreviewTab,
+        ngoConfig,
+    } = ctx;
 
     if (!previewItem) return null;
 
@@ -293,15 +313,65 @@ export const IDCardPreviewModal: React.FC = () => {
     return (
         <Modal
             isOpen={!!previewItem}
-            onClose={() => setPreviewItem(null)}
-            title="ID Card Preview"
+            onClose={() => {
+                setPreviewItem(null);
+                setPreviewTab("screenshot");
+            }}
+            title="ID Card Request & Payment Verification"
             size="xl"
         >
-            <div className="flex justify-center overflow-x-auto">
-                <IDCardCanvas
-                    data={cardData}
-                    showDownloadButtons={previewItem.status === "approved"}
-                />
+            <div className="space-y-4">
+                {/* Navigation Tabs */}
+                <div className="flex border-b border-slate-200 gap-1 sm:gap-2">
+                    <button
+                        onClick={() => setPreviewTab("screenshot")}
+                        className={`px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold border-b-2 transition-colors flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap flex-1 sm:flex-initial ${
+                            previewTab === "screenshot"
+                                ? "border-emerald-600 text-emerald-700"
+                                : "border-transparent text-slate-500 hover:text-slate-700"
+                        }`}
+                    >
+                        <Image className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                        <span>Payment Screenshot</span>
+                    </button>
+                    <button
+                        onClick={() => setPreviewTab("card")}
+                        className={`px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold border-b-2 transition-colors flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap flex-1 sm:flex-initial ${
+                            previewTab === "card"
+                                ? "border-emerald-600 text-emerald-700"
+                                : "border-transparent text-slate-500 hover:text-slate-700"
+                        }`}
+                    >
+                        <CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                        <span>ID Card Preview</span>
+                    </button>
+                </div>
+
+                {/* Tab Content */}
+                {previewTab === "screenshot" ? (
+                    <div className="flex justify-center p-4 bg-slate-50 rounded-xl">
+                        {previewItem.paymentScreenshotUrl ? (
+                            <img
+                                src={previewItem.paymentScreenshotUrl}
+                                alt="Payment Proof"
+                                className="max-h-96 rounded-xl object-contain shadow-sm border border-slate-200"
+                            />
+                        ) : (
+                            <div className="text-center py-12 text-slate-400">
+                                No payment screenshot uploaded (demo data)
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="flex justify-center overflow-x-auto py-2">
+                        <IDCardCanvas
+                            data={cardData}
+                            showDownloadButtons={
+                                previewItem.status === "approved"
+                            }
+                        />
+                    </div>
+                )}
             </div>
         </Modal>
     );

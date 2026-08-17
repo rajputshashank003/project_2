@@ -31,7 +31,12 @@ func (h *UserHandler) List(c *gin.Context) {
 		bloodGroup = c.Query("bloodGroup")
 	}
 
-	users, total, err := h.svc.List(pq.Page, pq.Limit, bloodGroup)
+	search := c.Query("search")
+	if search == "" {
+		search = c.Query("q")
+	}
+
+	users, total, err := h.svc.List(pq.Page, pq.Limit, bloodGroup, search)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "DB_ERROR", "message": "Failed to fetch users"}})
 		return

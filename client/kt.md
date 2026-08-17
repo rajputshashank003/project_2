@@ -342,7 +342,64 @@ npm run dev            # http://localhost:5173
 ## 22. Enhanced Rejection Email Templates & UI/UX
 
 - **Rejection Notification Templates (`notification_service.ts`)**:
-  - Updated `buildDonationRejectionMessages` and `buildIdCardRejectionMessages` with a structured layout, dark NGO branded header, styled rejection reason callout box (`#fff1f2` with `#e11d48` border), and action button linking directly to `/donate` or `/id-card/generate`.
+  - Updated `buildDonationRejectionMessages` and `buildIdCardRejectionMessages` with a structured layout, emerald NGO branded header (`#065f46`), styled rejection reason callout box (`#fff1f2` with `#e11d48` border), and action button linking directly to `/donate` or `/id-card/generate`.
+
+---
+
+## 23. ID Card Payment Verification & 20-Item Button Pagination
+
+- **ID Card Admin Payment Receipt Verification (`AdminRequestIdCard` / `IdCardRequestComponents.tsx`)**:
+  - Added dual navigation tabs to `IDCardPreviewModal`: **Payment Screenshot** (displays applicant's uploaded payment proof) and **ID Card Preview** (displays front/back canvas).
+  - Defaults to "Payment Screenshot" for pending requests and "ID Card Preview" for approved requests.
+- **Universal Reusable Pagination Component (`client/src/components/Pagination/index.tsx`)**:
+  - Numbered page buttons (`1`, `2`, `3`...) with smart ellipsis, active emerald highlight, item range text (`Showing X to Y of Z items`), and prev/next controls.
+- **20 Items per Page with Title Page Indicators**:
+  - Integrated across:
+    1. `/admin/request/donation` (`AdminRequestDonation`)
+    2. `/admin/request/id-card` (`AdminRequestIdCard`)
+    3. `/admin/users` (`AdminUsers`)
+    4. `/profile` My Donations Tab (`DonationList`)
+    5. `/profile` My ID Cards Tab (`IdCardList`)
+  - Displays `Page X of Y` badge around/next to the title of each page and tab.
+
+---
+
+## 24. Admin "Verify WhatsApp" Menu Option
+
+- **Environment Variable (`VITE_WHATSAPP_SERVICE_URL`)**:
+  - Configured in `client/.env` and `client/.env.example`.
+  - Default: `https://ngo-sandeep-whatsapp-service.onrender.com/qr`.
+- **Navigation Integration (`Navbar/index.tsx`)**:
+  - Added to both Desktop Admin Dropdown and Mobile Admin Drawer.
+  - Opens the WhatsApp QR authentication page in a new tab (`target="_blank" rel="noopener noreferrer"`).
+
+---
+
+## 25. Server-Side API Search & Filter on Paginated Lists
+
+- **Server-Side Search Queries**:
+  - `AdminUsers` (`useAdminUsers.ts`): Passes `search` and `blood_group` to `getUsers(page, limit, bloodGroup, search)` with 300ms debounce. Cross-page counts and pagination update dynamically based on API search results.
+  - `AdminRequestDonation` (`useAdminRequestDonation.ts`): Passes `status` and `search` to `getDonations(page, limit, status, search)` with 300ms debounce.
+  - `AdminRequestIdCard` (`useAdminRequestIdCard.ts`): Passes `status` to `getIdCardRequests(page, limit, status)`.
+- **Debouncing & Reset**:
+  - Search input debounces at 300ms and resets the active page to 1 on search or filter change.
+
+---
+
+## 26. Organization-Wide Global Stats on Admin Pages
+
+- **Single-API Stats Envelope**:
+  - `PaginatedResponse<T, S>` in `utils.ts` receives optional `stats?: S` returned by backend in the single GET request.
+- **Donation Requests Screen (`AdminRequestDonation.tsx` & `useAdminRequestDonation.ts`)**:
+  - Receives `DonationStats` (`total`, `pending`, `approved`, `rejected`, `totalCollected`).
+  - Top 4 cards render global database metrics (`stats.total`, `stats.pending`, `stats.approved`, `formatCurrency(stats.totalCollected)`), consistent across pagination and filtering.
+- **ID Card Requests Screen (`AdminRequestIdCard.tsx` & `useAdminRequestIdCard.ts`)**:
+  - Receives `IdCardStats` (`total`, `pending`, `approved`, `rejected`).
+  - Top 3 cards render global database metrics (`stats.total`, `stats.pending`, `stats.approved`).
+
+
+
+
 
 
 

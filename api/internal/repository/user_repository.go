@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/shashankrajput/ngo-platform/api/internal/models"
 	"gorm.io/gorm"
@@ -46,14 +48,18 @@ func (r *UserRepository) Update(user *models.User) error {
 	return r.db.Save(user).Error
 }
 
-// ListPaginated returns paginated users ordered by joined_at DESC with optional blood_group filter.
-func (r *UserRepository) ListPaginated(offset, limit int, bloodGroup string) ([]models.User, int64, error) {
+// ListPaginated returns paginated users ordered by joined_at DESC with optional blood_group and search filter.
+func (r *UserRepository) ListPaginated(offset, limit int, bloodGroup, search string) ([]models.User, int64, error) {
 	var users []models.User
 	var total int64
 
 	query := r.db.Model(&models.User{})
-	if bloodGroup != "" {
+	if bloodGroup != "" && bloodGroup != "all" {
 		query = query.Where("blood_group = ?", bloodGroup)
+	}
+	if search != "" {
+		s := "%" + strings.ToLower(strings.TrimSpace(search)) + "%"
+		query = query.Where("LOWER(name) LIKE ? OR phone LIKE ? OR LOWER(email) LIKE ? OR LOWER(blood_group) LIKE ? OR LOWER(designation) LIKE ?", s, s, s, s, s)
 	}
 
 	if err := query.Count(&total).Error; err != nil {

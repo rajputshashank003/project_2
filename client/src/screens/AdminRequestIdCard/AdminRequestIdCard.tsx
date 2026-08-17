@@ -17,10 +17,14 @@ import {
 const AdminRequestIdCardContent: React.FC = () => {
     const ctx = React.useContext(AdminRequestIdCardContext);
     if (!ctx) return null;
-    const { requests, loadRequests, setSignatureModalOpen, ngoConfig } = ctx;
-
-    const pending = requests.filter((r) => r.status === "pending").length;
-    const approved = requests.filter((r) => r.status === "approved").length;
+    const {
+        stats,
+        loadRequests,
+        setSignatureModalOpen,
+        ngoConfig,
+        page,
+        totalPages,
+    } = ctx;
 
     return (
         <div className="page-wrapper">
@@ -30,7 +34,14 @@ const AdminRequestIdCardContent: React.FC = () => {
                         <CreditCard className="h-3 w-3" />
                         Admin Panel
                     </div>
-                    <h1 className="section-heading">ID Card Requests</h1>
+                    <h1 className="section-heading flex items-center gap-2.5 flex-wrap">
+                        <span>ID Card Requests</span>
+                        {totalPages > 1 && (
+                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                Page {page} of {totalPages}
+                            </span>
+                        )}
+                    </h1>
                     <p className="section-subheading">
                         Review and approve volunteer ID card applications
                     </p>
@@ -57,7 +68,7 @@ const AdminRequestIdCardContent: React.FC = () => {
                         )}
                     </button>
                     <button
-                        onClick={loadRequests}
+                        onClick={() => loadRequests(page)}
                         className="btn-outline py-2 flex items-center gap-2"
                     >
                         <RefreshCw className="h-4 w-4" />
@@ -69,9 +80,9 @@ const AdminRequestIdCardContent: React.FC = () => {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4 mb-8">
                 {[
-                    { label: "Total", value: requests.length, color: "slate" },
-                    { label: "Pending", value: pending, color: "amber" },
-                    { label: "Approved", value: approved, color: "emerald" },
+                    { label: "Total", value: stats.total, color: "slate" },
+                    { label: "Pending", value: stats.pending, color: "amber" },
+                    { label: "Approved", value: stats.approved, color: "emerald" },
                 ].map((stat) => (
                     <div key={stat.label} className="card text-center py-4">
                         <div

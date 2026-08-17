@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
-import filter from "lodash/filter";
 import {
     getIdCardRequests,
     updateIdCardStatus,
@@ -17,6 +16,15 @@ export const useAdminRequestIdCard = () => {
     const [requests, setRequests] = useState<IdCard[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const [stats, setStats] = useState({
+        total: 0,
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+    });
     const [actionItem, setActionItem] = useState<IdCard | null>(null);
     const [actionType, setActionType] = useState<"approve" | "reject" | null>(
         null,
@@ -25,31 +33,45 @@ export const useAdminRequestIdCard = () => {
     const [validityYears, setValidityYears] = useState<number>(0);
     const [actionLoading, setActionLoading] = useState(false);
     const [previewItem, setPreviewItem] = useState<IdCard | null>(null);
+    const [previewTab, setPreviewTab] = useState<"screenshot" | "card">(
+        "screenshot",
+    );
 
     // Digital Signature Modal state
     const [signatureModalOpen, setSignatureModalOpen] = useState(false);
     const [signatureUploading, setSignatureUploading] = useState(false);
 
-    useEffect(() => {
-        loadRequests();
-    }, []);
+    const loadRequests = useCallback(
+        async (targetPage = 1, status = filterStatus) => {
+            setIsLoading(true);
+            try {
+                const result = await getIdCardRequests(targetPage, 20, status);
+                setRequests(result.data);
+                setPage(result.pagination?.page || targetPage);
+                setTotalPages(result.pagination?.totalPages || 1);
+                setTotalCount(result.pagination?.total || result.data.length);
+                if (result.stats) {
+                    setStats(result.stats);
+                }
+            } catch {
+                // error toast already shown by axiosInstance interceptor
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [filterStatus],
+    );
 
-    const loadRequests = async () => {
-        setIsLoading(true);
-        try {
-            const result = await getIdCardRequests();
-            setRequests(result.data);
-        } catch {
-            // error toast already shown by axiosInstance interceptor
-        } finally {
-            setIsLoading(false);
-        }
+    useEffect(() => {
+        void loadRequests(1, filterStatus);
+    }, [filterStatus, loadRequests]);
+
+    const openPreview = (item: IdCard) => {
+        setPreviewItem(item);
+        setPreviewTab(item.status === "approved" ? "card" : "screenshot");
     };
 
-    const filteredRequests =
-        filterStatus === "all"
-            ? requests
-            : filter(requests, (r) => r.status === filterStatus);
+    const filteredRequests = requests;
 
     const openApprove = (item: IdCard) => {
         if (!ngoConfig.signatureUrl) {
@@ -170,12 +192,17 @@ export const useAdminRequestIdCard = () => {
         filteredRequests,
         isLoading,
         filterStatus,
+        page,
+        totalPages,
+        totalCount,
+        stats,
         actionItem,
         actionType,
         rejectReason,
         validityYears,
         actionLoading,
         previewItem,
+        previewTab,
         signatureModalOpen,
         signatureUploading,
         ngoConfig,
@@ -183,11 +210,13 @@ export const useAdminRequestIdCard = () => {
         setRejectReason,
         setValidityYears,
         setPreviewItem,
+        setPreviewTab,
         setSignatureModalOpen,
         handleSignatureUpload,
         handleDeleteSignature,
         openApprove,
         openReject,
+        openPreview,
         closeAction,
         handleApprove,
         handleReject,

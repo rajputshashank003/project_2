@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import { STORAGE_KEYS } from "../constants";
 
 const BASE_URL =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
+    import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:3000/api/v1";
 
 export const axiosInstance = axios.create({
     baseURL: BASE_URL,
@@ -48,8 +48,8 @@ export interface ApiResponse<T> {
     data: T;
 }
 
-// Backend paginated list envelope: { data: T[], pagination: {...} }
-export interface PaginatedResponse<T> {
+// Backend paginated list envelope: { data: T[], pagination: {...}, stats?: S }
+export interface PaginatedResponse<T, S = unknown> {
     data: T[];
     pagination: {
         page: number;
@@ -57,6 +57,7 @@ export interface PaginatedResponse<T> {
         total: number;
         totalPages: number;
     };
+    stats?: S;
 }
 
 /** Unwraps the backend's { data: T } single-item envelope */

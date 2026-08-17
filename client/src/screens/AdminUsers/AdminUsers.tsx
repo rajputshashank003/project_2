@@ -2,6 +2,7 @@ import React from "react";
 import { useAdminUsers } from "./useAdminUsers";
 import { AdminUsersContext } from "./context";
 import { Users, Search, HeartPulse } from "lucide-react";
+import Pagination from "../../components/Pagination";
 import { DESIGNATIONS } from "../../utils/constants";
 import { getInitials, formatDate } from "../../utils/helpers";
 
@@ -25,9 +26,13 @@ const AdminUsersContent: React.FC = () => {
         isLoading,
         searchQuery,
         selectedBloodGroup,
+        page,
+        totalPages,
+        totalCount,
         setSearchQuery,
         setSelectedBloodGroup,
         handleDesignationChange,
+        loadUsers,
     } = ctx;
 
     return (
@@ -37,7 +42,14 @@ const AdminUsersContent: React.FC = () => {
                     <Users className="h-3 w-3" />
                     Admin Panel
                 </div>
-                <h1 className="section-heading">Registered Users</h1>
+                <h1 className="section-heading flex items-center gap-2.5 flex-wrap">
+                    <span>Registered Users</span>
+                    {totalPages > 1 && (
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            Page {page} of {totalPages}
+                        </span>
+                    )}
+                </h1>
                 <p className="section-subheading">
                     View and manage all registered members and blood group
                     directory
@@ -155,6 +167,15 @@ const AdminUsersContent: React.FC = () => {
                     </table>
                 </div>
             )}
+
+            <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={loadUsers}
+                totalItems={totalCount}
+                pageSize={20}
+                className="mt-4"
+            />
         </div>
     );
 };

@@ -5,11 +5,10 @@ import {
     Clock,
     CheckCircle,
     XCircle,
-    ChevronLeft,
-    ChevronRight,
     ArrowRight,
 } from "lucide-react";
 import { UserProfileContext } from "../context";
+import Pagination from "../../../components/Pagination";
 import type { IdCard } from "../../../types/id_card";
 
 const STATUS_CONFIG = {
@@ -37,13 +36,13 @@ const IdCardRow: React.FC<{ card: IdCard }> = ({ card }) => {
     return (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-4 rounded-2xl border border-slate-200/80 bg-white hover:shadow-sm transition-shadow">
             <div className="flex items-start sm:items-center gap-3.5 min-w-0">
-                <div className="h-11 w-11 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
+                <div className="h-11 w-11 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
                     <CreditCard className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-base font-bold text-slate-900 capitalize">
-                            {card.designation}
+                            {card.designation} Card
                         </span>
                         <span
                             className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${status.className}`}
@@ -54,7 +53,6 @@ const IdCardRow: React.FC<{ card: IdCard }> = ({ card }) => {
                     </div>
                     <p className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                         <span>
-                            Applied{" "}
                             {new Date(card.requestedAt).toLocaleDateString(
                                 "en-IN",
                                 {
@@ -70,19 +68,6 @@ const IdCardRow: React.FC<{ card: IdCard }> = ({ card }) => {
                             </span>
                         )}
                     </p>
-                    {card.status === "approved" && card.expiryDate && (
-                        <p className="text-[11px] text-slate-400 mt-0.5">
-                            Valid until{" "}
-                            {new Date(card.expiryDate).toLocaleDateString(
-                                "en-IN",
-                                {
-                                    day: "numeric",
-                                    month: "short",
-                                    year: "numeric",
-                                },
-                            )}
-                        </p>
-                    )}
                 </div>
             </div>
             {card.status === "approved" && card.id && (
@@ -107,6 +92,7 @@ export const IdCardList: React.FC = () => {
         idCardLoading,
         idCardPage,
         idCardTotalPages,
+        idCardTotal,
         loadIdCards,
     } = ctx;
 
@@ -145,32 +131,28 @@ export const IdCardList: React.FC = () => {
 
     return (
         <div className="space-y-3">
+            {idCardTotalPages > 1 && (
+                <div className="flex items-center justify-between pb-1 text-xs text-slate-500 font-medium">
+                    <span>ID Card Requests ({idCardTotal})</span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+                        Page {idCardPage} of {idCardTotalPages}
+                    </span>
+                </div>
+            )}
+
             {idCards.map((c) => (
                 <IdCardRow key={c.id} card={c} />
             ))}
 
             {/* Pagination */}
-            {idCardTotalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 pt-4">
-                    <button
-                        onClick={() => loadIdCards(idCardPage - 1)}
-                        disabled={idCardPage <= 1}
-                        className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    <span className="text-sm text-slate-600 font-medium">
-                        {idCardPage} / {idCardTotalPages}
-                    </span>
-                    <button
-                        onClick={() => loadIdCards(idCardPage + 1)}
-                        disabled={idCardPage >= idCardTotalPages}
-                        className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                        <ChevronRight className="h-4 w-4" />
-                    </button>
-                </div>
-            )}
+            <Pagination
+                currentPage={idCardPage}
+                totalPages={idCardTotalPages}
+                onPageChange={loadIdCards}
+                totalItems={idCardTotal}
+                pageSize={20}
+                className="pt-4"
+            />
         </div>
     );
 };

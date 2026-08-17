@@ -13,10 +13,7 @@ import { formatCurrency } from "../../utils/helpers";
 const AdminRequestDonationContent: React.FC = () => {
     const ctx = React.useContext(AdminRequestDonationContext);
     if (!ctx) return null;
-    const { donations, totalAmount, loadDonations } = ctx;
-
-    const pending = donations.filter((d) => d.status === "pending").length;
-    const approved = donations.filter((d) => d.status === "approved").length;
+    const { stats, loadDonations, page, totalPages } = ctx;
 
     return (
         <div className="page-wrapper">
@@ -26,13 +23,20 @@ const AdminRequestDonationContent: React.FC = () => {
                         <Heart className="h-3 w-3" />
                         Admin Panel
                     </div>
-                    <h1 className="section-heading">Donation Requests</h1>
+                    <h1 className="section-heading flex items-center gap-2.5 flex-wrap">
+                        <span>Donation Requests</span>
+                        {totalPages > 1 && (
+                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                Page {page} of {totalPages}
+                            </span>
+                        )}
+                    </h1>
                     <p className="section-subheading">
                         Verify payment receipts and issue certificates
                     </p>
                 </div>
                 <button
-                    onClick={loadDonations}
+                    onClick={() => loadDonations(page)}
                     className="btn-outline py-2 flex items-center gap-2 self-start"
                 >
                     <RefreshCw className="h-4 w-4" />
@@ -43,12 +47,12 @@ const AdminRequestDonationContent: React.FC = () => {
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
                 {[
-                    { label: "Total", value: donations.length, suffix: "" },
-                    { label: "Pending", value: pending, suffix: "" },
-                    { label: "Approved", value: approved, suffix: "" },
+                    { label: "Total", value: stats.total, suffix: "" },
+                    { label: "Pending", value: stats.pending, suffix: "" },
+                    { label: "Approved", value: stats.approved, suffix: "" },
                     {
                         label: "Total Collected",
-                        value: formatCurrency(totalAmount),
+                        value: formatCurrency(stats.totalCollected),
                         suffix: "",
                     },
                 ].map((stat) => (

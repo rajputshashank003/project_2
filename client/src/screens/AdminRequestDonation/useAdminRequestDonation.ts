@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
-import filter from "lodash/filter";
 import {
     getDonations,
     updateDonationStatus,
@@ -18,6 +17,16 @@ export const useAdminRequestDonation = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
     const [searchQuery, setSearchQuery] = useState("");
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const [stats, setStats] = useState({
+        total: 0,
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+        totalCollected: 0,
+    });
     const [actionItem, setActionItem] = useState<Donation | null>(null);
     const [actionType, setActionType] = useState<"approve" | "reject" | null>(
         null,
@@ -28,43 +37,42 @@ export const useAdminRequestDonation = () => {
         null,
     );
 
+    const loadDonations = useCallback(
+        async (
+            targetPage = 1,
+            status = filterStatus,
+            search = searchQuery,
+        ) => {
+            setIsLoading(true);
+            try {
+                const result = await getDonations(targetPage, 20, status, search);
+                setDonations(result.data);
+                setPage(result.pagination?.page || targetPage);
+                setTotalPages(result.pagination?.totalPages || 1);
+                setTotalCount(result.pagination?.total || result.data.length);
+                if (result.stats) {
+                    setStats(result.stats);
+                }
+            } catch {
+                // error toast already shown by axiosInstance interceptor
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [filterStatus, searchQuery],
+    );
+
+    // Debounced search & filter effect
     useEffect(() => {
-        loadDonations();
-    }, []);
+        const timer = setTimeout(() => {
+            void loadDonations(1, filterStatus, searchQuery);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [filterStatus, searchQuery, loadDonations]);
 
-    const loadDonations = async () => {
-        setIsLoading(true);
-        try {
-            const result = await getDonations();
-            setDonations(result.data);
-        } catch {
-            // error toast already shown by axiosInstance interceptor
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const filteredDonations = donations;
 
-    const filteredDonations = (() => {
-        let list =
-            filterStatus === "all"
-                ? donations
-                : filter(donations, (d) => d.status === filterStatus);
-        if (searchQuery.trim()) {
-            const q = searchQuery.toLowerCase();
-            list = filter(
-                list,
-                (d) =>
-                    d.donorName.toLowerCase().includes(q) ||
-                    d.phone.includes(q) ||
-                    d.email.toLowerCase().includes(q),
-            );
-        }
-        return list;
-    })();
-
-    const totalAmount = donations
-        .filter((d) => d.status === "approved")
-        .reduce((sum, d) => sum + d.amount, 0);
+    const totalAmount = stats.totalCollected;
 
     const openApprove = (item: Donation) => {
         setActionItem(item);
@@ -138,6 +146,10 @@ export const useAdminRequestDonation = () => {
         isLoading,
         filterStatus,
         searchQuery,
+        page,
+        totalPages,
+        totalCount,
+        stats,
         actionItem,
         actionType,
         rejectReason,

@@ -9,14 +9,29 @@ import type {
     UpdateDonationStatusPayload,
 } from "../../types/donation";
 
+export interface DonationStats {
+    total: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+    totalCollected: number;
+}
+
 export const getDonations = async (
     page = 1,
-    limit = 50,
-): Promise<PaginatedResponse<Donation>> => {
-    return request<PaginatedResponse<Donation>>({
+    limit = 20,
+    status?: string,
+    search?: string,
+): Promise<PaginatedResponse<Donation, DonationStats>> => {
+    return request<PaginatedResponse<Donation, DonationStats>>({
         url: "/donations",
         method: "GET",
-        params: { page, limit },
+        params: {
+            page,
+            limit,
+            status: status && status !== "all" ? status : undefined,
+            search: search?.trim() || undefined,
+        },
     });
 };
 

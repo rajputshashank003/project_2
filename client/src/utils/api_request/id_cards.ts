@@ -9,14 +9,28 @@ import type {
     UpdateIdCardStatusPayload,
 } from "../../types/id_card";
 
+export interface IdCardStats {
+    total: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+}
+
 export const getIdCardRequests = async (
     page = 1,
-    limit = 50,
-): Promise<PaginatedResponse<IdCard>> => {
-    return request<PaginatedResponse<IdCard>>({
+    limit = 20,
+    status?: string,
+    search?: string,
+): Promise<PaginatedResponse<IdCard, IdCardStats>> => {
+    return request<PaginatedResponse<IdCard, IdCardStats>>({
         url: "/id-cards",
         method: "GET",
-        params: { page, limit },
+        params: {
+            page,
+            limit,
+            status: status && status !== "all" ? status : undefined,
+            search: search?.trim() || undefined,
+        },
     });
 };
 

@@ -16,11 +16,17 @@ import {
     Info,
     Shield,
     ArrowRight,
+    ExternalLink,
+    QrCode,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useApp } from "../../context/AppContext";
 import ConfirmModal from "../ConfirmModal";
 import MenuDropdown from "../MenuDropdown";
+
+const WHATSAPP_SERVICE_URL =
+    import.meta.env.VITE_WHATSAPP_SERVICE_URL ||
+    "https://ngo-sandeep-whatsapp-service.onrender.com/qr";
 
 const NAV_LINKS = [
     { to: "/", label: "Home", icon: Leaf },
@@ -221,6 +227,21 @@ const Navbar: React.FC = () => {
                                             {link.label}
                                         </NavLink>
                                     ))}
+                                    <div className="pt-1 mt-1 border-t border-slate-100">
+                                        <a
+                                            href={WHATSAPP_SERVICE_URL}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            onClick={() => setAdminOpen(false)}
+                                            className="flex items-center justify-between px-4 py-2 text-sm text-emerald-800 hover:bg-emerald-50/80 transition-colors font-medium group"
+                                        >
+                                            <span className="flex items-center gap-2">
+                                                <QrCode className="h-4 w-4 text-emerald-600" />
+                                                Verify WhatsApp
+                                            </span>
+                                            <ExternalLink className="h-3.5 w-3.5 text-emerald-500 opacity-70 group-hover:opacity-100 transition-opacity" />
+                                        </a>
+                                    </div>
                                 </MenuDropdown>
                             )}
                         </nav>
@@ -471,6 +492,23 @@ const Navbar: React.FC = () => {
                                                         <ChevronRight className="h-3 w-3 opacity-50" />
                                                     </NavLink>
                                                 ))}
+                                                <div className="pt-1 mt-1 border-t border-slate-200/60">
+                                                    <a
+                                                        href={WHATSAPP_SERVICE_URL}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        onClick={() =>
+                                                            setMenuOpen(false)
+                                                        }
+                                                        className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-emerald-800 hover:bg-emerald-50 transition-colors"
+                                                    >
+                                                        <span className="flex items-center gap-2">
+                                                            <QrCode className="h-3.5 w-3.5 text-emerald-600" />
+                                                            Verify WhatsApp
+                                                        </span>
+                                                        <ExternalLink className="h-3 w-3 text-emerald-600 opacity-60" />
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
                                     )}

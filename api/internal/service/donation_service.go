@@ -85,10 +85,15 @@ func (s *DonationService) GetByID(id uuid.UUID) (*models.Donation, error) {
 	return s.repo.FindByID(id)
 }
 
-// List returns paginated donations (admin — all users).
-func (s *DonationService) List(page, limit int) ([]models.Donation, int64, error) {
+// List returns paginated donations with optional status and search filters (admin — all users).
+func (s *DonationService) List(page, limit int, status, search string) ([]models.Donation, int64, error) {
 	offset := (page - 1) * limit
-	return s.repo.ListPaginated(offset, limit)
+	return s.repo.ListPaginated(offset, limit, status, search)
+}
+
+// GetStats returns global database-wide donation metrics.
+func (s *DonationService) GetStats() (repository.DonationStats, error) {
+	return s.repo.GetStats()
 }
 
 // ListByUser returns paginated donations for a specific user.
@@ -224,7 +229,7 @@ func (s *DonationService) notify(d *models.Donation, status, certNumber string) 
 		)
 		subject = fmt.Sprintf("Donation Receipt — Action Required (%s)", ngoName)
 		html = fmt.Sprintf(`<div style="font-family:Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#f8fafc;">
-<div style="background:#0f172a;padding:20px 24px;border-radius:12px 12px 0 0;text-align:center;">
+<div style="background:#065f46;padding:20px 24px;border-radius:12px 12px 0 0;text-align:center;">
   <h2 style="color:#ffffff;margin:0;font-size:18px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">%s</h2>
 </div>
 <div style="background:#ffffff;padding:28px 24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">

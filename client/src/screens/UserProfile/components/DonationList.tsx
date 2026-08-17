@@ -5,11 +5,10 @@ import {
     Clock,
     CheckCircle,
     XCircle,
-    ChevronLeft,
-    ChevronRight,
     ArrowRight,
 } from "lucide-react";
 import { UserProfileContext } from "../context";
+import Pagination from "../../../components/Pagination";
 import type { Donation } from "../../../types/donation";
 
 const STATUS_CONFIG = {
@@ -93,6 +92,7 @@ export const DonationList: React.FC = () => {
         donationLoading,
         donationPage,
         donationTotalPages,
+        donationTotal,
         loadDonations,
     } = ctx;
 
@@ -129,32 +129,28 @@ export const DonationList: React.FC = () => {
 
     return (
         <div className="space-y-3">
+            {donationTotalPages > 1 && (
+                <div className="flex items-center justify-between pb-1 text-xs text-slate-500 font-medium">
+                    <span>Donations &amp; Certificates ({donationTotal})</span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+                        Page {donationPage} of {donationTotalPages}
+                    </span>
+                </div>
+            )}
+
             {donations.map((d) => (
                 <DonationRow key={d.id} donation={d} />
             ))}
 
             {/* Pagination */}
-            {donationTotalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 pt-4">
-                    <button
-                        onClick={() => loadDonations(donationPage - 1)}
-                        disabled={donationPage <= 1}
-                        className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    <span className="text-sm text-slate-600 font-medium">
-                        {donationPage} / {donationTotalPages}
-                    </span>
-                    <button
-                        onClick={() => loadDonations(donationPage + 1)}
-                        disabled={donationPage >= donationTotalPages}
-                        className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                        <ChevronRight className="h-4 w-4" />
-                    </button>
-                </div>
-            )}
+            <Pagination
+                currentPage={donationPage}
+                totalPages={donationTotalPages}
+                onPageChange={loadDonations}
+                totalItems={donationTotal}
+                pageSize={20}
+                className="pt-4"
+            />
         </div>
     );
 };

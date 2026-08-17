@@ -7,13 +7,19 @@ import type { User, UserDesignation } from "../../types/user";
 
 export const getUsers = async (
     page = 1,
-    limit = 100,
+    limit = 20,
     bloodGroup?: string,
+    search?: string,
 ): Promise<PaginatedResponse<User>> => {
     return request<PaginatedResponse<User>>({
         url: "/users",
         method: "GET",
-        params: { page, limit, blood_group: bloodGroup || undefined },
+        params: {
+            page,
+            limit,
+            blood_group: bloodGroup || undefined,
+            search: search?.trim() || undefined,
+        },
     });
 };
 

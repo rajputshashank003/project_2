@@ -123,7 +123,7 @@ export const buildIdCardRejectionMessages = (params: {
     subject: "NGO ID Card Request Update",
     userHtml: `
     <div style="font-family:Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#f8fafc;">
-      <div style="background:#0f172a;padding:20px 24px;border-radius:12px 12px 0 0;text-align:center;">
+      <div style="background:#065f46;padding:20px 24px;border-radius:12px 12px 0 0;text-align:center;">
         <h2 style="color:#ffffff;margin:0;font-size:18px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">NGO Platform</h2>
       </div>
       <div style="background:#ffffff;padding:28px 24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
@@ -192,7 +192,7 @@ export const buildDonationRejectionMessages = (params: {
     subject: "Donation Receipt — Action Required",
     userHtml: `
     <div style="font-family:Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#f8fafc;">
-      <div style="background:#0f172a;padding:20px 24px;border-radius:12px 12px 0 0;text-align:center;">
+      <div style="background:#065f46;padding:20px 24px;border-radius:12px 12px 0 0;text-align:center;">
         <h2 style="color:#ffffff;margin:0;font-size:18px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">NGO Platform</h2>
       </div>
       <div style="background:#ffffff;padding:28px 24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">

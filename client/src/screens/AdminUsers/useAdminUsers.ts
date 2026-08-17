@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getUsers, updateUserDesignation } from "../../utils/api_request/users";
-import filter from "lodash/filter";
 import type { User, UserDesignation } from "../../types/user";
 
 export const useAdminUsers = () => {
@@ -8,42 +7,42 @@ export const useAdminUsers = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedBloodGroup, setSelectedBloodGroup] = useState<string>("all");
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
 
+    const loadUsers = useCallback(
+        async (
+            targetPage = 1,
+            bg = selectedBloodGroup,
+            search = searchQuery,
+        ) => {
+            setIsLoading(true);
+            try {
+                const bloodParam = bg === "all" ? undefined : bg;
+                const result = await getUsers(targetPage, 20, bloodParam, search);
+                setUsers(result.data);
+                setPage(result.pagination?.page || targetPage);
+                setTotalPages(result.pagination?.totalPages || 1);
+                setTotalCount(result.pagination?.total || result.data.length);
+            } catch {
+                // error toast already shown by axiosInstance interceptor
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [selectedBloodGroup, searchQuery],
+    );
+
+    // Debounced search & filter effect
     useEffect(() => {
-        loadUsers();
-    }, []);
+        const timer = setTimeout(() => {
+            void loadUsers(1, selectedBloodGroup, searchQuery);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [selectedBloodGroup, searchQuery, loadUsers]);
 
-    const loadUsers = async () => {
-        setIsLoading(true);
-        try {
-            const result = await getUsers();
-            setUsers(result.data);
-        } catch {
-            // error toast already shown by axiosInstance interceptor
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const filteredUsers = filter(users, (u) => {
-        const matchesBloodGroup =
-            selectedBloodGroup === "all" ||
-            (selectedBloodGroup === "Unknown"
-                ? !u.bloodGroup || u.bloodGroup === "Unknown"
-                : u.bloodGroup === selectedBloodGroup);
-
-        if (!matchesBloodGroup) return false;
-
-        if (!searchQuery.trim()) return true;
-
-        const q = searchQuery.toLowerCase();
-        return (
-            u.name.toLowerCase().includes(q) ||
-            u.phone.includes(q) ||
-            (u.email || "").toLowerCase().includes(q) ||
-            (u.bloodGroup || "").toLowerCase().includes(q)
-        );
-    });
+    const filteredUsers = users;
 
     const handleDesignationChange = async (
         userId: string,
@@ -62,6 +61,9 @@ export const useAdminUsers = () => {
         isLoading,
         searchQuery,
         selectedBloodGroup,
+        page,
+        totalPages,
+        totalCount,
         setSearchQuery,
         setSelectedBloodGroup,
         handleDesignationChange,
@@ -70,3 +72,4 @@ export const useAdminUsers = () => {
 };
 
 export type ReturnTypeOfUseAdminUsers = ReturnType<typeof useAdminUsers>;
+

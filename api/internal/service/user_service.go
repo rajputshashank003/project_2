@@ -19,10 +19,10 @@ func NewUserService(repo *repository.UserRepository) *UserService {
 	return &UserService{repo: repo}
 }
 
-// List returns paginated users with optional blood_group filter.
-func (s *UserService) List(page, limit int, bloodGroup string) ([]models.User, int64, error) {
+// List returns paginated users with optional blood_group and search filter.
+func (s *UserService) List(page, limit int, bloodGroup, search string) ([]models.User, int64, error) {
 	offset := (page - 1) * limit
-	return s.repo.ListPaginated(offset, limit, bloodGroup)
+	return s.repo.ListPaginated(offset, limit, bloodGroup, search)
 }
 
 // Update partially updates a user's designation, name, email, blood group (admin use).

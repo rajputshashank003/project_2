@@ -28,7 +28,13 @@ func (h *DonationHandler) List(c *gin.Context) {
 	_ = c.ShouldBindQuery(&pq)
 	pq.Normalize()
 
-	donations, total, err := h.svc.List(pq.Page, pq.Limit)
+	status := c.Query("status")
+	search := c.Query("search")
+	if search == "" {
+		search = c.Query("q")
+	}
+
+	donations, total, err := h.svc.List(pq.Page, pq.Limit, status, search)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": gin.H{"code": "DB_ERROR", "message": "Failed to fetch donations"}})
 		return
@@ -39,9 +45,12 @@ func (h *DonationHandler) List(c *gin.Context) {
 		totalPages++
 	}
 
+	stats, _ := h.svc.GetStats()
+
 	c.JSON(http.StatusOK, gin.H{
 		"data":       donations,
 		"pagination": gin.H{"page": pq.Page, "limit": pq.Limit, "total": total, "totalPages": totalPages},
+		"stats":      stats,
 	})
 }
 

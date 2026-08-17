@@ -70,6 +70,7 @@ func main() {
 	teamSvc     := service.NewTeamService(teamRepo, cloudinarySvc)
 	ngoSvc      := service.NewNgoService(ngoRepo, cloudinarySvc)
 	userSvc     := service.NewUserService(userRepo)
+	healthSvc   := service.NewHealthService(db, cfg.WhatsAppLocalURL, 13*time.Minute)
 
 	// ---- Seed admin user ---------------------------------------------------
 	authSvc.SeedAdmin()
@@ -78,24 +79,12 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// ---- Idempotency cleanup goroutine (hourly) ----------------------------
-	go func() {
-		ticker := time.NewTicker(1 * time.Hour)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				if err := idempotencyRepo.Cleanup(); err != nil {
-					log.Error().Err(err).Msg("main: idempotency cleanup failed")
-				} else {
-					log.Info().Msg("main: idempotency keys cleaned up")
-				}
-			case <-ctx.Done():
-				log.Info().Msg("main: idempotency cleanup goroutine stopped")
-				return
-			}
-		}
-	}()
+	// ---- Background cleanup service (purges expired idempotency keys & OTPs older than 24h) ----
+	cleanupSvc := service.NewCleanupService(idempotencyRepo, otpRepo, 1*time.Hour, 24*time.Hour)
+	go cleanupSvc.Run(ctx)
+
+	// ---- WhatsApp service 13-minute keep-alive worker (anti-sleep ping) -----
+	go healthSvc.StartKeepAliveWorker(ctx)
 
 	// ---- HTTP router -------------------------------------------------------
 	bodyLimitBytes := cfg.BodyLimitMB * 1024 * 1024
@@ -104,6 +93,7 @@ func main() {
 		authSvc, donationSvc, idCardSvc, noticeSvc,
 		gallerySvc, eventSvc, teamSvc, ngoSvc, userSvc,
 		smsSvc, emailSvc, whatsappTwilioSvc, whatsappLocalSvc,
+		healthSvc,
 		userRepo, idempotencyRepo,
 		bodyLimitBytes,
 	)

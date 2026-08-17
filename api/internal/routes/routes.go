@@ -26,6 +26,7 @@ func Setup(
 	emailSvc *service.EmailService,
 	whatsappTwilioSvc *service.WhatsAppTwilioService,
 	whatsappLocalSvc *service.WhatsAppLocalService,
+	healthSvc *service.HealthService,
 	userRepo *repository.UserRepository,
 	idempotencyRepo *repository.IdempotencyRepository,
 	bodyLimitBytes int64,
@@ -56,16 +57,20 @@ func Setup(
 	ngoH := handler.NewNgoHandler(ngoSvc)
 	userH := handler.NewUserHandler(userSvc)
 	notifyH := handler.NewNotifyHandler(smsSvc, emailSvc, whatsappTwilioSvc, whatsappLocalSvc)
-	healthH := handler.NewHealthHandler(db)
+	healthH := handler.NewHealthHandler(healthSvc)
 
 	// ---- Infra routes (no version prefix) ----------------------------------
 	r.GET("/healthz", healthH.Liveness)
 	r.GET("/readyz", healthH.Readiness)
 	r.GET("/api/health", healthH.Liveness)
 	r.GET("/health", healthH.Liveness)
+	r.GET("/health/whatsapp", healthH.WhatsAppHealth)
+	r.GET("/config", ngoH.GetConfig)
+	r.GET("/ngo/config", ngoH.GetConfig)
 
 	// ---- API v1 routes -----------------------------------------------------
 	v1 := r.Group("/api/v1")
+	v1.GET("/health/whatsapp", healthH.WhatsAppHealth)
 
 	// Auth (public)
 	auth := v1.Group("/auth")
@@ -74,7 +79,12 @@ func Setup(
 		auth.POST("/verify-otp", authH.VerifyOTP)
 	}
 
-	// NGO config
+	// NGO config & aliases (/api/v1/ngo/config, /api/v1/config, /api/v1/ngo)
+	v1.GET("/config", ngoH.GetConfig)
+	v1.PATCH("/config", middleware.Auth(authSvc, userRepo), middleware.AdminOnly(), ngoH.UpdateConfig)
+	v1.GET("/ngo", ngoH.GetConfig)
+	v1.PATCH("/ngo", middleware.Auth(authSvc, userRepo), middleware.AdminOnly(), ngoH.UpdateConfig)
+
 	ngo := v1.Group("/ngo")
 	{
 		ngo.GET("/config", ngoH.GetConfig)
@@ -155,7 +165,12 @@ func Setup(
 		notify.POST("/whatsapp_local", notifyH.SendWhatsAppLocal)
 	}
 
-	// User profile: authenticated user's own records
+	// User profile: authenticated user's own records & aliases
+	v1.GET("/profile", middleware.Auth(authSvc, userRepo), userH.GetMyProfile)
+	v1.PATCH("/profile", middleware.Auth(authSvc, userRepo), userH.UpdateMyProfile)
+	v1.GET("/user/profile", middleware.Auth(authSvc, userRepo), userH.GetMyProfile)
+	v1.PATCH("/user/profile", middleware.Auth(authSvc, userRepo), userH.UpdateMyProfile)
+
 	my := v1.Group("/my")
 	my.Use(middleware.Auth(authSvc, userRepo))
 	{

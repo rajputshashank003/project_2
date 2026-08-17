@@ -55,3 +55,11 @@ func (r *OTPRepository) FindValidByPhone(phone string) (*models.OTP, error) {
 func (r *OTPRepository) MarkUsed(id interface{}) error {
 	return r.db.Model(&models.OTP{}).Where("id = ?", id).Update("used", true).Error
 }
+
+// CleanupOlderThan deletes OTP records older than the given duration (e.g. 7 days).
+// Called by the background cleanup goroutine in main.go.
+func (r *OTPRepository) CleanupOlderThan(d time.Duration) error {
+	return r.db.
+		Where("created_at < ?", time.Now().Add(-d)).
+		Delete(&models.OTP{}).Error
+}

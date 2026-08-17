@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/shashankrajput/ngo-platform/api/internal/models"
 	"gorm.io/gorm"
@@ -31,15 +33,24 @@ func (r *DonationRepository) FindByID(id uuid.UUID) (*models.Donation, error) {
 	return &d, nil
 }
 
-// ListPaginated returns paginated donations ordered by requested_at DESC.
-func (r *DonationRepository) ListPaginated(offset, limit int) ([]models.Donation, int64, error) {
+// ListPaginated returns paginated donations ordered by requested_at DESC with optional status and search filters.
+func (r *DonationRepository) ListPaginated(offset, limit int, status, search string) ([]models.Donation, int64, error) {
 	var donations []models.Donation
 	var total int64
 
-	if err := r.db.Model(&models.Donation{}).Count(&total).Error; err != nil {
+	query := r.db.Model(&models.Donation{})
+	if status != "" && status != "all" {
+		query = query.Where("status = ?", status)
+	}
+	if search != "" {
+		s := "%" + strings.ToLower(strings.TrimSpace(search)) + "%"
+		query = query.Where("LOWER(donor_name) LIKE ? OR phone LIKE ? OR LOWER(email) LIKE ? OR LOWER(utr_number) LIKE ? OR LOWER(certificate_number) LIKE ?", s, s, s, s, s)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	if err := r.db.Order("requested_at DESC").Offset(offset).Limit(limit).Find(&donations).Error; err != nil {
+	if err := query.Order("requested_at DESC").Offset(offset).Limit(limit).Find(&donations).Error; err != nil {
 		return nil, 0, err
 	}
 	return donations, total, nil
@@ -75,4 +86,29 @@ func (r *DonationRepository) ListByUserID(userID uuid.UUID, offset, limit int) (
 // Begin starts a DB transaction.
 func (r *DonationRepository) Begin() *gorm.DB {
 	return r.db.Begin()
+}
+
+// DonationStats contains global database-wide donation metrics.
+type DonationStats struct {
+	Total          int64   `json:"total"`
+	Pending        int64   `json:"pending"`
+	Approved       int64   `json:"approved"`
+	Rejected       int64   `json:"rejected"`
+	TotalCollected float64 `json:"totalCollected"`
+}
+
+// GetStats returns global database-wide donation counts and total collected amount in a single query.
+func (r *DonationRepository) GetStats() (DonationStats, error) {
+	var stats DonationStats
+	row := r.db.Raw(`
+		SELECT 
+			COUNT(*) as total,
+			COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
+			COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved,
+			COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected,
+			COALESCE(SUM(CASE WHEN status = 'approved' THEN amount ELSE 0 END), 0) as total_collected
+		FROM donations
+	`).Row()
+	err := row.Scan(&stats.Total, &stats.Pending, &stats.Approved, &stats.Rejected, &stats.TotalCollected)
+	return stats, err
 }
