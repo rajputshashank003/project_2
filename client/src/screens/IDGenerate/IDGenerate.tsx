@@ -4,6 +4,7 @@ import { IDGenerateContext } from "./context";
 import {
     IDPaymentDetails,
     IDForm,
+    IDCardNoteModal,
     IDSuccessModal,
 } from "./components/IDGenerateComponents";
 import { CreditCard } from "lucide-react";
@@ -23,6 +24,7 @@ const IDGenerateContent: React.FC = () => (
         </div>
         <IDPaymentDetails />
         <IDForm />
+        <IDCardNoteModal />
         <IDSuccessModal />
     </div>
 );

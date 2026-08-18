@@ -1,7 +1,8 @@
 import React, { useContext, useRef } from "react";
-import { User, CheckCircle, Copy, Check } from "lucide-react";
+import { User, CheckCircle, Copy, Check, Info } from "lucide-react";
 import { IDGenerateContext } from "../context";
 import { DESIGNATIONS } from "../../../utils/constants";
+import Modal from "../../../components/Modal";
 
 export const IDPaymentDetails: React.FC = () => {
     const ctx = useContext(IDGenerateContext);
@@ -9,6 +10,7 @@ export const IDPaymentDetails: React.FC = () => {
     const {
         ngoConfig,
         isConfigLoading,
+        setIsNoteModalOpen,
         copied,
         handleCopyUpi,
         copiedPhone,
@@ -21,14 +23,24 @@ export const IDPaymentDetails: React.FC = () => {
 
     return (
         <div className="card-md mb-6 max-w-2xl mx-auto">
-            <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <div className="h-6 w-6 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <span className="text-emerald-700 text-xs font-bold">
-                        ₹
-                    </span>
-                </div>
-                Payment Details
-            </h2>
+            <div className="flex items-center justify-between mb-4 gap-2">
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <span className="text-emerald-700 text-xs font-bold">
+                            ₹
+                        </span>
+                    </div>
+                    Payment Details
+                </h2>
+                <button
+                    type="button"
+                    onClick={() => setIsNoteModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer shrink-0"
+                >
+                    <Info className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                    Fee Details &amp; Note
+                </button>
+            </div>
 
             {isConfigLoading ? (
                 <div className="space-y-3 py-1">
@@ -190,10 +202,20 @@ export const IDPaymentDetails: React.FC = () => {
                 </React.Fragment>
             )}
 
-            <p className="text-xs text-slate-500 mt-3 flex items-center gap-1.5 font-medium">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                Donate here to generate ID card and paste screenshot below
-            </p>
+            <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <p className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    Donate here to generate ID card and paste screenshot below
+                </p>
+                <button
+                    type="button"
+                    onClick={() => setIsNoteModalOpen(true)}
+                    className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline inline-flex items-center gap-1 self-start sm:self-auto cursor-pointer"
+                >
+                    <Info className="h-3.5 w-3.5" />
+                    View Fee Structure
+                </button>
+            </div>
         </div>
     );
 };
@@ -276,6 +298,7 @@ export const IDForm: React.FC = () => {
         form,
         errors,
         isSubmitting,
+        setIsNoteModalOpen,
         handleFormChange,
         handlePassportUpload,
         handlePaymentUpload,
@@ -393,9 +416,19 @@ export const IDForm: React.FC = () => {
                     </select>
                 </div>
                 <div className="sm:col-span-2">
-                    <label className="form-label">
-                        Donation / Card Fee Amount (₹) *
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                        <label className="form-label mb-0">
+                            Donation / Card Fee Amount (₹) *
+                        </label>
+                        <button
+                            type="button"
+                            onClick={() => setIsNoteModalOpen(true)}
+                            className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                        >
+                            <Info className="h-3 w-3" />
+                            Fee Structure Note
+                        </button>
+                    </div>
                     <div className="relative">
                         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-semibold select-none">
                             ₹
@@ -455,6 +488,85 @@ export const IDForm: React.FC = () => {
                 )}
             </button>
         </div>
+    );
+};
+
+export const IDCardNoteModal: React.FC = () => {
+    const ctx = useContext(IDGenerateContext);
+    if (!ctx) return null;
+    const { isNoteModalOpen, setIsNoteModalOpen } = ctx;
+
+    return (
+        <Modal
+            isOpen={isNoteModalOpen}
+            onClose={() => setIsNoteModalOpen(false)}
+            title="ID Card Contribution & Validity Guidelines"
+            size="md"
+            footer={
+                <button
+                    type="button"
+                    onClick={() => setIsNoteModalOpen(false)}
+                    className="btn-primary w-full py-2.5 text-sm"
+                >
+                    Close
+                </button>
+            }
+        >
+            <div className="space-y-4 py-1">
+                <p className="text-sm text-slate-600">
+                    To support our NGO community initiatives and cover card processing, please refer to the recommended donation fee structure below:
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+                        <span className="text-xs font-semibold text-emerald-800 uppercase tracking-wider block mb-1">
+                            1 Year Card
+                        </span>
+                        <div className="text-2xl font-bold text-emerald-950 font-mono">
+                            ₹500
+                        </div>
+                        <span className="text-xs text-emerald-700 mt-1 block">
+                            Valid for 1 Year
+                        </span>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                        <span className="text-xs font-semibold text-blue-800 uppercase tracking-wider block mb-1">
+                            2 Years Card
+                        </span>
+                        <div className="text-2xl font-bold text-blue-950 font-mono">
+                            ₹1,000
+                        </div>
+                        <span className="text-xs text-blue-700 mt-1 block">
+                            Valid for 2 Years
+                        </span>
+                    </div>
+
+                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
+                        <span className="text-xs font-semibold text-purple-800 uppercase tracking-wider block mb-1">
+                            3 Years Card
+                        </span>
+                        <div className="text-2xl font-bold text-purple-950 font-mono">
+                            ₹2,000
+                        </div>
+                        <span className="text-xs text-purple-700 mt-1 block">
+                            Valid for 3 Years
+                        </span>
+                    </div>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-xs text-amber-900 flex items-start gap-2.5">
+                    <span className="text-base leading-none mt-0.5">ℹ️</span>
+                    <div>
+                        <strong className="font-semibold block mb-0.5">Note:</strong>
+                        • <strong>₹500</strong> for 1 Year Volunteer ID Card<br />
+                        • <strong>₹1,000</strong> for 2 Years Volunteer ID Card<br />
+                        • <strong>₹2,000</strong> for 3 Years Volunteer ID Card<br />
+                        Please donate the required amount using the payment details above and upload the payment screenshot with your application.
+                    </div>
+                </div>
+            </div>
+        </Modal>
     );
 };
 

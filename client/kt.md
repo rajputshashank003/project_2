@@ -501,6 +501,27 @@ npm run dev            # http://localhost:5173
 - **State & Copy Handlers (`useIDGenerate.ts`)**:
   - Hook exposes `isConfigLoading`, `copied`, `copiedPhone`, `copiedAccount`, `copiedIfsc` alongside corresponding copy handlers using `copyToClipboard`.
 
+---
+
+## 36. Footer Logo, ID Card Fee Structure Note Modal & Lifetime Option Removal
+
+- **Footer Logo Integration (`Footer/index.tsx`)**:
+  - Renders `ngoConfig.logoUrl` inside an elegant white container with image error fallback handling.
+  - Automatically falls back to the default emerald `Leaf` icon if no logo is configured or if an image loading error occurs.
+  - Includes pulse loading skeleton during `isConfigLoading`.
+- **ID Card Fee Structure & Validity Note Modal (`IDGenerateComponents.tsx`, `IDGenerate.tsx`, `useIDGenerate.ts`)**:
+  - Hook manages `isNoteModalOpen` and `setIsNoteModalOpen`.
+  - Added interactive "Fee Details & Note" button in `IDPaymentDetails` header, "View Fee Structure" link in bottom note, and "Fee Structure Note" beside the amount field in `IDForm`.
+  - Created `IDCardNoteModal`: Displays clean grid cards for:
+    - **1 Year Validity**: ₹500
+    - **2 Years Validity**: ₹1,000
+    - **3 Years Validity**: ₹2,000
+    - Explanatory instructions and primary close button.
+- **Lifetime Validity Removal (`AdminRequestIdCard`)**:
+  - In `IdCardRequestComponents.tsx`, removed `{ label: "Lifetime", value: 0 }` from approval validity options.
+  - In `useAdminRequestIdCard.ts`, updated initial state and reset handlers to default to `1` (1 Year).
+
+
 
 
 

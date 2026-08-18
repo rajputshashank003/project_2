@@ -60,6 +60,7 @@ export const useIDGenerate = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [submittedId, setSubmittedId] = useState("");
+    const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
     const [copied, setCopied] = useState(false);
     const [copiedPhone, setCopiedPhone] = useState(false);
     const [copiedAccount, setCopiedAccount] = useState(false);
@@ -213,6 +214,8 @@ export const useIDGenerate = () => {
         isSubmitting,
         isSuccess,
         submittedId,
+        isNoteModalOpen,
+        setIsNoteModalOpen,
         copied,
         copiedPhone,
         copiedAccount,

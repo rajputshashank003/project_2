@@ -1,10 +1,15 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Leaf, Phone, Mail, MapPin, ExternalLink } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 
 const Footer: React.FC = () => {
     const { ngoConfig, isConfigLoading } = useApp();
+    const [logoError, setLogoError] = useState(false);
+
+    useEffect(() => {
+        setLogoError(false);
+    }, [ngoConfig.logoUrl]);
 
     return (
         <footer className="bg-slate-900 text-slate-400 mt-auto">
@@ -13,9 +18,22 @@ const Footer: React.FC = () => {
                     {/* Brand */}
                     <div>
                         <div className="flex items-center gap-2.5 mb-4">
-                            <div className="h-9 w-9 rounded-xl bg-emerald-600 flex items-center justify-center">
-                                <Leaf className="h-5 w-5 text-white" />
-                            </div>
+                            {isConfigLoading ? (
+                                <div className="h-9 w-9 rounded-xl bg-slate-800 animate-pulse shrink-0" />
+                            ) : ngoConfig.logoUrl && !logoError ? (
+                                <div className="h-9 w-9 rounded-xl overflow-hidden bg-white border border-slate-700 shadow-sm shrink-0 flex items-center justify-center p-1">
+                                    <img
+                                        src={ngoConfig.logoUrl}
+                                        alt={ngoConfig.name}
+                                        onError={() => setLogoError(true)}
+                                        className="w-full h-full object-contain"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="h-9 w-9 rounded-xl bg-emerald-600 flex items-center justify-center shrink-0">
+                                    <Leaf className="h-5 w-5 text-white" />
+                                </div>
+                            )}
                             {isConfigLoading ? (
                                 <div className="h-5 w-28 bg-slate-800 rounded animate-pulse" />
                             ) : (

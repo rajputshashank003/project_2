@@ -30,7 +30,7 @@ export const useAdminRequestIdCard = () => {
         null,
     );
     const [rejectReason, setRejectReason] = useState("");
-    const [validityYears, setValidityYears] = useState<number>(0);
+    const [validityYears, setValidityYears] = useState<number>(1);
     const [actionLoading, setActionLoading] = useState(false);
     const [previewItem, setPreviewItem] = useState<IdCard | null>(null);
     const [previewTab, setPreviewTab] = useState<"screenshot" | "card">(
@@ -84,7 +84,7 @@ export const useAdminRequestIdCard = () => {
         setActionItem(item);
         setActionType("approve");
         setRejectReason("");
-        setValidityYears(0);
+        setValidityYears(1);
     };
 
     const openReject = (item: IdCard) => {
@@ -96,7 +96,7 @@ export const useAdminRequestIdCard = () => {
         setActionItem(null);
         setActionType(null);
         setRejectReason("");
-        setValidityYears(0);
+        setValidityYears(1);
     };
 
     const handleSignatureUpload = async (file: File) => {

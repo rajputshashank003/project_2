@@ -253,7 +253,6 @@ export const RequestActionModal: React.FC = () => {
                                 </label>
                                 <div className="flex flex-wrap gap-2">
                                     {[
-                                        { label: "Lifetime", value: 0 },
                                         { label: "1 Year", value: 1 },
                                         { label: "2 Years", value: 2 },
                                         { label: "3 Years", value: 3 },
