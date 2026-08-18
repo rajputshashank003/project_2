@@ -292,7 +292,7 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
 
                     {/* Middle Group: Donor & Donation Details */}
                     <div>
-                        {/* Donor Name */}
+                        {/* Donor Name  */}
                         <div style={{ textAlign: "center", marginBottom: 8 }}>
                             <div
                                 style={{
