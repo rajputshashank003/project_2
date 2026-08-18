@@ -96,6 +96,7 @@ func main() {
 		healthSvc,
 		userRepo, idempotencyRepo,
 		bodyLimitBytes,
+		cfg.FEUrls,
 	)
 
 	srv := &http.Server{

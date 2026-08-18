@@ -662,6 +662,24 @@ See `whatsapp_service/kt.md` for full documentation.
 - **Service Notification**:
   - `IDCardService.notifyManagerNewIDCard`: Includes the applicant's declared donation / fee amount (`INR %.0f`) in the WhatsApp notification to the manager.
 
+---
+
+## 24. Dynamic CORS Origins via `FE_URLS`
+
+- **Configuration (`config.go`)**:
+  - `Config.FEUrls []string` parsed from `FE_URLS` environment variable using `parseOrigins(raw string) []string`.
+  - Splits across commas (`,`), semicolons (`;`), spaces (` `), tabs, or newlines (`\n`).
+  - Trims quotes, trailing slashes (`/`), and normalizes plain domain names without schemes (e.g. `xyz.com`) to both `https://xyz.com` and `http://xyz.com`.
+  - If `FE_URLS` is empty or `*`, automatically permits all origins in development.
+- **Router Integration (`routes.go`, `main.go`)**:
+  - `routes.Setup(...)` configures `cors.New(cors.Config)`:
+    - Sets `AllowOrigins: feURLs` and matching `AllowOriginFunc`.
+    - Enables `AllowCredentials: true`.
+    - Allowed methods: `GET`, `POST`, `PATCH`, `PUT`, `DELETE`, `OPTIONS`, `HEAD`.
+    - Allowed headers: `Authorization`, `Content-Type`, `X-Request-ID`, `Idempotency-Key`, `Origin`, `Accept`, `X-Requested-With`.
+    - Exposes: `X-Request-ID`, `Content-Length`, `Content-Disposition`.
+
+
 
 
 

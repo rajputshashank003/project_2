@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"strings"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/shashankrajput/ngo-platform/api/internal/handler"
@@ -30,6 +32,7 @@ func Setup(
 	userRepo *repository.UserRepository,
 	idempotencyRepo *repository.IdempotencyRepository,
 	bodyLimitBytes int64,
+	feURLs []string,
 ) *gin.Engine {
 	r := gin.New()
 
@@ -38,13 +41,35 @@ func Setup(
 	r.Use(middleware.RequestLogger())
 	r.Use(gin.Recovery())
 	r.Use(middleware.BodyLimit(bodyLimitBytes))
-	r.Use(cors.New(cors.Config{
-		AllowAllOrigins:  true,
-		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Authorization", "Content-Type", "X-Request-ID", "Idempotency-Key"},
-		ExposeHeaders:    []string{"X-Request-ID"},
-		AllowCredentials: false,
-	}))
+
+	var corsConfig cors.Config
+	if len(feURLs) == 0 || (len(feURLs) == 1 && feURLs[0] == "*") {
+		corsConfig = cors.Config{
+			AllowAllOrigins:  true,
+			AllowMethods:     []string{"GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS", "HEAD"},
+			AllowHeaders:     []string{"Authorization", "Content-Type", "X-Request-ID", "Idempotency-Key", "Origin", "Accept", "X-Requested-With"},
+			ExposeHeaders:    []string{"X-Request-ID", "Content-Length", "Content-Disposition"},
+			AllowCredentials: false,
+		}
+	} else {
+		allowedMap := make(map[string]bool)
+		for _, u := range feURLs {
+			allowedMap[strings.ToLower(strings.TrimRight(u, "/"))] = true
+		}
+
+		corsConfig = cors.Config{
+			AllowOrigins: feURLs,
+			AllowOriginFunc: func(origin string) bool {
+				norm := strings.ToLower(strings.TrimRight(origin, "/"))
+				return allowedMap[norm]
+			},
+			AllowMethods:     []string{"GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS", "HEAD"},
+			AllowHeaders:     []string{"Authorization", "Content-Type", "X-Request-ID", "Idempotency-Key", "Origin", "Accept", "X-Requested-With"},
+			ExposeHeaders:    []string{"X-Request-ID", "Content-Length", "Content-Disposition"},
+			AllowCredentials: true,
+		}
+	}
+	r.Use(cors.New(corsConfig))
 
 	// ---- Handlers ----------------------------------------------------------
 	authH := handler.NewAuthHandler(authSvc)
