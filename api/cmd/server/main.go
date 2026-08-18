@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"os/signal"
 	"syscall"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 	"github.com/shashankrajput/ngo-platform/api/internal/repository"
 	"github.com/shashankrajput/ngo-platform/api/internal/routes"
 	"github.com/shashankrajput/ngo-platform/api/internal/service"
-	"os/signal"
+	"github.com/shashankrajput/ngo-platform/api/internal/wa"
 )
 
 func main() {
@@ -30,7 +31,7 @@ func main() {
 	// ---- Config ------------------------------------------------------------
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal().Err(err).Msg("main: failed to load config")
+		log.Fatal().Err(err).Msg("main: config load failed")
 	}
 
 	// ---- Database ----------------------------------------------------------
@@ -38,7 +39,6 @@ func main() {
 
 	// ---- Repositories ------------------------------------------------------
 	userRepo := repository.NewUserRepository(db)
-	otpRepo := repository.NewOTPRepository(db)
 	donationRepo := repository.NewDonationRepository(db)
 	idCardRepo := repository.NewIDCardRepository(db)
 	noticeRepo := repository.NewNoticeRepository(db)
@@ -46,31 +46,45 @@ func main() {
 	eventRepo := repository.NewEventRepository(db)
 	teamRepo := repository.NewTeamRepository(db)
 	ngoRepo := repository.NewOrgSettingsRepository(db)
+	otpRepo := repository.NewOTPRepository(db)
 	idempotencyRepo := repository.NewIdempotencyRepository(db)
 
+	// ---- In-memory WhatsApp service -----------------------------------------
+	waContainer, err := wa.OpenContainer(cfg.WhatsAppDBPath)
+	if err != nil {
+		log.Error().Err(err).Msg("main: failed to open WhatsApp SQLite store; continuing without WhatsApp")
+	}
+	var waClient *wa.WAClient
+	if waContainer != nil {
+		waClient, err = wa.NewWAClient(waContainer)
+		if err != nil {
+			log.Error().Err(err).Msg("main: failed to initialize WhatsApp client; continuing without WhatsApp")
+		}
+	}
+
 	// ---- External services -------------------------------------------------
-	cloudinarySvc     := service.NewCloudinaryService(cfg)
-	smsSvc            := service.NewSMSService(cfg)
-	emailSvc          := service.NewEmailService(cfg)
+	cloudinarySvc := service.NewCloudinaryService(cfg)
+	smsSvc := service.NewSMSService(cfg)
+	emailSvc := service.NewEmailService(cfg)
 	whatsappTwilioSvc := service.NewWhatsAppTwilioService(cfg)
-	whatsappLocalSvc  := service.NewWhatsAppLocalService(cfg)
+	whatsappLocalSvc := service.NewWhatsAppLocalService(waClient, cfg.DevMode)
 
 	// MultiMessenger routes to the correct channel based on MESSAGING_TYPE env var
 	messenger := service.NewMultiMessenger(smsSvc, whatsappTwilioSvc, whatsappLocalSvc, cfg.MessagingType)
 	log.Info().Str("messagingType", cfg.MessagingType).Str("appBaseURL", cfg.AppBaseURL).Msg("main: messaging configured")
 
 	// ---- Domain services ---------------------------------------------------
-	otpSvc      := service.NewOTPService(otpRepo, messenger, cfg)
-	authSvc     := service.NewAuthService(userRepo, otpSvc, cfg)
+	otpSvc := service.NewOTPService(otpRepo, messenger, cfg)
+	authSvc := service.NewAuthService(userRepo, otpSvc, cfg)
 	donationSvc := service.NewDonationService(donationRepo, ngoRepo, cloudinarySvc, messenger, emailSvc, cfg.AppBaseURL)
-	idCardSvc   := service.NewIDCardService(idCardRepo, ngoRepo, cloudinarySvc, messenger, emailSvc, cfg.AppBaseURL)
-	noticeSvc   := service.NewNoticeService(noticeRepo, cloudinarySvc)
-	gallerySvc  := service.NewGalleryService(galleryRepo, cloudinarySvc)
-	eventSvc    := service.NewEventService(eventRepo, cloudinarySvc)
-	teamSvc     := service.NewTeamService(teamRepo, cloudinarySvc)
-	ngoSvc      := service.NewNgoService(ngoRepo, cloudinarySvc)
-	userSvc     := service.NewUserService(userRepo)
-	healthSvc   := service.NewHealthService(db, cfg.WhatsAppLocalURL, 13*time.Minute)
+	idCardSvc := service.NewIDCardService(idCardRepo, ngoRepo, cloudinarySvc, messenger, emailSvc, cfg.AppBaseURL)
+	noticeSvc := service.NewNoticeService(noticeRepo, cloudinarySvc)
+	gallerySvc := service.NewGalleryService(galleryRepo, cloudinarySvc)
+	eventSvc := service.NewEventService(eventRepo, cloudinarySvc)
+	teamSvc := service.NewTeamService(teamRepo, cloudinarySvc)
+	ngoSvc := service.NewNgoService(ngoRepo, cloudinarySvc)
+	userSvc := service.NewUserService(userRepo)
+	healthSvc := service.NewHealthService(db, waClient)
 
 	// ---- Seed admin user ---------------------------------------------------
 	authSvc.SeedAdmin()
@@ -83,9 +97,6 @@ func main() {
 	cleanupSvc := service.NewCleanupService(idempotencyRepo, otpRepo, 1*time.Hour, 24*time.Hour)
 	go cleanupSvc.Run(ctx)
 
-	// ---- WhatsApp service 13-minute keep-alive worker (anti-sleep ping) -----
-	go healthSvc.StartKeepAliveWorker(ctx)
-
 	// ---- HTTP router -------------------------------------------------------
 	bodyLimitBytes := cfg.BodyLimitMB * 1024 * 1024
 	router := routes.Setup(
@@ -94,6 +105,7 @@ func main() {
 		gallerySvc, eventSvc, teamSvc, ngoSvc, userSvc,
 		smsSvc, emailSvc, whatsappTwilioSvc, whatsappLocalSvc,
 		healthSvc,
+		waClient,
 		userRepo, idempotencyRepo,
 		bodyLimitBytes,
 		cfg.FEUrls,
@@ -124,6 +136,11 @@ func main() {
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Error().Err(err).Msg("main: server shutdown error")
+	}
+
+	if waClient != nil {
+		waClient.Disconnect()
+		log.Info().Msg("main: WhatsApp client disconnected")
 	}
 
 	if sqlDB, err := db.DB(); err == nil {

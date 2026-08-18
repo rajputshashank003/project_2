@@ -2,18 +2,16 @@ package service
 
 import (
 	"context"
-	"fmt"
-	"net/http"
-	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/shashankrajput/ngo-platform/api/internal/wa"
 	"gorm.io/gorm"
 )
 
-// WhatsAppHealthResult holds the health probe result for the standalone WhatsApp microservice.
+// WhatsAppHealthResult holds the health probe result for WhatsApp.
 type WhatsAppHealthResult struct {
-	Status     string `json:"status"` // "ok" | "unreachable" | "degraded" | "not_configured"
+	Status     string `json:"status"` // "ok" | "qr_pending" | "disconnected" | "not_configured"
 	StatusCode int    `json:"statusCode,omitempty"`
 	LatencyMs  int64  `json:"latencyMs"`
 	URL        string `json:"url"`
@@ -28,24 +26,17 @@ type SystemHealthResult struct {
 	WhatsApp  WhatsAppHealthResult `json:"whatsapp"`
 }
 
-// HealthService manages system health checks and the periodic WhatsApp keep-alive worker.
+// HealthService manages system health checks.
 type HealthService struct {
-	db           *gorm.DB
-	whatsAppURL  string
-	pingInterval time.Duration
-	httpClient   *http.Client
+	db       *gorm.DB
+	waClient *wa.WAClient
 }
 
 // NewHealthService constructs a new HealthService instance.
-func NewHealthService(db *gorm.DB, whatsAppURL string, pingInterval time.Duration) *HealthService {
-	if pingInterval <= 0 {
-		pingInterval = 13 * time.Minute
-	}
+func NewHealthService(db *gorm.DB, waClient *wa.WAClient) *HealthService {
 	return &HealthService{
-		db:           db,
-		whatsAppURL:  strings.TrimRight(strings.TrimSpace(whatsAppURL), "/"),
-		pingInterval: pingInterval,
-		httpClient:   &http.Client{Timeout: 10 * time.Second},
+		db:       db,
+		waClient: waClient,
 	}
 }
 
@@ -61,58 +52,43 @@ func (s *HealthService) CheckDatabase(ctx context.Context) (string, error) {
 	return "connected", nil
 }
 
-// CheckWhatsAppService executes a health check against the WhatsApp microservice (/api/health).
+// CheckWhatsAppService returns the in-memory WhatsApp client connection status.
 func (s *HealthService) CheckWhatsAppService(ctx context.Context) WhatsAppHealthResult {
-	if s.whatsAppURL == "" {
+	if s.waClient == nil {
 		return WhatsAppHealthResult{
 			Status: "not_configured",
-			URL:    s.whatsAppURL,
+			URL:    "in-memory",
 		}
 	}
 
-	targetURL := fmt.Sprintf("%s/api/health", s.whatsAppURL)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, targetURL, nil)
-	if err != nil {
+	st := s.waClient.Status()
+	switch st {
+	case wa.StatusConnected:
 		return WhatsAppHealthResult{
-			Status: "error",
-			URL:    targetURL,
-			Error:  err.Error(),
+			Status:     "ok",
+			StatusCode: 200,
+			LatencyMs:  0,
+			URL:        "in-memory",
 		}
-	}
-
-	start := time.Now()
-	resp, err := s.httpClient.Do(req)
-	latency := time.Since(start).Milliseconds()
-
-	if err != nil {
+	case wa.StatusQRPending:
 		return WhatsAppHealthResult{
-			Status:    "unreachable",
-			LatencyMs: latency,
-			URL:       targetURL,
-			Error:     err.Error(),
+			Status:     "qr_pending",
+			StatusCode: 200,
+			LatencyMs:  0,
+			URL:        "in-memory",
 		}
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+	default:
 		return WhatsAppHealthResult{
-			Status:     "degraded",
-			StatusCode: resp.StatusCode,
-			LatencyMs:  latency,
-			URL:        targetURL,
-			Error:      fmt.Sprintf("received HTTP %d", resp.StatusCode),
+			Status:     "disconnected",
+			StatusCode: 503,
+			LatencyMs:  0,
+			URL:        "in-memory",
+			Error:      "WhatsApp is disconnected",
 		}
-	}
-
-	return WhatsAppHealthResult{
-		Status:     "ok",
-		StatusCode: resp.StatusCode,
-		LatencyMs:  latency,
-		URL:        targetURL,
 	}
 }
 
-// GetOverallHealth aggregates database connectivity and WhatsApp microservice health.
+// GetOverallHealth aggregates database connectivity and WhatsApp client health.
 func (s *HealthService) GetOverallHealth(ctx context.Context) SystemHealthResult {
 	dbStatus, dbErr := s.CheckDatabase(ctx)
 	waHealth := s.CheckWhatsAppService(ctx)
@@ -120,7 +96,7 @@ func (s *HealthService) GetOverallHealth(ctx context.Context) SystemHealthResult
 	overallStatus := "ok"
 	if dbErr != nil {
 		overallStatus = "error"
-	} else if waHealth.Status != "ok" && waHealth.Status != "not_configured" {
+	} else if waHealth.Status == "disconnected" {
 		overallStatus = "degraded"
 	}
 
@@ -132,41 +108,8 @@ func (s *HealthService) GetOverallHealth(ctx context.Context) SystemHealthResult
 	}
 }
 
-// StartKeepAliveWorker runs a 13-minute periodic loop to ping the WhatsApp microservice,
-// keeping it awake on Render/free tier hosting while logging status.
+// StartKeepAliveWorker logs that WhatsApp in-memory mode is active and waits for ctx.Done().
 func (s *HealthService) StartKeepAliveWorker(ctx context.Context) {
-	ticker := time.NewTicker(s.pingInterval)
-	defer ticker.Stop()
-
-	// Initial ping on server startup
-	s.pingWhatsAppKeepAlive(ctx)
-
-	for {
-		select {
-		case <-ticker.C:
-			s.pingWhatsAppKeepAlive(ctx)
-		case <-ctx.Done():
-			log.Info().Msg("health: WhatsApp keep-alive worker stopped")
-			return
-		}
-	}
-}
-
-func (s *HealthService) pingWhatsAppKeepAlive(ctx context.Context) {
-	result := s.CheckWhatsAppService(ctx)
-	if result.Status == "ok" {
-		log.Info().
-			Str("url", result.URL).
-			Int64("latencyMs", result.LatencyMs).
-			Int("statusCode", result.StatusCode).
-			Msg("health: WhatsApp service keep-alive ping successful")
-	} else if result.Status == "not_configured" {
-		log.Debug().Msg("health: WhatsApp service URL not configured; skipping keep-alive ping")
-	} else {
-		log.Warn().
-			Str("url", result.URL).
-			Str("status", result.Status).
-			Str("error", result.Error).
-			Msg("health: WhatsApp service keep-alive ping failed")
-	}
+	log.Info().Msg("health: WhatsApp in-memory service is active (no external ping needed)")
+	<-ctx.Done()
 }

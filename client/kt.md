@@ -521,6 +521,22 @@ npm run dev            # http://localhost:5173
   - In `IdCardRequestComponents.tsx`, removed `{ label: "Lifetime", value: 0 }` from approval validity options.
   - In `useAdminRequestIdCard.ts`, updated initial state and reset handlers to default to `1` (1 Year).
 
+---
+
+## 37. Unified Single-Server WhatsApp QR Link Resolution
+
+- **Dynamic URL Resolution (`Navbar/index.tsx`)**:
+  - `WHATSAPP_SERVICE_URL` now dynamically resolves to the primary API origin:
+    ```ts
+    const WHATSAPP_SERVICE_URL =
+        import.meta.env.VITE_WHATSAPP_SERVICE_URL ||
+        (import.meta.env.VITE_API_BASE_URL
+            ? `${import.meta.env.VITE_API_BASE_URL.replace(/\/api\/v1\/?$/, "")}/qr`
+            : "http://localhost:3000/qr");
+    ```
+  - Automatically targets `https://api.yourdomain.com/qr` in production and `http://localhost:3000/qr` in local development without requiring `VITE_WHATSAPP_SERVICE_URL` to be explicitly configured.
+
+
 
 
 

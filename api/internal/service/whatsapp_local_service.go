@@ -1,37 +1,27 @@
 package service
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
-
 	"github.com/rs/zerolog/log"
-	"github.com/shashankrajput/ngo-platform/api/internal/config"
+	"github.com/shashankrajput/ngo-platform/api/internal/wa"
 )
 
-// WhatsAppLocalService sends WhatsApp messages via the standalone whatsapp_service
-// microservice (which uses the unofficial whatsmeow library internally).
-// This service calls the microservice over HTTP — no whatsmeow dependency in N_P.
+// WhatsAppLocalService sends WhatsApp messages via the in-memory whatsmeow client.
 // Implements the Messenger interface.
 type WhatsAppLocalService struct {
-	baseURL string // e.g. "http://localhost:8080"
-	apiKey  string // secret API key for authentication
-	devMode bool
+	waClient *wa.WAClient
+	devMode  bool
 }
 
 // NewWhatsAppLocalService constructs a WhatsAppLocalService.
-func NewWhatsAppLocalService(cfg *config.Config) *WhatsAppLocalService {
+func NewWhatsAppLocalService(waClient *wa.WAClient, devMode bool) *WhatsAppLocalService {
 	return &WhatsAppLocalService{
-		baseURL: cfg.WhatsAppLocalURL,
-		apiKey:  cfg.WhatsAppLocalAPIKey,
-		devMode: cfg.DevMode,
+		waClient: waClient,
+		devMode:  devMode,
 	}
 }
 
-// Send sends a WhatsApp message via the local whatsapp_service microservice.
-// In dev mode it only logs.
+// Send sends a WhatsApp message via the in-memory WhatsApp client.
+// In dev mode it only logs without sending.
 // phone: raw 10-digit Indian number (e.g. "9876543210").
 func (s *WhatsAppLocalService) Send(phone, message string) {
 	if phone == "" {
@@ -44,36 +34,18 @@ func (s *WhatsAppLocalService) Send(phone, message string) {
 		return
 	}
 
-	payload, err := json.Marshal(map[string]string{
-		"phone":   phone,
-		"message": message,
-	})
-	if err != nil {
-		log.Error().Err(err).Str("to", phone).Msg("whatsapp_local: marshal failed")
+	if s.waClient == nil {
+		log.Warn().Str("to", phone).Msg("whatsapp_local: WhatsApp client is not initialized")
 		return
 	}
 
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/send", s.baseURL), bytes.NewBuffer(payload))
-	if err != nil {
-		log.Error().Err(err).Str("to", phone).Msg("whatsapp_local: request creation failed")
+	if s.waClient.Status() != wa.StatusConnected {
+		log.Warn().Str("to", phone).Str("status", s.waClient.Status()).
+			Msg("whatsapp_local: WhatsApp client is not connected")
 		return
 	}
-	req.Header.Set("Content-Type", "application/json")
-	if s.apiKey != "" {
-		req.Header.Set("X-API-Key", s.apiKey)
-	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
+	if err := s.waClient.Send(phone, message); err != nil {
 		log.Error().Err(err).Str("to", phone).Msg("whatsapp_local: send failed")
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		log.Error().Int("status", resp.StatusCode).Str("to", phone).Str("response", string(bodyBytes)).
-			Msg("whatsapp_local: non-2xx response from whatsapp_service")
 	}
 }

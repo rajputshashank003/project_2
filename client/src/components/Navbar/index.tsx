@@ -26,7 +26,9 @@ import MenuDropdown from "../MenuDropdown";
 
 const WHATSAPP_SERVICE_URL =
     import.meta.env.VITE_WHATSAPP_SERVICE_URL ||
-    "https://ngo-sandeep-whatsapp-service.onrender.com/qr";
+    (import.meta.env.VITE_API_BASE_URL
+        ? `${import.meta.env.VITE_API_BASE_URL.replace(/\/api\/v1\/?$/, "")}/qr`
+        : "http://localhost:3000/qr");
 
 const NAV_LINKS = [
     { to: "/", label: "Home", icon: Leaf },

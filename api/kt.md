@@ -677,7 +677,28 @@ See `whatsapp_service/kt.md` for full documentation.
     - Enables `AllowCredentials: true`.
     - Allowed methods: `GET`, `POST`, `PATCH`, `PUT`, `DELETE`, `OPTIONS`, `HEAD`.
     - Allowed headers: `Authorization`, `Content-Type`, `X-Request-ID`, `Idempotency-Key`, `Origin`, `Accept`, `X-Requested-With`.
-    - Exposes: `X-Request-ID`, `Content-Length`, `Content-Disposition`.
+---
+
+## 25. Single Server In-Memory WhatsApp Integration
+
+- **Consolidation**:
+  - Merged standalone `whatsapp_service` into main `api` server running on a single port (`PORT=3000`).
+  - Uses `go.mau.fi/whatsmeow` with `modernc.org/sqlite` (pure Go SQLite, zero CGO required).
+- **Internal WhatsApp Engine (`api/internal/wa/`)**:
+  - `store.go`: Initializes SQLite session container (`store/whatsapp.db`) with auto schema upgrades and WAL mode.
+  - `client.go`: `WAClient` handles connection lifecycle (`StatusConnected`, `StatusQRPending`, `StatusDisconnected`) and captures base64 QR codes.
+  - `sender.go`: `WAClient.Send(phone, message)` formats phone number to WhatsApp JID (`91XXXXXXXXXX@s.whatsapp.net`) and dispatches messages with a 30s timeout context.
+  - `qr.go`: `qrToPNG` renders 256x256 pixel QR code PNGs.
+- **Service Refactoring (`WhatsAppLocalService`)**:
+  - Direct in-memory invocation `waClient.Send(phone, message)`. Zero HTTP roundtrip overhead, zero cross-service timeouts.
+  - In `DEV_MODE=true`, logs `[DEV] WhatsApp local send skipped`.
+- **Health Probing (`HealthService`)**:
+  - `CheckWhatsAppService` inspects in-memory `waClient.Status()` directly (reports `"ok"`, `"qr_pending"`, or `"disconnected"`).
+- **Endpoints & Handlers**:
+  - `GET /qr` and `GET /api/v1/whatsapp/qr`: Auto-refreshing HTML page for WhatsApp Web QR linking.
+  - `GET /api/v1/whatsapp/status`: Returns JSON connection status.
+  - `GET /health/whatsapp` & `GET /api/v1/health/whatsapp`: WhatsApp health probe.
+
 
 
 

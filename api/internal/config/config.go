@@ -52,7 +52,8 @@ type Config struct {
 
 	// Messaging
 	MessagingType       string // "sms" | "whatsapp_twilio" | "whatsapp_local"
-	WhatsAppLocalURL    string // base URL of standalone whatsapp_service (e.g. "http://localhost:8080")
+	WhatsAppDBPath      string // SQLite session database path (e.g. "store/whatsapp.db")
+	WhatsAppLocalURL    string // (Optional fallback) base URL of standalone whatsapp_service (e.g. "http://localhost:8080")
 	WhatsAppLocalAPIKey string // API key for authenticating with whatsapp_service
 
 	// Resend
@@ -109,6 +110,7 @@ func Load() (*Config, error) {
 		FEUrls:     parseOrigins(getEnv("FE_URLS", "")),
 
 		MessagingType:       getEnv("MESSAGING_TYPE", "sms"),
+		WhatsAppDBPath:      getEnv("WHATSAPP_DB_PATH", "store/whatsapp.db"),
 		WhatsAppLocalURL:    getEnv("WHATSAPP_LOCAL_URL", "http://localhost:8080"),
 		WhatsAppLocalAPIKey: getEnv("WHATSAPP_LOCAL_API_KEY", ""),
 

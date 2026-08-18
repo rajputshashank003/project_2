@@ -9,6 +9,7 @@ import (
 	"github.com/shashankrajput/ngo-platform/api/internal/middleware"
 	"github.com/shashankrajput/ngo-platform/api/internal/repository"
 	"github.com/shashankrajput/ngo-platform/api/internal/service"
+	"github.com/shashankrajput/ngo-platform/api/internal/wa"
 	"gorm.io/gorm"
 )
 
@@ -29,6 +30,7 @@ func Setup(
 	whatsappTwilioSvc *service.WhatsAppTwilioService,
 	whatsappLocalSvc *service.WhatsAppLocalService,
 	healthSvc *service.HealthService,
+	waClient *wa.WAClient,
 	userRepo *repository.UserRepository,
 	idempotencyRepo *repository.IdempotencyRepository,
 	bodyLimitBytes int64,
@@ -83,6 +85,7 @@ func Setup(
 	userH := handler.NewUserHandler(userSvc)
 	notifyH := handler.NewNotifyHandler(smsSvc, emailSvc, whatsappTwilioSvc, whatsappLocalSvc)
 	healthH := handler.NewHealthHandler(healthSvc)
+	whatsAppH := handler.NewWhatsAppHandler(waClient)
 
 	// ---- Infra routes (no version prefix) ----------------------------------
 	r.GET("/healthz", healthH.Liveness)
@@ -90,12 +93,16 @@ func Setup(
 	r.GET("/api/health", healthH.Liveness)
 	r.GET("/health", healthH.Liveness)
 	r.GET("/health/whatsapp", healthH.WhatsAppHealth)
+	r.GET("/qr", whatsAppH.QR)
+	r.GET("/whatsapp/qr", whatsAppH.QR)
 	r.GET("/config", ngoH.GetConfig)
 	r.GET("/ngo/config", ngoH.GetConfig)
 
 	// ---- API v1 routes -----------------------------------------------------
 	v1 := r.Group("/api/v1")
 	v1.GET("/health/whatsapp", healthH.WhatsAppHealth)
+	v1.GET("/whatsapp/qr", whatsAppH.QR)
+	v1.GET("/whatsapp/status", whatsAppH.Status)
 
 	// Auth (public)
 	auth := v1.Group("/auth")
