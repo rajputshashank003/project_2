@@ -499,7 +499,7 @@ npm run dev            # http://localhost:5173
     Donate here to generate ID card and paste screenshot below
     ```
 - **State & Copy Handlers (`useIDGenerate.ts`)**:
-  - Hook exposes `isConfigLoading`, `copied`, `copiedPhone`, `copiedAccount`, `copiedIfsc` alongside corresponding copy handlers using `copyToClipboard`.
+  - Hook exposes `isConfigLoading`, `copied`, `copiedPhone`, `copiedAccount`, `copiedIfsc` alongside corresponding copy handlers using `copyToClipboard` .
 
 ---
 
