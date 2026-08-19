@@ -104,7 +104,7 @@ function App() {
             {/* Profile Completion Onboarding Modal */}
             <ProfileCompletionModal />
 
-            {/* Navbar  */}
+            {/* Navbar */}
             <Navbar />
 
             {/* Main content */}
