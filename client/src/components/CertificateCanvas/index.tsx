@@ -207,7 +207,7 @@ const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
                         }}
                     />
 
-                    {/* Top Group: Header & Title */}
+                    {/*  Top Group: Header & Title */}
                     <div>
                         {/* Header */}
                         <div style={{ textAlign: "center", marginBottom: 12 }}>
