@@ -39,7 +39,8 @@ func NewCloudinaryService(cfg *config.Config) *CloudinaryService {
 // Returns (CloudinaryResult, error). On error the caller must NOT persist the record.
 func (s *CloudinaryService) UploadFile(ctx context.Context, file io.Reader) (CloudinaryResult, error) {
 	resp, err := s.cld.Upload.Upload(ctx, file, uploader.UploadParams{
-		Folder: s.folder,
+		Folder:         s.folder,
+		Transformation: "c_limit,w_1600,h_1600,q_auto:good",
 	})
 	if err != nil {
 		return CloudinaryResult{}, fmt.Errorf("cloudinary: file upload failed: %w", err)
