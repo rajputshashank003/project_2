@@ -44,7 +44,7 @@ const TeamSection: React.FC = () => {
                                             member.name ||
                                             `Team member ${member.slot}`
                                         }
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-cover "
                                     />
                                 ) : (
                                     <UserCircle2
