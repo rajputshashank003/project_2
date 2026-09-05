@@ -509,10 +509,16 @@ const IDCardCanvas: React.FC<IDCardCanvasProps> = ({
                         style={{
                             fontSize: 8.5,
                             color: "#64748b",
-                            lineHeight: 1.45,
+                            lineHeight: 1.35,
                         }}
                     >
-                        <div>
+                        <div
+                            style={{
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                            }}
+                        >
                             <strong>Issued By:</strong> {data.ngoName}
                         </div>
                         <div>
@@ -520,17 +526,27 @@ const IDCardCanvas: React.FC<IDCardCanvasProps> = ({
                             {formatDateShort(data.issueDate)}
                         </div>
                         {data.presidentName && (
-                            <div>
+                            <div
+                                style={{
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                }}
+                            >
                                 <strong>President:</strong> {data.presidentName}
                             </div>
                         )}
                         {data.address && (
                             <div
                                 style={{
-                                    whiteSpace: "nowrap",
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: data.presidentName ? 2 : 3,
+                                    WebkitBoxOrient: "vertical",
                                     overflow: "hidden",
                                     textOverflow: "ellipsis",
-                                    maxWidth: 280,
+                                    wordBreak: "break-word",
+                                    lineHeight: 1.3,
+                                    marginTop: 1,
                                 }}
                             >
                                 <strong>Address:</strong> {data.address}
